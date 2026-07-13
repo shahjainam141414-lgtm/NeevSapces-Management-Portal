@@ -1,0 +1,2579 @@
+    <!DOCTYPE html>
+
+<html data-wf-page="63af63be30817d675bd64ee2" data-wf-site="636a61728cd4f9398ba7eac5">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Sun Builders Group | Best builders of Ahmedabad | Top Builders in Ahmedabad</title>
+    <meta name="description" content="Sun Builders Group is the trusted best builder in Ahmedabad. We have completed a number of residential and commercial real estate projects in Ahmedabad.">
+    <meta name="keywords" content="Sun Builders Group, Real estate projects in Ahmedabad, Top Builders In Ahmedabad, Residential Projects In Ahmedabad, Commercial Projects In Ahmedabad, Best builders of Ahmedabad">
+    <meta name="robots" content="index,follow" />
+    <meta name="GOOGLEBOT" content="INDEX, FOLLOW" />
+    <meta name="geo.placename" content="Ahmedabad, India" />
+    <meta name="geo.placename" content="Gujarat, India" />
+    <meta name="reply-to" content="info@compubrain.in" />
+    <meta name="document-classification" content="Internet" />
+    <meta name="document-type" content="Public" />
+    <meta name="document-rating" content="Safe for Kids" />
+    <meta name="document-distribution" content="Global" />
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <meta name="og:title" content="Best builders of Ahmedabad | Top Builders in Ahmedabad" />
+    <meta name="og:description" content="Sun Builders Group is the trusted best builder in Ahmedabad. We have completed a number of residential and commercial real estate projects in Ahmedabad." />
+    <meta property="og:site_name" content="Sun Builders Group" />
+    <meta name="og:email" content="contact@sunbuilders.in" />
+    <meta name="og:phone_number" content="+91 81288 28888" />
+    <meta property="og:image" content="https://sunbuilders.in/images/sunbuilders_logo.png" />
+    <meta name="og:url" content="https://sunbuilders.in/" />
+    <link rel="canonical" href="https://sunbuilders.in/" />
+    <!-- Favicon -->
+    <link rel="shortcut icon" href="images/favicon.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+
+    <link href="css/normalize.min.css" rel="stylesheet" type="text/css" />
+    <link href="css/read-more.css" rel="stylesheet" type="text/css" />
+    <link href="css/font-awesome.css" rel="stylesheet" type="text/css" />
+    <link href="css/style.css" rel="stylesheet" type="text/css" />
+
+    <link href="css/custom.css" rel="stylesheet" type="text/css" />
+    <script type="text/javascript">
+        ! function(o, c) {
+            var n = c.documentElement,
+                t = " w-mod-";
+            n.className += t + "js", ("ontouchstart" in o || o.DocumentTouch && c instanceof DocumentTouch) && (n.className += t + "touch")
+        }(window, document);
+
+    </script>
+
+
+    <script>
+        /*Font scaling with Wizardry method*/
+        document.addEventListener('DOMContentLoaded', (event) => {
+            function setFontSize() {
+                if (window.innerWidth <= 1920 && window.innerWidth >= 991) {
+                    document.body.style.fontSize = window.innerWidth / 1366 + "rem";
+                } else {
+                    if (document.body.style.removeProperty) {
+                        document.body.style.removeProperty("font-size");
+                    } else {
+                        document.body.style.removeAttribute("font-size");
+                    }
+                }
+            }
+            window.addEventListener("resize", function() {
+                setFontSize();
+            });
+            setFontSize();
+        });
+
+    </script>
+    <link rel="stylesheet" href="css/swiper-bundle.min.css" />
+    <link href="css/owl.carousel.min.css" rel="stylesheet" type="text/css" />
+
+</head>
+
+<body>
+
+    <div id="popup-reg" class="popup">
+        <div class="popup-content">
+            <div>
+                <div class="event-header">
+                    <h6>To Receive a Brochure
+                        <!--<span class="fade-out closeBtn">X</span>-->
+                    </h6>
+                    <p class="brochure-text">Please fill up the details in the form below, and we shall send you the brochure immediately to your registered WhatsApp number.</p>
+                </div>
+                <div class="form-w w-form">
+                    <form id="Download_Brochure" action="thankyou.php" method="post" autocomplete="off" class="">
+
+                        <div class="form-content">
+                            <div class="form-field-w">
+                                <input name="name" id="name" type="text" placeholder="" maxlength="255" class="form-input-field w-input">
+                                <label for="name" class="form-label">Name *</label>
+                            </div>
+
+                            <div class="form-field-w">
+                                <input name="contact_no" id="contact_no" onkeypress="contact_num_valid(event)" minlength="10" maxlength="15" type="text" placeholder="" class="form-input-field w-input">
+                                <label for="name-3" class="form-label">Mobile No.*</label>
+                            </div>
+
+                            <div class="form-field-w">
+                                <input name="email" id="email" type="text" placeholder="" maxlength="255" class="form-input-field w-input">
+                                <label for="name-3" class="form-label">Email ID*</label>
+                            </div>
+                        </div>
+                        <div class="btn-brochure">
+                            <div class="row">
+                                <div class="col-md-12 col-sm-12 col-xs-12" style="display: none">
+                                    <input type="checkbox" name="" placeholder="" id="whatsapp_agree" checked>
+                                    <label for="whatsapp_agree" class="whatsapp_agree">I want to receive the brochure on WhatsApp.</label>
+                                    <!--<img src="images/whatsapp-icon.svg" class="whatsapp-icon">-->
+                                </div>
+                            </div>
+                            <input type="hidden" name="project" id="project" value="">
+                            <p id="error_data"></p>
+                            <input type="hidden" id="g-recaptcha-response" name="g-recaptcha-response" class="g-recaptcha-response">
+                            <button type="submit" class="main-btn-rect" name="Download_Brochure">Receive</button>
+                            <input type="hidden" value="Download_Brochure" name="type_of_form" />
+                            <i class="fa fa-refresh" id="form_process"></i>
+                            <span class="fade-out main-btn-circle">Back</span>
+                        </div>
+                    </form>
+                    <span class="fade-out main-btn-circle">Back</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="page-wrapper page-wrapper-flex">
+        <div class="load-wrapper">
+            <div class="loader-portion">
+
+
+                <div class="container">
+                    <div class="hero-content is--loader">
+                        <div class="heading--w">
+                            <h2 class="heading--large is--loader">Building<span class="orangedot">.</span>Communities</h2>
+                        </div>
+                        
+                    </div>
+
+                </div>
+            </div>
+            <div data-scroll="toggle" class="scroll--toggle"></div>
+        </div>
+
+
+
+        <!--<div id="cb_popup_wrap">
+            <div id="cb_popup_center">
+                <div id="cb_popup_content"> <img src="images/cb_popup_close.png" alt="Residential Projects in Ahmedabad" id="cb_popup_close" /><a href="sales-inquiry.html" target="_blank"> <img src="images/sun-festival-popup.jpg" id="cb_popup_img" /> </a></div>
+            </div>
+        </div>-->
+        <nav class="nav-wrapper">
+            <div class="nav-bar">
+                <div class="page-padding">
+                    <div class="nav-content">
+                        <a aria-label="click to go home" href="index.html" aria-current="page" class="nav-logo w-inline-block w--current">
+                            <img src="images/sun-builders-logo.png" loading="eager" width="189" alt="Sun Builders Group" title="Sun Builders Group" class="nav-logo__img" />
+                        </a>
+                        <div class="nav-content__right ">
+                            <div class="dropdown-connect">
+
+
+                                <ul class="nav">
+                                    <li>
+                                        <a href="#" class="button-main is--nav w-inline-block ">
+                                            Connect <i class="fa fa-chevron-down"></i>
+
+                                        </a>
+
+
+                                        <ul>
+                                            <li>
+                                                <a href="tel: +91 90813 39933">Call</a>
+
+                                            </li>
+                                            <li><a href="#" onclick="if(window.innerWidth>769){popUp=window.open('https://web.whatsapp.com/send?phone=919988988444&text=Hi', 'popupwindow', 'scrollbars=yes,width=800,height=400');popUp.focus();}else{popUp=window.open('whatsapp://send?phone=919988988444&text=Hi', 'popupwindow', 'scrollbars=yes,width=800,height=400');popUp.focus();}">Whatsapp</a></li>
+                                            <li><a href="mailto: contact@sunbuilders.in">Email</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="menu-btn">
+                                <div class="menu-line is--top"></div>
+                                <div class="menu-line is--btm"></div>
+                                <div class="menu-btn__bg"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="menu-wrapper">
+                <div class="menu-content">
+
+                    <div class="menu-content__btm">
+                        <div class="menu-link__w">
+                            <div class="menu-link__overflow">
+                                <a id="about" href="#" class="menu-link__item w-inline-block">
+                                    <div data-w-id="abc70f94-5399-78d0-0d7a-f4324c80ca6f" class="menu-link no-trans">Sun</div>
+                                </a>
+                            </div>
+                            <div class="menu-link__overflow">
+                                <a href="ongoing-projects.html" class="menu-link__item w-inline-block">
+                                    <div data-w-id="abc70f94-5399-78d0-0d7a-f4324c80ca5b" class="menu-link">Our Projects</div>
+                                </a>
+                            </div>
+                            <div class="menu-link__overflow">
+                                <a href="locations.html" class="menu-link__item w-inline-block">
+                                    <div data-w-id="abc70f94-5399-78d0-0d7a-f4324c80ca67" class="menu-link">Locations</div>
+                                </a>
+                            </div>
+                            <div class="menu-link__overflow">
+                                <a href="whats-new.html" class="menu-link__item w-inline-block">
+                                    <div data-w-id="abc70f94-5399-78d0-0d7a-f4324c80ca61" class="menu-link whats-new-blink">What’s New</div>
+                                </a>
+                            </div>
+
+                            <div class="menu-link__overflow"><a data-w-id="abc70f94-5399-78d0-0d7a-f4324c80ca72" href="emi-calculator.html" class="menu-link">Buyer's Guide</a>
+                            </div>
+                            <div class="menu-link__overflow">
+                                <a data-w-id="abc70f94-5399-78d0-0d7a-f4324c80ca6c" href="https://commune.sunbuilders.in/" class="menu-link" target="_blank">Sun Commune</a>
+                            </div>
+                            <div class="menu-link__overflow"><a data-w-id="abc70f94-5399-78d0-0d7a-f4324c80ca75" href="https://thekimanatowers.com/" class="menu-link" target="_blank">The Kimana Towers</a>
+                            </div>
+                            <div class="menu-content__bottom">
+                                <div data-w-id="abc70f94-5399-78d0-0d7a-f4324c80ca78" class="horizontal-line"></div>
+                                <div class="menu-content__meta">
+
+                                    <div class="menu-meta__links">
+                                        <a href="https://www.facebook.com/SunBuildersGroup" target="_blank" class="text--link is--tiny">facebook</a>
+                                        <a href="https://www.instagram.com/sunbuildersgroup/" target="_blank" class="text--link is--tiny">instagram</a>
+                                        <a href="https://twitter.com/SunBuildersGrp" target="_blank" class="text--link is--tiny">twitter</a>
+                                        <a href="https://www.youtube.com/@sunbuildersgroup" target="_blank" class="text--link is--tiny">youtube</a>
+                                        <a href="https://social.sunbuilders.in/" target="_blank" class="text--link is--tiny">we're social</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="about-wrapper">
+                <div data-w-id="13341472-079f-713c-6306-2f1b0e2523d5" class="about-trigger"></div>
+                <div class="about-content" data-scroll="overscroll">
+                    <div data-w-id="b1788db8-6bae-80a6-64d2-f6972b6a1e25" class="margin-bottom margin--medium">
+                        <div class="margin-bottom margin--small">
+                            <p class="text--xlarge is--wulkan">It’s been more than <span class="number-font-style font-16">4</span> decades since Sun Builders Group has been credited to be Gujarat’s Premier Real Estate Company. At Sun Builders Group we strongly believe in “Promise, only if you can deliver”.
+                            </p>
+                        </div>
+                        <p class="text--about">With a heritage spanning over four decades, the Sun Builders Group's commitment remains unchanged. We believe in actions, not just mere words. Our belief in 'Promise only if you can deliver' defines our approach. That's the cornerstone of our legacy, and it continues to guide us forward at every step.
+                            <br /><br />
+
+                        </p>
+
+                        <p class="text--about">
+                            Since inception, our values revolve around three aspects: Quality, Trust, & Commitment. From concept to the completion phase, our focus remains unwavering on upholding these standards in all our ventures while building relations & communities. As a result of this, we've dedicated ourselves to delivering top-tier spaces and ensuring efficient facilities for our clients.<br />
+                        </p>
+                    </div>
+                    <div class="about-item-w">
+
+
+
+                        <div class="about-item is--1">
+                            <div class="text--med is--wulkan">Promoters </div>
+                            <p class="text--about">At the Sun Builders Group, we strongly believe in building communities through the shared leadership of our first & second-generation technocrats, enriched by their vast experiences & expertise. Through this, we have been able to fulfil our promise of guiding communities towards advancement while mirroring our growth with Ahmedabad's evolution, showcasing our commitment to progress.
+
+                            </p>
+                        </div>
+                        <div data-w-id="68032c8f-1186-6c0e-3f09-c2006e6223d6" class="horizontal-line"></div>
+
+
+                        <div class="about-item is--2">
+                            <div class="text--med is--wulkan">Vision</div>
+                            <p class="text--about">Our vision is straightforward yet profound: to build environments that inspire, enrich, and endure.
+
+
+
+
+                            </p>
+                        </div>
+                        <div data-w-id="68032c8f-1186-6c0e-3f09-c2006e6223d6" class="horizontal-line"></div>
+
+
+                        <div class="about-item is--2">
+                            <div class="text--med is--wulkan">Expertise </div>
+                            <p class="text--about">All our key leaders possess deep knowledge in both Civil Engineering and Urban Planning. This unique blend of expertise enables us to build & timely deliver spaces that resonate with functional aspects catering to our customers' evolving needs and desires, with a focus on creating user-friendly environments that align with upcoming trends in the industry.
+
+
+
+
+                            </p>
+                        </div>
+                        <div data-w-id="68032c8f-1186-6c0e-3f09-c2006e6223d6" class="horizontal-line"></div>
+                        <div class="about-item is--2">
+                            <div class="text--med is--wulkan">Sun Chronicle</div>
+                            <ul class="text--about list-items">
+
+
+                                <li> Leading the industry for 45+ years
+                                </li>
+                                <li>Successfully delivered 80+ projects
+                                </li>
+                                <li>Over 17 Million sq. ft. of built-up area</li>
+                                <li>A thriving community of 7700+ satisfied sun patrons</li>
+
+                            </ul>
+                        </div>
+                        <div data-w-id="68032c8f-1186-6c0e-3f09-c2006e6223d6" class="horizontal-line"></div>
+                        <div class="about-item is--2">
+                            <div class="text--med is--wulkan"><a href="milestones.html">Click here <div class="edit-cta-w1 milestone-arrow">
+                                        <div class="edit-cta-inner">
+                                            <div class="edit-cta-inner__text">→</div>
+                                            <div class="edit-cta-inner__border"></div>
+                                        </div>
+                                    </div><br> to know about our Milestones <img src="images/Milestones-icon.png" alt="Milestones" class="milestones-icon"></a></div>
+
+                        </div>
+                    </div>
+                </div>
+                <div class="load-wrapper">
+                    <div class="page-padding">
+                        <div class="container">
+                            <div class="hero-content is--loader">
+                                <div class="heading--w">
+                                    <h2 class="heading--large is--loader">Building<span class="orangedot">.</span>Communities</h2>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+                    <div data-scroll="toggle" class="scroll--toggle"></div>
+                </div>
+            </div>
+            <div class="menu-transition"></div>
+            <div class="menu-bg main"></div>
+            <div data-w-id="2f95cd65-0df0-b609-4d7e-5035a759fd35" class="menu-bg hero-trigger"></div>
+
+        </nav>
+        <main class="main-wrapper clip">
+            <section class="section is--hero home-page-section-is-hero">
+                <div class="page-padding">
+                    <div class="container">
+                        <div class="hero-content">
+                            <div class="heading--w">
+                                <h1 class="heading--large is--hero">The destination <br />
+                                    for your next property
+                                </h1>
+                            </div>
+                            
+                            <p class="caps-p">At Sun Builders Group, We Strongly Believe In<span class="desktop-newline">
+                                    Quality, Trust & Commitment.</span>
+
+
+
+                            </p>
+                            <a id="hero-btn" class="button-main is--hero w-inline-block top-20 explore-projects-btn explore-projects-wide-btn" href="ongoing-projects.html">
+                                Explore Projects
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section is--marquee home-section-is--marquee">
+                <div class="marquee-cover"></div>
+                <div class="marquee">
+                    <div tr-marquee-scrollscrub="true" tr-marquee-element="component" tr-marquee-horizontal="true" class="marquee-track">
+                        <div class="marquee-list">
+                            <div tr-marquee-element="panel" class="marquee-flex">
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/the-quad.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/the-quad.jpg 500w, images/shot-at-sun/the-quad.jpg 800w, images/shot-at-sun/the-quad.jpg 1080w, images/shot-at-sun/the-quad.jpg 1600w, images/shot-at-sun/the-quad.jpg 1600w" class="marquee-img" />
+
+                                </div>
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun1.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun1.jpg 500w, images/shot-at-sun/shot-at-sun1.jpg 800w, images/shot-at-sun/shot-at-sun1.jpg 1080w, images/shot-at-sun/shot-at-sun1.jpg 1600w, images/shot-at-sun/shot-at-sun1.jpg 1600w" class="marquee-img" />
+
+                                </div>
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun2.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun2.jpg 500w, images/shot-at-sun/shot-at-sun2.jpg 800w, images/shot-at-sun/shot-at-sun2.jpg 1080w, images/shot-at-sun/shot-at-sun2.jpg 1600w, images/shot-at-sun/shot-at-sun2.jpg 1600w" class="marquee-img" />
+
+                                </div>
+                                <!--<div class="marquee-item">
+                     <img src="images/shot-at-sun/shot-at-sun3.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun3.jpg 500w, images/shot-at-sun/shot-at-sun3.jpg 800w, images/shot-at-sun/shot-at-sun3.jpg 1080w, images/shot-at-sun/shot-at-sun3.jpg 1600w, images/shot-at-sun/shot-at-sun3.jpg 1600w" class="marquee-img" />
+                     
+                  </div>-->
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun4.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun4.jpg 500w, images/shot-at-sun/shot-at-sun4.jpg 800w, images/shot-at-sun/shot-at-sun4.jpg 1080w, images/shot-at-sun/shot-at-sun4.jpg 1600w, images/shot-at-sun/shot-at-sun4.jpg 1600w" class="marquee-img" />
+
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun5.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun5.jpg 500w, images/shot-at-sun/shot-at-sun5.jpg 800w, images/shot-at-sun/shot-at-sun5.jpg 1080w, images/shot-at-sun/shot-at-sun5.jpg 1600w, images/shot-at-sun/shot-at-sun5.jpg 1600w" class="marquee-img" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun6.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun6.jpg 500w, images/shot-at-sun/shot-at-sun6.jpg 800w, images/shot-at-sun/shot-at-sun6.jpg 1080w, images/shot-at-sun/shot-at-sun6.jpg 1600w, images/shot-at-sun/shot-at-sun6.jpg 1600w" class="marquee-img " />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun7.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun7.jpg 500w, images/shot-at-sun/shot-at-sun7.jpg 800w, images/shot-at-sun/shot-at-sun7.jpg 1080w, images/shot-at-sun/shot-at-sun7.jpg 1600w, images/shot-at-sun/shot-at-sun7.jpg" class="marquee-img" />
+
+                                </div>
+
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun14.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun14.jpg 500w, images/shot-at-sun/shot-at-sun14.jpg 800w, images/shot-at-sun/shot-at-sun14.jpg 1080w, images/shot-at-sun/shot-at-sun14.jpg 1600w, images/shot-at-sun/shot-at-sun14.jpg" class="marquee-img" />
+
+                                </div>
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun15.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun15.jpg 500w, images/shot-at-sun/shot-at-sun15.jpg 800w, images/shot-at-sun/shot-at-sun15.jpg 1080w, images/shot-at-sun/shot-at-sun15.jpg 1600w, images/shot-at-sun/shot-at-sun15.jpg" class="marquee-img" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun16.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun16.jpg 500w, images/shot-at-sun/shot-at-sun16.jpg 800w, images/shot-at-sun/shot-at-sun16.jpg 1080w, images/shot-at-sun/shot-at-sun16.jpg 1600w, images/shot-at-sun/shot-at-sun16.jpg" class="marquee-img" />
+
+                                </div>
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun17.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun17.jpg 500w, images/shot-at-sun/shot-at-sun17.jpg 800w, images/shot-at-sun/shot-at-sun17.jpg 1080w, images/shot-at-sun/shot-at-sun17.jpg 1600w, images/shot-at-sun/shot-at-sun17.jpg" class="marquee-img" />
+
+                                </div>
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/the-kimana-tower.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/the-kimana-tower.jpg 500w, images/shot-at-sun/the-kimana-tower.jpg 800w, images/shot-at-sun/the-kimana-tower.jpg 1080w, images/shot-at-sun/the-kimana-tower.jpg 1600w, images/shot-at-sun/the-kimana-tower.jpg 1600w" class="marquee-img image-position-bottom desktop-image-position-bottom" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun8.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun8.jpg 500w, images/shot-at-sun/shot-at-sun8.jpg 800w, images/shot-at-sun/shot-at-sun8.jpg 1080w, images/shot-at-sun/shot-at-sun8.jpg 1600w, images/shot-at-sun/shot-at-sun8.jpg 1600w" class="marquee-img image-position-top" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun11.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun11.jpg 500w, images/shot-at-sun/shot-at-sun11.jpg 800w, images/shot-at-sun/shot-at-sun11.jpg 1080w, images/shot-at-sun/shot-at-sun11.jpg 1600w, images/shot-at-sun/shot-at-sun11.jpg 1600w" class="marquee-img " />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun10.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun10.jpg 500w, images/shot-at-sun/shot-at-sun10.jpg 800w, images/shot-at-sun/shot-at-sun10.jpg 1080w, images/shot-at-sun/shot-at-sun10.jpg 1600w, images/shot-at-sun/shot-at-sun10.jpg 1600w" class="marquee-img" />
+
+                                </div>
+
+
+
+
+                            </div>
+                            <div tr-marquee-element="panel" class="marquee-flex">
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/the-quad.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/the-quad.jpg 500w, images/shot-at-sun/the-quad.jpg 800w, images/shot-at-sun/the-quad.jpg 1080w, images/shot-at-sun/the-quad.jpg 1600w, images/shot-at-sun/the-quad.jpg 1600w" class="marquee-img" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun1.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun1.jpg 500w, images/shot-at-sun/shot-at-sun1.jpg 800w, images/shot-at-sun/shot-at-sun1.jpg 1080w, images/shot-at-sun/shot-at-sun1.jpg 1600w, images/shot-at-sun/shot-at-sun1.jpg 1600w" class="marquee-img" />
+
+                                </div>
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun2.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun2.jpg 500w, images/shot-at-sun/shot-at-sun2.jpg 800w, images/shot-at-sun/shot-at-sun2.jpg 1080w, images/shot-at-sun/shot-at-sun2.jpg 1600w, images/shot-at-sun/shot-at-sun2.jpg 1600w" class="marquee-img" />
+
+                                </div>
+                                <!--<div class="marquee-item">
+                     <img src="images/shot-at-sun/shot-at-sun3.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun3.jpg 500w, images/shot-at-sun/shot-at-sun3.jpg 800w, images/shot-at-sun/shot-at-sun3.jpg 1080w, images/shot-at-sun/shot-at-sun3.jpg 1600w, images/shot-at-sun/shot-at-sun3.jpg 1600w" class="marquee-img" />
+                     
+                  </div>-->
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun4.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun4.jpg 500w, images/shot-at-sun/shot-at-sun4.jpg 800w, images/shot-at-sun/shot-at-sun4.jpg 1080w, images/shot-at-sun/shot-at-sun4.jpg 1600w, images/shot-at-sun/shot-at-sun4.jpg 1600w" class="marquee-img" />
+
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun5.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun5.jpg 500w, images/shot-at-sun/shot-at-sun5.jpg 800w, images/shot-at-sun/shot-at-sun5.jpg 1080w, images/shot-at-sun/shot-at-sun5.jpg 1600w, images/shot-at-sun/shot-
+					at-sun5.jpg 1600w" class="marquee-img" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun6.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun6.jpg 500w, images/shot-at-sun/shot-at-sun6.jpg 800w, images/shot-at-sun/shot-at-sun6.jpg 1080w, images/shot-at-sun/shot-at-sun6.jpg 1600w, images/shot-at-sun/shot-at-sun6.jpg 1600w" class="marquee-img " />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun7.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun7.jpg 500w, images/shot-at-sun/shot-at-sun7.jpg 800w, images/shot-at-sun/shot-at-sun7.jpg 1080w, images/shot-at-sun/shot-at-sun7.jpg 1600w, images/shot-at-sun/shot-at-sun7.jpg" class="marquee-img" />
+
+                                </div>
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun14.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun14.jpg 500w, images/shot-at-sun/shot-at-sun14.jpg 800w, images/shot-at-sun/shot-at-sun14.jpg 1080w, images/shot-at-sun/shot-at-sun14.jpg 1600w, images/shot-at-sun/shot-at-sun14.jpg" class="marquee-img" />
+
+                                </div>
+
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun15.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun15.jpg 500w, images/shot-at-sun/shot-at-sun15.jpg 800w, images/shot-at-sun/shot-at-sun15.jpg 1080w, images/shot-at-sun/shot-at-sun15.jpg 1600w, images/shot-at-sun/shot-at-sun15.jpg" class="marquee-img" />
+
+                                </div>
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun16.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun16.jpg 500w, images/shot-at-sun/shot-at-sun16.jpg 800w, images/shot-at-sun/shot-at-sun16.jpg 1080w, images/shot-at-sun/shot-at-sun16.jpg 1600w, images/shot-at-sun/shot-at-sun16.jpg" class="marquee-img" />
+
+                                </div>
+
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun17.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun17.jpg 500w, images/shot-at-sun/shot-at-sun17.jpg 800w, images/shot-at-sun/shot-at-sun17.jpg 1080w, images/shot-at-sun/shot-at-sun17.jpg 1600w, images/shot-at-sun/shot-at-sun17.jpg" class="marquee-img" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/the-kimana-tower.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/the-kimana-tower.jpg 500w, images/shot-at-sun/the-kimana-tower.jpg 800w, images/shot-at-sun/the-kimana-tower.jpg 1080w, images/shot-at-sun/the-kimana-tower.jpg 1600w, images/shot-at-sun/the-kimana-tower.jpg 1600w" class="marquee-img image-position-bottom desktop-image-position-bottom" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun8.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun8.jpg 500w, images/shot-at-sun/shot-at-sun8.jpg 800w, images/shot-at-sun/shot-at-sun8.jpg 1080w, images/shot-at-sun/shot-at-sun8.jpg 1600w, images/shot-at-sun/shot-at-sun8.jpg 1600w" class="marquee-img image-position-top" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun11.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/shot-at-sun11.jpg 500w, images/shot-at-sun/shot-at-sun11.jpg 800w, images/shot-at-sun/shot-at-sun11.jpg 1080w, images/shot-at-sun/shot-at-sun11.jpg 1600w, images/shot-at-sun/shot-at-sun11.jpg 1600w" class="marquee-img image-position-bottom" />
+
+                                </div>
+                                <div class="marquee-item">
+                                    <img src="images/shot-at-sun/shot-at-sun10.jpg" loading="lazy" sizes="(max-width: 479px) 299.8515625px, (max-width: 991px) 479.765625px, 48vw" srcset="images/shot-at-sun/10.jpg 500w, images/shot-at-sun/shot-at-sun10.jpg 800w, images/shot-at-sun/shot-at-sun10.jpg 1080w, images/shot-at-sun/shot-at-sun10.jpg 1600w, images/shot-at-sun/shot-at-sun10.jpg 1600w" class="marquee-img" />
+
+                                </div>
+
+
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section overflow--hidden border-bottom-white" id="ongoing-projects">
+                <div class="page-padding padding-right-none">
+                    <div class="container">
+                        <div class="container-padding padding-top">
+                            <div class="container-split padding-right-one">
+                                <div class="title-w">
+                                    <h2 class="heading--mega">Ongoing Projects</h2>
+                                    <div class="title-nr" id="project-count"></div>
+                                </div>
+                                <!--<a href="#" class="button-main w-inline-block">
+                    <div class="button-text-w">
+                      <div class="button-text">Explore Projects</div>
+                      <div aria-hidden="true" class="button-text">Explore Projects</div>
+                    </div>
+                    <div class="button-bg is--black"></div>
+                  </a>-->
+                            </div>
+                            <div>
+                                <div class=" ongoing-projects">
+
+                                    <div class="owl-carousel owl-theme">
+<div class="item">
+                                            <div class="edit-item1">
+                                                <a href="sun-mayfair.html" class="swiper-slide__inner w-inline-block">
+
+                                                    <img src="images/ongoing-projects/Sun-Mayfair.jpg" alt="Sun Mayfair" class="edit-item__img" />
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">Sun Mayfair
+                                                        </div>
+                                                        <span>3/4 BHK Homes & Retail
+
+
+                                                        </span>
+                                                        <span>Opp. Sanskardham, Godhavi
+
+
+                                                        </span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+
+                                        <div class="item">
+                                            <div class="edit-item1">
+                                                <a href="the-quad.html" class="swiper-slide__inner w-inline-block">
+
+                                                    <img src="images/ongoing-projects/The-quad.jpg" alt="The Quad" class="edit-item__img" />
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">The Quad
+                                                        </div>
+                                                        <span>4 BHK Residences & 5 BHK 
+
+                                                        </span>
+                                                        <span>Penthouse - Shilaj Circle
+
+                                                        </span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+
+
+
+                                        <div class="item">
+                                            <div class="edit-item1">
+                                                <a href="sun-citypark.html" class="swiper-slide__inner w-inline-block">
+
+                                                    <img src="images/ongoing-projects/Sun-CityPark.jpg" alt="Sun CityPark" class="edit-item__img" />
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">Sun CityPark
+                                                        </div>
+                                                        <span>3 BHK Homes & Retail
+                                                        </span>
+                                                        <span>Sattadhar - Ghatlodia
+                                                        </span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+
+
+
+
+                                        <div class="item">
+                                            <div class="edit-item1">
+                                                <a href="sun-urban-park.html" class="swiper-slide__inner w-inline-block">
+
+                                                    <img src="images/ongoing-projects/Sun-Urban-Park.jpg" alt="Sun Urban Park" class="edit-item__img" />
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">Sun Urban Park</div>
+                                                        <span>3 BHK Homes & Retail
+                                                        </span>
+                                                        <span>Ambli - S.P. Ring Road</span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+
+
+
+                                        <div class="item">
+                                            <div class="edit-item1">
+                                                <a href="sun-silver-springs.html" class="swiper-slide__inner w-inline-block">
+
+                                                    <img src="images/ongoing-projects/Sun-Silver-Spring.jpg" alt="Sun Silver Springs" class="edit-item__img" />
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">Sun Silver Springs</div>
+                                                        <span>Plotted Community
+                                                        </span>
+                                                        <span>Lekhamba - Sanand</span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+
+
+
+
+                                        <div class="item">
+                                            <div class="edit-item1">
+                                                <a href="sun-skyview.html" class="swiper-slide__inner w-inline-block">
+
+                                                    <img src="images/ongoing-projects/Sun-SkyView.jpg" alt="Sun SkyView" class="edit-item__img" />
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">Sun SkyView</div>
+                                                        <span>3 BHK Homes & Retail </span>
+                                                        <span>Opp. Skycity, Shela</span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="item">
+                                            <div class="edit-item1">
+                                                <a href="sun-parkwest.html" class="swiper-slide__inner w-inline-block">
+
+                                                    <img src="images/ongoing-projects/Sun-Parkwest.jpg" alt="Sun ParkWest" class="edit-item__img" />
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">Sun ParkWest</div>
+                                                        <span>2/3 BHK Homes & Retail </span>
+                                                        <span>Opp. Orchid Valley, Shela</span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="item">
+                                            <div class="edit-item1">
+                                                <a href="https://thekimanatowers.com/" class="swiper-slide__inner w-inline-block" target="_blank">
+
+                                                    <img src="images/ongoing-projects/The-Kimana-Towers.jpg" alt="" class="edit-item__img" />
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">The Kimana Towers</div>
+                                                        <span>4/5/6/7 BHK Homes </span>
+                                                        <span>Off ABR, Ambli</span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="item">
+                                            <div class="edit-item1">
+                                                <a href="sun-footprints.html" class="swiper-slide__inner w-inline-block">
+
+                                                    <img src="images/ongoing-projects/Sun-Footprints.jpg" alt="" class="edit-item__img" />
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">Sun FootPrints</div>
+                                                        <span>2 BHK Homes & Retail </span>
+                                                        <span>B/H Apple Woods, Shela</span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+
+
+                                        
+
+
+                                        <div class="item">
+                                            <div class="edit-item1">
+                                                <a href="sun-gravitas.html" class="swiper-slide__inner w-inline-block">
+
+                                                    <img src="images/ongoing-projects/Sun-Gravitas.jpg" alt="" class="edit-item__img" />
+                                                    <img src="images/ready.png" class="ready-possession">
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">Sun Gravitas</div>
+                                                        <span>Retail & Office Segments</span>
+                                                        <span>Near Shyamal Cross Road</span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+
+
+                                        <div class="item">
+                                            <div class="edit-item1">
+
+                                                <a href="sun-solace.html" class="swiper-slide__inner w-inline-block">
+                                                    <img src="images/ongoing-projects/Sun-Solace.jpg" alt="" class="edit-item__img" />
+                                                    <img src="images/ready.png" class="ready-possession">
+                                                    <div class="photo-copy_w1">
+                                                        <div class="text--med is--caps">Sun Solace </div>
+                                                        <span>Serene Plotted Community</span>
+                                                        <span>Lekhamba - Sanand
+                                                        </span>
+                                                    </div>
+                                                    <div class="edit-cta-w1">
+                                                        <div class="edit-cta-inner">
+                                                            <div class="edit-cta-inner__text">→</div>
+                                                            <div class="edit-cta-inner__border"></div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section get-brochure home-get-brochure">
+                <div class="page-padding">
+                    <div class="container">
+                        <div class="container-padding ">
+                            <div class="margin-bottom margin--medium">
+                                <div class="container-split">
+                                    <div class="title-w">
+                                        <h2 class="heading--mega"> Get Brochure</h2>
+                                        <div class="title-nr" id="brochure-count"></div>
+                                    </div>
+
+                                </div>
+                            </div>
+                            <div class="column-grid tablet--smaller mt-50 mobile-none brochure-head-title">
+                                <div class="hotels-list__title">name</div>
+                                <div class="hotels-list__title brochure-location-title">location</div>
+                                <div class="hotels-list__title hide-tablet brochureproject-type-title">project type</div>
+                                <div class="hotels-list__title hide-tablet whatsapp-brochure-title">Download</div>
+                            </div>
+                            <div class="w-dyn-list">
+
+
+                                <div role="list" class="hotels-list w-dyn-items">
+                                    <input type="checkbox" class="read-more-state" id="post-2">
+                                    <div class="read-more-wrap">
+
+                                        
+                                         <div role="listitem" class="hotels-item list--view w-dyn-item">
+    <div class="line-w">
+        <div class="line-inner"></div>
+    </div>
+    <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Mayfair" target="_blank">
+
+        <div class="column-grid tablet--smaller projectdetail-column">
+            <div class="hotels__left">
+                <div class="hotels__col--img__w">
+                    <img loading="lazy" alt="" src="images/ongoing-projects-page/Sun-mayfair.jpg" class="hotels__col--img">
+                </div>
+                <h3 class="text--small is--caps">Sun Mayfair<span class="project-brochure-typo">3/4 BHK Homes & Retail
+ </span></h3>
+            </div>
+            <h3 class="location-name1 is--caps">WAPA, Godhavi
+ </h3>
+            <div class=" hide-tablet">
+
+                <div class="text-bubble">3/4 BHK Homes & Retail
+ </div>
+
+
+
+            </div>
+
+        </div>
+    </a>
+    <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Mayfair"><img src="images/download.png"></a>
+
+
+    </div>
+</div>
+                                        
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item">
+    <div class="line-w">
+        <div class="line-inner"></div>
+    </div>
+    <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="The Quad" target="_blank">
+
+        <div class="column-grid tablet--smaller projectdetail-column">
+            <div class="hotels__left">
+                <div class="hotels__col--img__w">
+                    <img loading="lazy" alt="" src="images/ongoing-projects-page/the-quad.jpg" class="hotels__col--img">
+                </div>
+                <h3 class="text--small is--caps">The Quad<span class="project-brochure-typo">4 BHK Residences & 5 BHK Penthouse
+ </span></h3>
+            </div>
+            <h3 class="location-name1 is--caps">Shilaj Circle
+ </h3>
+            <div class=" hide-tablet">
+
+                <div class="text-bubble">4 BHK Residences & 5 BHK Penthouse
+ </div>
+
+
+
+            </div>
+
+        </div>
+    </a>
+    <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="The Quad"><img src="images/download.png"></a>
+
+
+    </div>
+</div>
+
+
+
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun CityPark" target="_blank">
+
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_citypark.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun CityPark<span class="project-brochure-typo">3 BHK Homes & Retail </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1 is--caps">Sattadhar - <span class="location-new-line"> Ghatlodia</span></h3>
+                                                    <div class=" hide-tablet">
+
+                                                        <div class="text-bubble">3 BHK Homes & Retail </div>
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun CityPark"><img src="images/download.png"></a>
+
+
+                                            </div>
+                                        </div>
+
+
+
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Urban Park" target="_blank">
+
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_urban_park.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun Urban Park<span class="project-brochure-typo">3 BHK Homes & Retail </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1 is--caps">Ambli - S.P<span class="location-new-line"> Ring Road </span></h3>
+                                                    <div class=" hide-tablet">
+
+                                                        <div class="text-bubble">3 BHK Homes & Retail </div>
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Urban Park"><img src="images/download.png"></a>
+
+
+                                            </div>
+                                        </div>
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Silver Springs" target="_blank">
+
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_silversprings.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun Silver Springs<span class="project-brochure-typo">Plotted Community </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1 is--caps">Lekhamba -<span class="location-new-line"> Sanand</span></h3>
+                                                    <div class=" hide-tablet">
+
+                                                        <div class="text-bubble">Plotted Community </div>
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Silver Springs"><img src="images/download.png"></a>
+
+
+                                            </div>
+                                        </div>
+
+
+
+
+
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun SkyView" target="_blank">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_skyview.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun SkyView<span class="project-brochure-typo">3 BHK Homes & Retail </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">Opp. Skycity,<span class="location-new-line"> Shela</span></h3>
+                                                    <div class=" hide-tablet">
+
+                                                        <div class="text-bubble">3 BHK Homes & Retail </div>
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun SkyView"><img src="images/download.png"></a></div>
+                                        </div>
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item is--faded">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun ParkWest">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_parkwest.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun ParkWest<span class="project-brochure-typo">2/3 BHK Homes & Retail</span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">Opp. Orchid Valley,<span class="location-new-line"> Shela</span></h3>
+                                                    <div class=" hide-tablet">
+                                                        <div class="text-bubble">2/3 BHK Homes & Retail</div>
+
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun ParkWest"><img src="images/download.png"></a></div>
+                                        </div>
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item is--faded">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="The Kimana Towers">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/the_kimana_towers.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">The Kimana Towers<span class="project-brochure-typo">4/5 BHK Crafted Residences</span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">Ambli <span class="location-new-line"> BRTS Road</span></h3>
+                                                    <div class=" hide-tablet">
+                                                        <div class="text-bubble">4/5 BHK Crafted Residences</div>
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="The Kimana Towers"><img src="images/download.png"></a></div>
+                                        </div>
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item is--faded">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Footprints">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_footprints.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun FootPrints<span class="project-brochure-typo">2 BHK Homes & Retail</span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1 is--caps">B/H Apple Woods, <span class="location-new-line">Shela</span></h3>
+                                                    <div class=" hide-tablet">
+                                                        <div class="text-bubble">2 BHK Homes & Retail</div>
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Footprints"><img src="images/download.png"></a></div>
+                                        </div>
+
+                                       
+
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item ">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Gravitas">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_gravitas.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun Gravitas <span class="project-brochure-typo">Retail & Office Segments </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">Near Shyamal Cross <span class="location-new-line">Road</span></h3>
+                                                    <div class=" hide-tablet">
+                                                        <div class="text-bubble">Retail & Office Segments</div>
+
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Gravitas"><img src="images/download.png"></a></div>
+                                        </div>
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item is--faded">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun South Trade">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/Sun_South_Trade.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun SouthTrade<span class="project-brochure-typo">Retail Complex</span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">Gala Gymkhana <span class="location-new-line">Road, South Bopal</span> </h3>
+                                                    <div class=" hide-tablet">
+                                                        <div class="text-bubble">Retail Complex</div>
+
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun South Trade"><img src="images/download.png"></a></div>
+                                        </div>
+
+
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item read-more-target">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Solace">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_solace.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun Solace<span class="project-brochure-typo">Serene Plotted Community </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps"> Lekhamba -<span class="location-new-line"> Sanand</span> </h3>
+                                                    <div class=" hide-tablet">
+
+                                                        <div class="text-bubble">Serene Plotted Community </div>
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Solace"><img src="images/download.png"></a></div>
+                                        </div>
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item  read-more-target">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Atmosphere">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_atmosphere.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun Atmosphere<span class="project-brochure-typo">2/3 BHK Homes & Retail</span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">Central Shela
+                                                    </h3>
+                                                    <div class=" hide-tablet">
+                                                        <div class="text-bubble">2/3 BHK Homes & Retail</div>
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Atmosphere"><img src="images/download.png"></a></div>
+                                        </div>
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item read-more-target">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun South Rayz">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_south_rayz_get_brochure.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun SouthRayz <span class="project-brochure-typo">2/3 BHK Homes & Retail</span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">South Bopal </h3>
+                                                    <div class=" hide-tablet">
+                                                        <div class="text-bubble">2/3 BHK Homes & Retail</div>
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun South Rayz"><img src="images/download.png"></a></div>
+                                        </div>
+
+
+
+
+
+
+
+
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item read-more-target">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun West Bank">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_west_bank.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun WestBank <span class="project-brochure-typo">Retail & Office Segments </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">Ashram Road, <span class="location-new-line">Riverfront </span></h3>
+                                                    <div class=" hide-tablet">
+
+                                                        <div class="text-bubble">Retail & Office Segments </div>
+
+
+
+
+                                                    </div>
+
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun West Bank"><img src="images/download.png"></a></div>
+                                        </div>
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item read-more-target">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun South Street">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_south_street_get_brochure.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun SouthStreet<span class="project-brochure-typo"> Retail Complex </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">South Bopal </h3>
+                                                    <div class=" hide-tablet">
+                                                        <div class="text-bubble">Retail Complex </div>
+
+
+
+
+
+                                                    </div>
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun South Street"><img src="images/download.png"></a></div>
+
+                                        </div>
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item read-more-target">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Central Place">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_central_place_get_brochure.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun CentralPlace<span class="project-brochure-typo">Retail & Office Segments </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1 is--caps">Bopal Flyover </h3>
+                                                    <div class=" hide-tablet">
+
+                                                        <div class="text-bubble">Retail & Office Segments </div>
+
+
+
+
+                                                    </div>
+
+
+                                                </div>
+                                            </a>
+
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Central Place"><img src="images/download.png"></a></div>
+                                        </div>
+                                        <div role="listitem" class="hotels-item list--view w-dyn-item read-more-target">
+                                            <div class="line-w">
+                                                <div class="line-inner"></div>
+                                            </div>
+                                            <a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Avenue One">
+                                                <div class="column-grid tablet--smaller projectdetail-column">
+                                                    <div class="hotels__left">
+                                                        <div class="hotels__col--img__w">
+                                                            <img loading="lazy" alt="" src="images/ongoing-projects-page/sun_avenue_one_get_brochure.jpg" class="hotels__col--img">
+                                                        </div>
+                                                        <h3 class="text--small is--caps">Sun AvenueOne<span class="project-brochure-typo">Retail & Office Segments </span></h3>
+                                                    </div>
+                                                    <h3 class="location-name1  is--caps">Manekbaug<span class="location-new-line">Shyamal Road</span> </h3>
+                                                    <div class=" hide-tablet">
+
+                                                        <div class="text-bubble">Retail & Office Segments </div>
+
+
+
+                                                    </div>
+
+
+                                                </div>
+                                            </a>
+                                            <div class="whatsapp-brochure"><a href="#" class="popup-btn" data-popup="popup-reg" data-popup-form="Sun Avenue One"><img src="images/download.png"></a></div>
+                                        </div>
+
+                                    </div>
+                                    <label for="post-2" class="read-more-trigger"></label>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section is--bg__img life-at-sun-video">
+                <div class="home-edit-w w-dyn-list">
+                    <div role="list" class="home-edit-list w-dyn-items">
+                        <div role="listitem" class="home-edit-item w-dyn-item">
+                            <div class="page-padding">
+                                <div class="container align--center">
+                                    <div class="full--bg__content">
+                                        <div class="margin-bottom margin--small">
+                                            <p class="caps-p no-margin">The Kimana Towers Show Unit</p>
+                                        </div>
+                                        <h3 class="heading--large">The Magic of Elegance</h3>
+                                        <p class="reg-p max-28"> Haven of Refinement </p>
+                                        <a class="button-main is--wide w-inline-block button-bg is--white" href="https://www.youtube.com/@sunbuildersgroup" target="_blank">
+                                            Our Video Library
+
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                            <!--<img loading="lazy" alt="" src="images/bg.jpg" class="full--bg__img" />-->
+                            <video class="full--bg__img video-mobile-none" src="videos/sun-home-video.mp4" playsinline autoplay loop muted></video>
+                            <video class="full--bg__img video-desktop-none" src="videos/Kimana_Towers_mobile_version.mp4" playsinline autoplay loop muted></video>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="section is--black be-pro-broker-section">
+                <div class="page-padding">
+                    <div class="container">
+                        <div class="container-padding">
+                            <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb69-fc45cb64" class="footer-top_item">
+                                <div class="margin-bottom margin--medium text-center">
+                                    <h4 class="heading--large">Be a Pro Broker</h4>
+                                    <p class="about-title-detial">Your One-Stop Destination At Sun, offering to access up-to-date Information on Designs, Factsheets, Brochures, Unit Availability, Videos, and Site Progress.</p>
+                                </div>
+
+                                <a href="https://probroker.xyz/sunbuilders/signup.php" target="_blank" class="button-main is--wide is--white w-inline-block">
+                                    Sign Up
+                                </a>
+                            </div>
+
+                            <!-- <h2 class="heading--mega rera-title"><a href="#">Be A Pro Broker </a> </h2>-->
+
+
+
+
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!--<section class=" section is--black is--people"></section>-->
+            <section class="section is--grid instagram-post-section">
+                <div class="grid-columns">
+                    <div class="grid-column-w">
+                        <div class="grid-column">
+                            <div class="grid-column-item">
+                                <img src="images/instagram-section/1.jpg" alt="" class="grid-column-item__img" />
+                            </div>
+                            <div class="grid-column-item">
+                                <img src="images/instagram-section/2.jpg" alt="" class="grid-column-item__img" />
+                            </div>
+                            <div class="grid-column-item show-mobile">
+                                <img src="images/instagram-section/3.jpg" alt="" class="grid-column-item__img" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-column-w">
+                        <div class="grid-column">
+                            <div class="grid-column-item">
+                                <img src="images/instagram-section/5.jpg" alt="" class="grid-column-item__img" />
+                            </div>
+                            <div class="grid-column-item">
+                                <img src="images/instagram-section/4.jpg" alt="" class="grid-column-item__img" />
+
+                            </div>
+                            <div class="grid-column-item show-mobile">
+                                <img src="images/instagram-section/6.jpg" alt="" class="grid-column-item__img" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-column-w">
+                        <div class="grid-column">
+                            <div class="grid-column-item">
+                                <img src="images/instagram-section/7.jpg" alt="" class="grid-column-item__img" />
+                            </div>
+                            <div class="grid-column-item">
+                                <img src="images/instagram-section/8.jpg" alt="" class="grid-column-item__img" />
+                            </div>
+                            <div class="grid-column-item show-mobile">
+                                <img src="images/instagram-section/9.jpg" alt="" class="grid-column-item__img" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <a href="https://www.instagram.com/sunbuildersgroup/" target="_blank" class="button-main is--white is--grid w-inline-block">
+
+
+                    See more on Instagram
+
+                </a>
+            </section>
+            <footer class="section is--black is--footer hide-tablet">
+                <div class="page-padding">
+                    <div class="container">
+
+                        <div class="footer-wrap">
+                            <div class="footer-top">
+
+                                <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb69-fc45cb64" class="footer-top_item about-sun-commune">
+                                    <div class="margin-bottom margin--medium text-center right-space">
+                                        <h4 class="heading--large"> Sales Inquiry</h4>
+                                        <p class="about-title-detial pr1">Sun Builders Group has 45+ years of Experience in creating Beautiful Homes and Business Spaces.
+
+
+                                        </p>
+                                    </div>
+
+                                    <a href="sales-inquiry.html" class="button-main is--wide w-inline-block footer-inq-btn is--white">
+                                        Click Here
+
+                                    </a>
+                                    <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb77-fc45cb64" class="footer-top_line"></div>
+
+                                    <div class="margin-bottom margin--medium text-center right-space">
+                                        <h4 class="heading--large"> Locate Us
+                                        </h4>
+                                        <p class="about-title-detial pr1">Step into a Welcoming and Supportive Environment where our Dedicated Team is committed to provide you with the Finest Sun Experience.
+
+
+
+
+                                        </p>
+                                    </div>
+                                    <a href="locate-us.html" class="button-main is--wide w-inline-block is--white">
+                                        Corporate Campus
+
+                                    </a>
+                                </div>
+
+                                <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb77-fc45cb64" class="footer-top_line"></div>
+                                <div class="footer-btm__col desktop-footer-btn__col">
+
+
+
+                                    <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb90-fc45cb64" class="footer-btm__el">
+                                        <div class="text--meta is--grey">Quick Links</div>
+                                        <div class="footer-btm__socials col-mobile">
+
+                                            <a id="w-node-_4afcd648-023c-3fdf-bbf9-b74901f00e30-fc45cb64" href="redevelopment.html" class="text--link">Re-Development</a>
+                                            <a id="w-node-_4afcd648-023c-3fdf-bbf9-b74901f00e30-fc45cb64" href="join-us.html" class="text--link">Join Us</a>
+                                            <a id="w-node-_4afcd648-023c-3fdf-bbf9-b74901f00e30-fc45cb64" href="blogs-board.html" class="text--link">Blogs Board</a>
+                                            <!--<a id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb96-f" class="text--link"></a>-->
+                                        </div>
+                                    </div>
+
+                                    <div class="footer-btm__el">
+                                        <div class="text--meta is--grey">email</div>
+                                        <a href="mailto: contact@sunbuilders.in" class="text--link">contact@sunbuilders.in</a>
+                                    </div>
+
+
+                                    <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb90-fc45cb64" class="footer-btm__el">
+                                        <div class="text--meta is--grey">legal</div>
+                                        <div class="footer-btm__socials col-mobile">
+                                            <a href="disclaimer.html" class="text--link">Disclaimer</a>
+                                            <a id="w-node-_4afcd648-023c-3fdf-bbf9-b74901f00e30-fc45cb64" href="rera-disclaimer.html" class="text--link">Rera Disclaimer</a>
+                                            <!--<a id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb96-f" class="text--link"></a>-->
+                                        </div>
+                                    </div>
+                                    <div class="footer-btm__el stack-mobile">
+                                        <div class="text--meta is--grey">socials</div>
+                                        <div class="footer-btm__socials">
+
+                                            <a href="https://www.facebook.com/SunBuildersGroup" target="_blank" class="text--link is--tiny">facebook</a>
+                                            <a href="https://www.instagram.com/sunbuildersgroup/" target="_blank" class="text--link is--tiny">instagram</a>
+                                            <a href="https://twitter.com/SunBuildersGrp" target="_blank" class="text--link is--tiny">twitter</a>
+                                            <a href="https://www.youtube.com/@sunbuildersgroup" target="_blank" class="text--link is--tiny">youtube</a>
+                                            <a href="https://social.sunbuilders.in/" target="_blank" class="text--link is--tiny">we're social</a>
+                                        </div>
+                                    </div>
+
+                                    <div class="footer-btm__el desktop_footer-btm__el">
+                                        <div class="text--meta is--grey">designed by</div>
+                                        <a href="https://compubrain.com/" target="_blank" class="text--link">CompuBrain</a>
+                                    </div>
+                                    <div class="footer-btm__el desktop_footer-btm__el">
+                                        <div class="text--meta is--grey">All Rights Reserved</div>
+                                        <a class="text--link">© <span class="currentyear"></span> SUN BUILDERS GROUP</a>
+                                    </div>
+                                </div>
+
+
+
+
+
+
+
+
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+            </footer>
+
+
+
+
+            <footer class="section is--black is--footer desktop-none">
+                <div class="page-padding">
+                    <div class="container">
+
+                        <div class="footer-wrap">
+                            <div class="footer-top">
+
+                                <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb69-fc45cb64" class="footer-top_item about-sun-commune">
+                                    <div class="margin-bottom margin--medium text-center right-space">
+                                        <h4 class="heading--large"> Sales Inquiry</h4>
+                                        <p class="about-title-detial pr1">Sun Builders Group has 45+ years of Experience in creating Beautiful Homes and Business Spaces.
+
+
+                                        </p>
+                                    </div>
+
+                                    <a href="sales-inquiry.html" class="button-main is--wide w-inline-block is--white">
+                                        Click Here
+
+
+                                    </a>
+                                </div>
+
+                                <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb77-fc45cb64" class="footer-top_line"></div>
+                                <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb78-fc45cb64" class="footer-top_item about-get-in-touch">
+                                    <div class="margin-bottom margin--medium text-center right-space">
+                                        <h4 class="heading--large">Locate Us</h4>
+                                        <p class="about-title-detial pr1">Step into a Welcoming and Supportive Environment where our Dedicated Team is committed to provide you with the Finest Sun Experience.
+                                        </p>
+                                    </div>
+                                    <a href="locate-us.html" class="button-main is--wide w-inline-block">
+                                        <div class="button-text-w is--black">
+                                            <div class="button-text">Corporate Campus</div>
+                                            <div aria-hidden="true" class="button-text">Corporate Campus</div>
+                                        </div>
+                                        <div class="button-bg is--white"></div>
+                                    </a>
+                                </div>
+                            </div>
+                            <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb7e-fc45cb64" class="footer-btm">
+                                <div class="footer-btm__col">
+                                    <div class="footer-btm__el stack-mobile">
+                                        <div class="text--meta is--grey cnt-head">Quick Lnks</div>
+                                        <div class="footer-btm__socials">
+                                            <a href="redevelopment.html" class="text--link is--tiny">Re-Development</a>
+                                            <a href="join-us.html" class="text--link is--tiny">Join US</a>
+                                            <a href="blogs-board.html" class="text--link is--tiny">Blogs Board</a>
+
+                                        </div>
+                                    </div>
+                                    <div class="footer-btm__el">
+                                        <div class="text--meta is--grey cnt-head">email</div>
+                                        <a href="mailto: contact@sunbuilders.in" class="text--link">contact@sunbuilders.in</a>
+                                    </div>
+                                    <div class="footer-btm__el stack-mobile">
+                                        <div class="text--meta is--grey cnt-head">socials</div>
+                                        <div class="footer-btm__socials">
+                                            <a href="https://www.facebook.com/SunBuildersGroup" target="_blank" class="text--link is--tiny">facebook</a>
+                                            <a href="https://www.instagram.com/sunbuildersgroup/" target="_blank" class="text--link is--tiny">instagram</a>
+                                            <a href="https://twitter.com/SunBuildersGrp" target="_blank" class="text--link is--tiny">twitter</a>
+                                            <a href="https://www.youtube.com/@sunbuildersgroup" target="_blank" class="text--link is--tiny">youtube</a>
+                                            <a href="https://social.sunbuilders.in/" target="_blank" class="text--link is--tiny">we're social</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+
+
+                                <div class="footer-btm__col">
+                                    <div id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb90-fc45cb64" class="footer-btm__el">
+                                        <div class="text--meta is--grey cnt-head">legal</div>
+                                        <div class="footer-btm__socials col-mobile">
+                                            <a href="disclaimer.html" class="text--link">Disclaimer</a>
+                                            <a id="w-node-_4afcd648-023c-3fdf-bbf9-b74901f00e30-fc45cb64" href="rera-disclaimer.html" class="text--link">Rera Disclaimer</a>
+                                            <!--<a id="w-node-a38493ae-ad70-3079-daae-cd33fc45cb96-f" class="text--link"></a>-->
+                                        </div>
+                                    </div>
+                                    <div class="footer-btm__el">
+                                        <div class="text--meta is--grey cnt-head">designed by</div>
+                                        <a href="https://compubrain.com/" target="_blank" class="text--link">CompuBrain</a>
+                                    </div>
+                                    <div class="footer-btm__el">
+                                        <div class="text--meta is--grey cnt-head">All Rights Reserved</div>
+                                        <a class="text--link">© <span class="currentyear">2024</span> SUN BUILDERS GROUP</a>
+                                    </div>
+                                </div>
+
+
+
+
+
+                                <div class="footer-btm__line"></div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </footer>
+
+
+        </main>
+    </div>
+
+    <script src="js/jquery-3.5.1.min.js"></script>
+    <script src="js/webflow.js" type="text/javascript"></script>
+    <script src="js/gsap.min.js"></script>
+    <script src="js/ScrollTrigger.min.js"></script>
+    <script src="js/Observer.min.js"></script>
+    <script src="js/lenis.js"></script>
+    <script src="js/split-type.js"></script>
+    <script>
+        // Lenis starter by the Off Brand legends < 3
+        class Scroll extends Lenis {
+            constructor() {
+                super({
+                    duration: 1.1,
+                    easing: (t) => (t === 1 ? 1 : 1 - Math.pow(2, -10 * t)), // https://easings.net
+                    direction: "vertical",
+                    smooth: true,
+                    smoothTouch: false,
+                    touchMultiplier: 1.2
+                });
+                this.time = 0;
+                this.isActive = true;
+                this.init();
+            }
+            init() {
+                this.config();
+                this.render();
+            }
+            config() {
+                // allow scrolling on overflow elements
+                const overscroll = [...document.querySelectorAll('[data-scroll="overscroll"]')];
+                if (overscroll.length > 0) {
+                    overscroll.forEach((item) => item.setAttribute("onwheel", "event.stopPropagation()"));
+                }
+                // toggle page scrolling
+                const toggle = [...document.querySelectorAll('[data-scroll="toggle"]')];
+                if (toggle.length > 0) {
+                    toggle.forEach((item) => {
+                        item.onclick = () => {
+                            if (this.isActive) {
+                                this.stop();
+                                this.isActive = false;
+                            } else {
+                                this.start();
+                                this.isActive = true;
+                            }
+                        };
+                    });
+                }
+                // anchor links
+                const anchor = [...document.querySelectorAll("[data-scrolllink]")];
+                if (anchor.length > 0) {
+                    anchor.forEach((item) => {
+                        const id = parseFloat(item.dataset.scrolllink);
+                        const target = document.querySelector(`[data-scrolltarget="${id}"]`);
+                        if (target) {
+                            console.log(id, target);
+                            item.onclick = () => this.scrollTo(target);
+                        }
+                    });
+                }
+            }
+            render() {
+                this.raf((this.time += 10));
+                window.requestAnimationFrame(this.render.bind(this));
+            }
+        }
+        window.Scroll = new Scroll();
+        observeEditor(); // don't trigger if it's webflow editor view
+        function observeEditor() {
+            const html = document.documentElement;
+            const config = {
+                attributes: true,
+                childList: false,
+                subtree: false
+            };
+            const callback = (mutationList, observer) => {
+                for (const mutation of mutationList) {
+                    if (mutation.type === "attributes") {
+                        const btn = document.querySelector(".w-editor-bem-EditSiteButton");
+                        const bar = document.querySelector(".w-editor-bem-EditorMainMenu");
+                        const addTrig = (target) => target.addEventListener("click", () => window.Scroll.destroy());
+                        if (btn) addTrig(btn);
+                        if (bar) addTrig(bar);
+                    }
+                }
+            };
+            const observer = new MutationObserver(callback);
+            observer.observe(html, config);
+        }
+        $('#about').click(function() {
+            $('.about-trigger').click();
+        });
+        $('.hotels-item.list--view').hover(function() {
+            $('.hotels-item.list--view').not($(this)).addClass("is--faded");
+        }, function() {
+            $('.hotels-item.list--view').removeClass("is--faded");
+        });
+
+
+
+
+        $('.menu-link').hover(function() {
+
+            $('.menu-link').not($(this)).css("opacity", "0.4");
+        }, function() {
+            $('.menu-link').css("opacity", "1");
+        });
+        $('.menu-bg.main').click(function() {
+            $('.menu-btn').click();
+        });
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+        window.addEventListener('resize', () => {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        });
+        let introDurationMS = 1000;
+        let exitDurationMS = 700;
+        let excludedClass = "no-trans";
+        // On Link Click
+        $("a").on("click", function(e) {
+            if ($(this).prop("hostname") == window.location.host && $(this).attr("href").indexOf("#") === -1 && !$(this).hasClass(excludedClass) && $(this).attr("target") !== "_blank") {
+                e.preventDefault();
+                let transitionURL = $(this).attr("href");
+                //GSAP animations before going to new page
+                gsap.to(".menu-transition", {
+                    duration: 0.6,
+                    height: "100%",
+                    ease: "cubic-bezier(.77, 0, .175, 1)"
+                });
+                gsap.to(".main-wrapper", {
+                    duration: 0.6,
+                    y: "3rem",
+                    opacity: 0,
+                    ease: "cubic-bezier(.77, 0, .175, 1)"
+                });
+                gsap.to(".menu-link", {
+                    duration: 0.4,
+                    ease: "ease.inOut",
+                    y: "110%",
+                    stagger: {
+                        each: 0.05
+                    }
+                });
+                gsap.to(".menu-nr", {
+                    duration: 0.4,
+                    ease: "ease.inOut",
+                    opacity: 0,
+                    stagger: {
+                        each: 0.05
+                    }
+                });
+                gsap.to(".menu-content__top", {
+                    duration: 0.4,
+                    ease: "ease.inOut",
+                    opacity: 0,
+                    y: "60%"
+                });
+                gsap.to(".menu-content__bottom", {
+                    duration: 0.4,
+                    ease: "ease.inOut",
+                    opacity: 0,
+                    y: "60%"
+                });
+                setTimeout(function() {
+                    window.location = transitionURL;
+                }, exitDurationMS);
+            }
+        });
+        // On Back Button Tap
+        window.onpageshow = function(event) {
+            if (event.persisted) {
+                window.location.reload()
+            }
+        };
+        //Variables for grid section
+        const DOM = {
+            sections: {
+                columns: document.querySelector('.section.is--grid'),
+                trigger: document.querySelector('.section.is--people'),
+            },
+            columns: document.querySelectorAll('.section.is--grid > .grid-columns'),
+            columnWraps: document.querySelectorAll('.section.is--grid .grid-column-w'),
+            itemsWrappers: document.querySelectorAll('.section.is--grid .grid-column-w .grid-column'),
+            items: document.querySelectorAll('.section.is--grid .grid-column-item'),
+            images: document.querySelectorAll('.section.is--grid .grid-column-item__img'),
+        };
+        //Social grid section
+        const scroll = () => {
+            gsap.timeline({
+                scrollTrigger: {
+                    start: 0,
+                    end: 'max',
+                    scrub: true
+                }
+            }).addLabel('start', 0).to(DOM.sections.columns, {
+                ease: 'none',
+                startAt: {
+                    scale: 1.1
+                },
+                scale: 1,
+            }, 'start').to(DOM.sections.columns, {
+                scrollTrigger: {
+                    trigger: DOM.sections.trigger,
+                    start: 0,
+                    end: 'bottom bottom',
+                    scrub: true
+                },
+                ease: 'none',
+                yoyo: true,
+                repeat: 1
+            }, 'start').to(DOM.columnWraps, {
+                ease: 'none',
+                yPercent: pos => pos % 2 ? 5 : -5
+            }, 'start').to(DOM.images, {
+                ease: 'none',
+                startAt: {
+                    scale: 1.2,
+                    opacity: 0.6
+                },
+                scale: 1,
+                opacity: 1,
+            }, 'start')
+        };
+        scroll();
+        $('.button-main.is--form').click(function() {
+            $("#form-submit").click();
+        });
+
+    </script>
+    <script src="js/swiper-bundle.min.js"></script>
+    <script>
+        gsap.set(".heading--large.is--hero", {
+            opacity: 0,
+            y: "110%"
+        });
+        gsap.set(".caps-p", {
+            opacity: 0,
+            y: "110%"
+        });
+        gsap.set(".button-main.is--hero", {
+            opacity: 0,
+            y: "110%"
+        });
+        gsap.set(".button-main.is--nav", {
+            opacity: 0,
+            y: "60%"
+        });
+        gsap.set(".menu-btn", {
+            opacity: 0,
+            y: "60%"
+        });
+        gsap.set(".nav-logo", {
+            opacity: 0,
+            y: "60%"
+        });
+        gsap.set(".marquee-list", {
+            x: "3%"
+        });
+        gsap.set(".marquee-cover", {
+            scaleX: 1,
+            opacity: 1
+        })
+        window.onload = function() {
+            //lock page from scrolling
+            $('.scroll--toggle').click();
+            gsap.to(".heading--large.is--loader", {
+                delay: 0.1,
+                ease: "cubic-bezier(.77, 0, .175, 1)",
+                opacity: 1,
+                y: 0,
+                duration: 0.8,
+                stagger: {
+                    amount: 0.15
+                }
+            });
+            gsap.to(".load-wrapper", {
+                duration: 2,
+                ease: "cubic-bezier(.77, 0, .175, 1)",
+                scaleY: 1,
+                onComplete: function() {
+                    // Wait 2 seconds after page has finished loading
+                    gsap.delayedCall(0, function() {
+                        // Fade out loader heading
+                        gsap.to(".heading--large.is--loader", {
+                            ease: "cubic-bezier(.22,.86,.47,.94)",
+                            startAt: {
+                                opacity: 1,
+                                y: 0,
+                            },
+                            opacity: 0,
+                            y: "110%",
+                            duration: 0.6,
+                        });
+                        // Fade out .preloader
+                        gsap.to(".load-wrapper", {
+                            delay: 0.25,
+                            duration: 0.6,
+                            scaleY: 0,
+                            ease: "cubic-bezier(.22,.86,.47,.94)",
+                            // Set .preloader to display: none after fade out is complete
+                            onComplete: function() {
+                                //allow page scrolling again
+                                $('.scroll--toggle').click();
+                                gsap.set(".load-wrapper", {
+                                    display: "none"
+                                });
+                                // Animate hero heading
+                                gsap.to(".heading--large.is--hero", {
+                                    ease: "cubic-bezier(.77, 0, .175, 1)",
+                                    opacity: 1,
+                                    y: 0,
+                                    duration: 0.8,
+                                    stagger: {
+                                        amount: 0.15
+                                    }
+                                });
+                                // --- hero subline
+                                gsap.to(".caps-p", {
+                                    delay: 0.45,
+                                    ease: "cubic-bezier(.77, 0, .175, 1)",
+                                    opacity: 1,
+                                    y: 0,
+                                    duration: 0.8,
+                                });
+                                // --- buttons
+                                gsap.to(".button-main.is--hero", {
+                                    delay: 0.6,
+                                    ease: "cubic-bezier(.77, 0, .175, 1)",
+                                    opacity: 1,
+                                    y: 0,
+                                    duration: 0.8,
+                                });
+                                gsap.to(".nav-logo", {
+                                    delay: 0.6,
+                                    ease: "cubic-bezier(.77, 0, .175, 1)",
+                                    opacity: 1,
+                                    y: 0,
+                                    duration: 0.8,
+                                });
+                                gsap.to(".button-main.is--nav", {
+                                    delay: 0.7,
+                                    ease: "cubic-bezier(.77, 0, .175, 1)",
+                                    opacity: 1,
+                                    y: 0,
+                                    duration: 0.8,
+                                });
+                                gsap.to(".menu-btn", {
+                                    delay: 0.8,
+                                    ease: "cubic-bezier(.77, 0, .175, 1)",
+                                    opacity: 1,
+                                    y: 0,
+                                    duration: 0.8,
+                                });
+                                gsap.to(".marquee-list", {
+                                    delay: 0.75,
+                                    ease: "cubic-bezier(.77, 0, .175, 1)",
+                                    x: 0,
+                                    duration: 0.8,
+                                });
+                                gsap.to(".marquee-cover", {
+                                    delay: 0.75,
+                                    ease: "cubic-bezier(.77, 0, .175, 1)",
+                                    scaleX: 0,
+                                    duration: 1,
+                                });
+                                /*for pop up*/
+                                $("#cb_popup_wrap").fadeIn(500);
+                                $("#cb_popup_center").addClass("cb_popup_animation");
+                            }
+                        });
+                    });
+                }
+            });
+        };
+
+        // MARQUEE POWER-UP by Timothy Ricks < 3
+        window.addEventListener("DOMContentLoaded", (event) => {
+            // attribute value checker
+            function attr(defaultVal, attrVal) {
+                const defaultValType = typeof defaultVal;
+                if (typeof attrVal !== "string" || attrVal.trim() === "") return defaultVal;
+                if (attrVal === "true" && defaultValType === "boolean") return true;
+                if (attrVal === "false" && defaultValType === "boolean") return false;
+                if (isNaN(attrVal) && defaultValType === "string") return attrVal;
+                if (!isNaN(attrVal) && defaultValType === "number") return +attrVal;
+                return defaultVal;
+            }
+            // marquee component
+            $("[tr-marquee-element='component']").each(function(index) {
+                let componentEl = $(this),
+                    panelEl = componentEl.find("[tr-marquee-element='panel']"),
+                    triggerHoverEl = componentEl.find("[tr-marquee-element='triggerhover']"),
+                    triggerClickEl = componentEl.find("[tr-marquee-element='triggerclick']");
+                let speedSetting = attr(100, componentEl.attr("tr-marquee-speed")),
+                    verticalSetting = attr(false, componentEl.attr("tr-marquee-vertical")),
+                    reverseSetting = attr(false, componentEl.attr("tr-marquee-reverse")),
+                    scrollDirectionSetting = attr(false, componentEl.attr("tr-marquee-scrolldirection")),
+                    scrollScrubSetting = attr(false, componentEl.attr("tr-marquee-scrollscrub")),
+                    moveDistanceSetting = -100,
+                    timeScaleSetting = 1,
+                    pausedStateSetting = false;
+                if (reverseSetting) moveDistanceSetting = 100;
+                let marqueeTimeline = gsap.timeline({
+                    repeat: -1,
+                    onReverseComplete: () => marqueeTimeline.progress(1)
+                });
+                if (verticalSetting) {
+                    speedSetting = panelEl.first().height() / speedSetting;
+                    marqueeTimeline.fromTo(panelEl, {
+                        yPercent: 0
+                    }, {
+                        yPercent: moveDistanceSetting,
+                        ease: "none",
+                        duration: speedSetting
+                    });
+                } else {
+                    speedSetting = panelEl.first().width() / speedSetting;
+                    marqueeTimeline.fromTo(panelEl, {
+                        xPercent: 0
+                    }, {
+                        xPercent: moveDistanceSetting,
+                        ease: "none",
+                        duration: speedSetting
+                    });
+                }
+                let scrubObject = {
+                    value: 1
+                };
+                ScrollTrigger.create({
+                    trigger: "body",
+                    start: "top top",
+                    end: "bottom bottom",
+                    onUpdate: (self) => {
+                        if (!pausedStateSetting) {
+                            if (scrollDirectionSetting && timeScaleSetting !== self.direction) {
+                                timeScaleSetting = self.direction;
+                                marqueeTimeline.timeScale(self.direction);
+                            }
+                            if (scrollScrubSetting) {
+                                let v = self.getVelocity() * 0.006;
+                                v = gsap.utils.clamp(-60, 60, v);
+                                let scrubTimeline = gsap.timeline({
+                                    onUpdate: () => marqueeTimeline.timeScale(scrubObject.value)
+                                });
+                                scrubTimeline.fromTo(scrubObject, {
+                                    value: v
+                                }, {
+                                    value: timeScaleSetting,
+                                    duration: 0.5
+                                });
+                            }
+                        }
+                    }
+                });
+
+                function pauseMarquee(isPausing) {
+                    pausedStateSetting = isPausing;
+                    let pauseObject = {
+                        value: 1
+                    };
+                    let pauseTimeline = gsap.timeline({
+                        onUpdate: () => marqueeTimeline.timeScale(pauseObject.value)
+                    });
+                    if (isPausing) {
+                        pauseTimeline.fromTo(pauseObject, {
+                            value: timeScaleSetting
+                        }, {
+                            value: 0,
+                            duration: 0.5
+                        });
+                        triggerClickEl.addClass("is-paused");
+                    } else {
+                        pauseTimeline.fromTo(pauseObject, {
+                            value: 0
+                        }, {
+                            value: timeScaleSetting,
+                            duration: 0.5
+                        });
+                        triggerClickEl.removeClass("is-paused");
+                    }
+                }
+                if (window.matchMedia("(pointer: fine)").matches) {
+                    triggerHoverEl.on("mouseenter", () => pauseMarquee(true));
+                    triggerHoverEl.on("mouseleave", () => pauseMarquee(false));
+                }
+                triggerClickEl.on("click", function() {
+                    !$(this).hasClass("is-paused") ? pauseMarquee(true) : pauseMarquee(false);
+                });
+            });
+        });
+
+    </script>
+    <script src="js/owl.carousel.js"></script>
+    <!--<script>
+            $(document).ready(function() {
+              $('.owl-carousel').owlCarousel({
+                loop: true,
+                margin: 15,
+                  autoplay: 10000,
+           // slideTransition: 'linear',
+            //autoplayTimeout: 6000,
+            //autoplaySpeed: 7000,
+				  
+                responsiveClass: true,
+				
+                responsive: {
+                  0: {
+                    items: 1.2,
+                    nav: false
+                  },
+                  600: {
+                    items: 3,
+                    nav: false
+                  },
+                  1000: {
+                    items: 3,
+                    nav: false,
+                    loop: true,
+                    margin: 20
+                  }
+                }
+              })
+            })
+          </script>-->
+    <script src="js/toggleMenu.js"></script>
+    <script src="js/popup-brochure-form.js"></script>
+    <script src="js/Download_Brochure.js"></script>
+    <script src="js/read-more.js"></script>
+    <script>
+        $(allInView);
+        $(window).scroll(allInView);
+
+
+        function isScrolledIntoView(elem) {
+            var docViewTop = $(window).scrollTop();
+            var docViewBottom = docViewTop + $(window).height();
+
+            var elemTop = $(elem).offset().top;
+            var elemBottom = elemTop + $(elem).height();
+            console.log(elemBottom <= docViewBottom);
+            console.log(elemTop >= docViewTop);
+            return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
+        }
+
+        function allInView() {
+            if (isScrolledIntoView($(".ongoing-projects")))
+                $(document).ready(function() {
+                    $('.owl-carousel').owlCarousel({
+                        loop: true,
+                        margin: 15,
+                        autoplay: 9000,
+                        // autoplay:false,
+                        // slideTransition: 'linear',
+                        //autoplayTimeout: 6000,
+                        //autoplaySpeed: 7000,
+
+                        responsiveClass: true,
+
+                        responsive: {
+                            0: {
+                                items: 1.2,
+                                nav: false
+                            },
+                            600: {
+                                items: 3,
+                                nav: false
+                            },
+                            1000: {
+                                items: 4,
+                                nav: false,
+                                loop: true,
+                                margin: 20
+                            }
+                        }
+                    })
+                })
+
+
+        }
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const projectCountElement = document.getElementById('project-count');
+            const projectItems = document.querySelectorAll('.owl-carousel .item');
+            const projectCount = projectItems.length;
+
+            projectCountElement.textContent = `(${projectCount})`;
+        });
+
+    </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const projectCountElement = document.getElementById('brochure-count');
+            const projectItems = document.querySelectorAll('.hotels-item .line-w');
+            const projectCount = projectItems.length;
+
+            projectCountElement.textContent = `(${projectCount})`;
+        });
+
+    </script>
+    <!--<script type="text/javascript">
+        (function($) {
+            $(window).on('ready', function() {
+                $("#cb_popup_wrap").fadeIn(500);
+                $("#cb_popup_center").addClass("cb_popup_animation");
+                return false;
+            });
+            $(document).on('click touchstart', function(event) {
+                if ($('#cb_popup_wrap').is(":visible")) {
+                    if (event.target.id != 'cb_popup_content' && !$('#cb_popup_content').find(event.target).length) {
+                        $("#cb_popup_wrap").fadeOut("normal");
+                    }
+                }
+            });
+            $("#cb_popup_close").on('click touchstart', function(event) {
+                $("#cb_popup_wrap").fadeOut("normal");
+            });
+            $(document).keyup(function(t) {
+                27 == t.keyCode && $("#cb_popup_wrap").fadeOut("normal");
+            });
+        })(jQuery);
+
+    </script>-->
+    <script src="https://www.google.com/recaptcha/api.js?render=6Le1FaoZAAAAALw1D0ytLXdoxKikeZihN_O3hL41"></script>
+    <script>
+        function googleCaptcha() {
+            grecaptcha.ready(function() {
+                grecaptcha.execute('6Le1FaoZAAAAALw1D0ytLXdoxKikeZihN_O3hL41', {
+                    action: 'homepage'
+                }).then(function(token) {
+                    var recaptchaEls = document.getElementsByClassName('g-recaptcha-response');
+                    for (var i = 0; i < recaptchaEls.length; i++) {
+                        recaptchaEls[i].value = token;
+                    }
+                    document.getElementsByClassName('grecaptcha-badge')[0].style.display = 'none';
+                });
+            });
+        }
+        document.addEventListener("DOMContentLoaded", function(event) {
+            googleCaptcha();
+
+            function addXMLRequestCallback(callback) {
+                var oldSend, i;
+                if (XMLHttpRequest.callbacks) {
+                    XMLHttpRequest.callbacks.push(callback);
+                } else {
+                    XMLHttpRequest.callbacks = [callback];
+                    oldSend = XMLHttpRequest.prototype.send;
+                    XMLHttpRequest.prototype.send = function() {
+                        for (i = 0; i < XMLHttpRequest.callbacks.length; i++) {
+                            XMLHttpRequest.callbacks[i](this);
+                        }
+                        oldSend.apply(this, arguments);
+                    }
+                }
+            }
+            addXMLRequestCallback(function(xhr) {
+                setTimeout(function() {
+                    googleCaptcha();
+                }, 1800);
+            });
+
+            var currentPage = location.href;
+            setInterval(function() {
+                if (currentPage != location.href) {
+                    currentPage = location.href;
+                    setTimeout(function() {
+                        googleCaptcha();
+                    }, 1800);
+                }
+            }, 500);
+        });
+
+    </script>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-SWK8W5TP26"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        gtag('js', new Date());
+
+        gtag('config', 'G-SWK8W5TP26');
+
+    </script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+ 
+    {
+      "@type": "Organization",
+      "@id": "https://sunbuilders.in/#organization",
+      "name": "Sun Builders Group",
+      "alternateName": "Sun Builders",
+      "url": "https://sunbuilders.in/",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://sunbuilders.in/images/sun-builders-logo.png"
+      },
+      "image": [
+        "https://sunbuilders.in/images/sun-builders-logo.png",
+        "https://sunbuilders.in/images/sunbuilders_logo.png"
+      ],
+      "description": "Sun Builders Group is one of Gujarat’s premier real estate developers with 45+ years of experience in residential, commercial, plotted, and mixed-use developments.",
+      "telephone": "+91 90813 39933",
+      "email": "contact@sunbuilders.in",
+      "foundingDate": "1983",
+ 
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Plot No. 43, Adjoining Saket-3, Pakvan-Sindhu Bhavan Road, Bodakdev",
+        "addressLocality": "Ahmedabad",
+        "addressRegion": "Gujarat",
+        "postalCode": "380058",
+        "addressCountry": "IN"
+      },
+ 
+      "sameAs": [
+        "https://www.facebook.com/SunBuildersGroup",
+        "https://www.instagram.com/sunbuildersgroup/",
+        "https://twitter.com/SunBuildersGrp",
+        "https://www.youtube.com/@sunbuildersgroup",
+        "https://social.sunbuilders.in/"
+      ]
+    },
+ 
+    {
+      "@type": "RealEstateAgent",
+      "@id": "https://sunbuilders.in/#realestateagent",
+      "name": "Sun Builders Group",
+      "url": "https://sunbuilders.in/",
+      "logo": "https://sunbuilders.in/images/sun-builders-logo.png",
+      "image": "https://sunbuilders.in/images/sunbuilders_logo.png",
+      "telephone": "+91 90813 39933",
+      "email": "contact@sunbuilders.in",
+      "priceRange": "0000",
+      "description": "Ahmedabad based real estate developer offering premium residential apartments, commercial projects, plotted developments, and luxury properties.",
+ 
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Plot No. 43, Adjoining Saket-3, Pakvan-Sindhu Bhavan Road, Bodakdev",
+        "addressLocality": "Ahmedabad",
+        "addressRegion": "Gujarat",
+        "postalCode": "380058",
+        "addressCountry": "IN"
+      },
+ 
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "23.0396",
+        "longitude": "72.4977"
+      },
+ 
+      "areaServed": {
+        "@type": "City",
+        "name": "Ahmedabad"
+      },
+ 
+      "sameAs": [
+        "https://www.facebook.com/SunBuildersGroup",
+        "https://www.instagram.com/sunbuildersgroup/",
+        "https://twitter.com/SunBuildersGrp",
+        "https://www.youtube.com/@sunbuildersgroup",
+        "https://social.sunbuilders.in/"
+      ]
+    },
+ 
+    {
+      "@type": "LocalBusiness",
+      "@id": "https://sunbuilders.in/#localbusiness",
+      "name": "Sun Builders Group",
+      "url": "https://sunbuilders.in/",
+      "image": "https://sunbuilders.in/images/sun-builders-logo.png",
+      "telephone": "+91 90813 39933",
+      "email": "contact@sunbuilders.in",
+ 
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Plot No. 43, Sun Builders Group, Adjoining Saket-3, Pakvan-Sindhu Bhavan Road, Bodakdev",
+        "addressLocality": "Ahmedabad",
+        "addressRegion": "Gujarat",
+        "postalCode": "380058",
+        "addressCountry": "IN"
+      },
+ 
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "23.0396",
+        "longitude": "72.4977"
+      },
+ 
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday"
+          ],
+          "opens": "10:00",
+          "closes": "19:00"
+        },
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": "Sunday",
+          "opens": "11:00",
+          "closes": "17:00"
+        }
+      ],
+ 
+      "sameAs": [
+        "https://www.facebook.com/SunBuildersGroup",
+        "https://www.instagram.com/sunbuildersgroup/",
+        "https://twitter.com/SunBuildersGrp",
+        "https://www.youtube.com/@sunbuildersgroup",
+        "https://social.sunbuilders.in/"
+      ]
+    },
+ 
+    {
+      "@type": "WebSite",
+      "@id": "https://sunbuilders.in/#website",
+      "url": "https://sunbuilders.in/",
+      "name": "Sun Builders Group",
+      "publisher": {
+        "@id": "https://sunbuilders.in/#organization"
+      },
+      "inLanguage": "en-IN"
+    },
+ 
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://sunbuilders.in/#breadcrumb",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://sunbuilders.in/"
+        }
+      ]
+    },
+ 
+    {
+      "@type": "FAQPage",
+      "@id": "https://sunbuilders.in/#faq",
+      "mainEntity": [
+ 
+        {
+          "@type": "Question",
+          "name": "Who is Sun Builders Group?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sun Builders Group is one of Ahmedabad’s leading real estate developers with over 45 years of experience in residential and commercial developments."
+          }
+        },
+ 
+        {
+          "@type": "Question",
+          "name": "Where is Sun Builders Group located?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sun Builders Group is located at Plot No. 43, Adjoining Saket-3, Pakvan-Sindhu Bhavan Road, Bodakdev, Ahmedabad, Gujarat 380058."
+          }
+        },
+ 
+        {
+          "@type": "Question",
+          "name": "How can I contact Sun Builders Group?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You can contact Sun Builders Group at +91 90813 39933 or email contact@sunbuilders.in."
+          }
+        },
+ 
+        {
+          "@type": "Question",
+          "name": "What properties does Sun Builders Group develop?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sun Builders Group develops residential apartments, luxury homes, commercial spaces, retail developments, and plotted communities across Gujarat."
+          }
+        }
+ 
+      ]
+    }
+ 
+  ]
+}
+</script>
+</body>
+
+</html>

@@ -1,0 +1,32 @@
+import {
+  LayoutDashboard,
+  SlidersHorizontal,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
+
+export type NavItem = {
+  title: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+export const mainNav: NavItem[] = [
+  { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { title: "Customization", href: "/customization/areas", icon: SlidersHorizontal },
+  { title: "Users", href: "/users", icon: Users },
+];
+
+export const customizationTabs = [
+  { id: "areas", label: "Areas", href: "/customization/areas" },
+  { id: "projects", label: "Projects", href: "/customization/projects" },
+  { id: "main-banner", label: "Main Banner", href: "/customization/main-banner" },
+  { id: "builders", label: "Builders", href: "/customization/builders" },
+  { id: "amenities", label: "Amenities", href: "/customization/amenities" },
+  { id: "property-types", label: "Property Types", href: "/customization/property-types" },
+  { id: "categories", label: "Categories", href: "/customization/categories" },
+] as const;
+
+export type UserRole = "Super Admin" | "Manager";
+
+export const userRoles: UserRole[] = ["Super Admin", "Manager"];

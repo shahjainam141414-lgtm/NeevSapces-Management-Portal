@@ -1,0 +1,7 @@
+-- Example: after uploading logos to Cloudinary in the admin UI,
+-- builders.logo_url and builders.cloudinary_public_id are updated automatically.
+--
+-- Godrej + Shivalik were uploaded as the reference originals:
+-- logo_url = https://res.cloudinary.com/ywqiqhfa/image/upload/.../neev/builders/...
+--
+-- For every other builder: open Edit → upload original logo → Save.

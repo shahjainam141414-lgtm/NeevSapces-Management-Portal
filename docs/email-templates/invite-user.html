@@ -1,0 +1,77 @@
+<!--
+  Paste into Supabase Dashboard:
+  Authentication → Emails → Templates → Invite user
+
+  Subject: You're invited to Neev Management Portal
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Neev invitation</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f4f6f8;font-family:Georgia,'Times New Roman',serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#f4f6f8;padding:32px 16px;">
+      <tr>
+        <td align="center">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e8ecf1;">
+            <tr>
+              <td style="background:#1a2744;padding:28px 32px;text-align:center;">
+                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.28em;text-transform:uppercase;color:#c5d0e0;">
+                  Neev Spaces
+                </p>
+                <h1 style="margin:10px 0 0;font-size:28px;line-height:1.2;color:#ffffff;font-weight:normal;">
+                  Management Portal
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:36px 32px 16px;">
+                <h2 style="margin:0 0 12px;font-size:22px;color:#1a2744;font-weight:normal;">
+                  You've been invited
+                </h2>
+                <p style="margin:0 0 16px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#475569;">
+                  You have been invited to join the <strong style="color:#1a2744;">Neev Management Portal</strong> as a Super Admin.
+                  This portal is used to manage properties, customization, and team access for Neev Spaces.
+                </p>
+                <p style="margin:0 0 24px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#475569;">
+                  Click the button below to accept the invitation and set your password. After that, you can sign in with your email and password, or continue with Google using this same email.
+                </p>
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 28px;">
+                  <tr>
+                    <td style="border-radius:10px;background:#1a2744;">
+                      <a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:14px 28px;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">
+                        Accept invitation &amp; set password
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:#64748b;">
+                  Or copy and paste this link into your browser:
+                </p>
+                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.5;color:#94a3b8;word-break:break-all;">
+                  {{ .ConfirmationURL }}
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 32px 32px;">
+                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#94a3b8;">
+                  If you were not expecting this invite, you can ignore this email. Access is invite-only and managed by Neev administrators.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="background:#f8fafc;padding:18px 32px;border-top:1px solid #e8ecf1;text-align:center;">
+                <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:#94a3b8;">
+                  Neev Spaces · Management Portal
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

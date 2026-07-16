@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { AlertBanner } from "@/components/ui/alert-banner";
 import { getInitials } from "@/lib/utils";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { inviteAdminUser } from "@/app/actions/users";
@@ -142,12 +143,12 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
       }}
     >
       <DialogTrigger asChild>
-        <Button className="cursor-pointer">
+        <Button>
           <UserPlus className="h-4 w-4" />
           Add User
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add New User</DialogTitle>
           <DialogDescription>
@@ -157,9 +158,9 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
         </DialogHeader>
 
         <form onSubmit={handleSubmit(submitForm)} className="space-y-5">
-          <div className="flex items-center gap-4">
-            <div className="relative">
-              <Avatar className="h-16 w-16">
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
+            <div className="relative shrink-0">
+              <Avatar className="h-16 w-16 ring-2 ring-white shadow-[0_1px_2px_rgba(16,25,46,0.06),0_8px_20px_rgba(22,35,63,0.1)]">
                 {photoPreview ? (
                   <AvatarImage src={photoPreview} alt="Profile preview" />
                 ) : (
@@ -171,7 +172,7 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}
-                className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm hover:bg-slate-50"
+                className="absolute -bottom-1 -right-1 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full border border-white bg-[#16233f] text-white shadow-[0_2px_8px_rgba(22,35,63,0.35)] transition-all duration-200 hover:bg-[#1f3157] hover:scale-105 active:scale-95"
               >
                 <Camera className="h-3.5 w-3.5" />
               </button>
@@ -222,7 +223,7 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
             <div className="space-y-2">
               <Label htmlFor="phone">Phone Number</Label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   id="phone"
                   placeholder="+91 98765 43210"
@@ -233,50 +234,48 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
             </div>
           </div>
 
-          {formError && (
-            <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-xs text-red-600">
-              {formError}
-            </p>
-          )}
+          {formError && <AlertBanner variant="error">{formError}</AlertBanner>}
 
           {formSuccess && (
-            <div className="space-y-3 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">
-              <p>{formSuccess}</p>
-              {inviteLink && (
-                <div className="space-y-2">
-                  <p className="font-semibold text-emerald-900">Invite link</p>
-                  <p className="break-all rounded-lg bg-white/80 px-2 py-1.5 text-[11px] text-slate-600">
-                    {inviteLink}
-                  </p>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => void copyInviteLink()}
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="h-3.5 w-3.5" />
-                        Copied
-                      </>
-                    ) : (
-                      <>
-                        <Copy className="h-3.5 w-3.5" />
-                        Copy link
-                      </>
-                    )}
-                  </Button>
-                </div>
-              )}
-            </div>
+            <AlertBanner variant="success">
+              <div className="space-y-3">
+                <p>{formSuccess}</p>
+                {inviteLink && (
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold text-emerald-900">
+                      Invite link
+                    </p>
+                    <p className="break-all rounded-lg bg-white/80 px-2 py-1.5 text-[11px] text-slate-600">
+                      {inviteLink}
+                    </p>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => void copyInviteLink()}
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="h-3.5 w-3.5" />
+                          Copied
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" />
+                          Copy link
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </AlertBanner>
           )}
 
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
             <Button
               type="button"
               variant="outline"
-              className="cursor-pointer"
               onClick={() => {
                 resetLocal();
                 setOpen(false);
@@ -285,11 +284,7 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
               {inviteLink ? "Done" : "Cancel"}
             </Button>
             {!inviteLink && (
-              <Button
-                type="submit"
-                className="cursor-pointer"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" loading={isSubmitting}>
                 {isSubmitting ? "Sending invite..." : "Send Invite"}
               </Button>
             )}

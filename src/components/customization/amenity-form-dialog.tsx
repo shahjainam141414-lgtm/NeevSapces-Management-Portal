@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, ImagePlus, Loader2, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertBanner } from "@/components/ui/alert-banner";
 import {
   Dialog,
   DialogContent,
@@ -22,7 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AmenityIcon } from "@/components/customization/amenity-icon";
+import { ImageUploadField, ImagePreviewOverlay } from "@/components/ui/image-upload-field";
+import { useRemountKey } from "@/hooks/use-remount-key";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import type { Amenity, AmenityStatus } from "@/lib/amenities";
 
@@ -59,13 +60,7 @@ export function AmenityFormDialog({
   initial,
   onSubmit,
 }: AmenityFormDialogProps) {
-  const [wasOpen, setWasOpen] = useState(open);
-  const [formKey, setFormKey] = useState(0);
-
-  if (open !== wasOpen) {
-    setWasOpen(open);
-    if (open) setFormKey((k) => k + 1);
-  }
+  const formKey = useRemountKey(open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -95,10 +90,11 @@ function AmenityFormFields({
   onOpenChange,
   onSubmit,
 }: AmenityFormFieldsProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
-  const [existingIcon] = useState<string | null>(initial?.icon_url ?? null);
+  // `key={formKey}` on the parent remounts this component fresh on every
+  // open, so this never needs to change after mount — plain const.
+  const existingIcon: string | null = initial?.icon_url ?? null;
   const [clearIcon, setClearIcon] = useState(false);
   const [fullPreview, setFullPreview] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -121,7 +117,6 @@ function AmenityFormFields({
 
   const status = useWatch({ control, name: "status" });
   const isDefault = useWatch({ control, name: "is_default" });
-  const title = useWatch({ control, name: "title" });
 
   useEffect(() => {
     return () => {
@@ -129,9 +124,7 @@ function AmenityFormFields({
     };
   }, [localPreview]);
 
-  const shownIcon = clearIcon
-    ? null
-    : localPreview || existingIcon || null;
+  const shownIcon = clearIcon ? null : localPreview || existingIcon || null;
 
   const pickFile = (next: File | null) => {
     if (!next) return;
@@ -148,6 +141,15 @@ function AmenityFormFields({
     setFile(next);
     setLocalPreview(URL.createObjectURL(next));
     setClearIcon(false);
+  };
+
+  const removeIcon = () => {
+    setFile(null);
+    if (localPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(localPreview);
+    }
+    setLocalPreview(null);
+    if (existingIcon) setClearIcon(true);
   };
 
   const submitForm = async (data: FormData) => {
@@ -211,7 +213,7 @@ function AmenityFormFields({
             <Input
               id="amenity-title"
               placeholder="e.g. Swimming Pool"
-              className="h-11 border-slate-200"
+              className="h-11"
               {...register("title")}
             />
             {errors.title && (
@@ -232,17 +234,17 @@ function AmenityFormFields({
                   })
                 }
               >
-                <SelectTrigger className="h-11 cursor-pointer border-slate-200">
+                <SelectTrigger className="h-11">
                   <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active" className="cursor-pointer">
+                  <SelectItem value="active">
                     <span className="flex items-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                       Active
                     </span>
                   </SelectItem>
-                  <SelectItem value="inactive" className="cursor-pointer">
+                  <SelectItem value="inactive">
                     <span className="flex items-center gap-2">
                       <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
                       Inactive
@@ -264,16 +266,12 @@ function AmenityFormFields({
                   })
                 }
               >
-                <SelectTrigger className="h-11 cursor-pointer border-slate-200">
+                <SelectTrigger className="h-11">
                   <SelectValue placeholder="Select" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="yes" className="cursor-pointer">
-                    Yes
-                  </SelectItem>
-                  <SelectItem value="no" className="cursor-pointer">
-                    No
-                  </SelectItem>
+                  <SelectItem value="yes">Yes</SelectItem>
+                  <SelectItem value="no">No</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -281,159 +279,39 @@ function AmenityFormFields({
 
           <div className="space-y-2">
             <Label>Icon (optional)</Label>
-            <input
-              ref={inputRef}
-              type="file"
+            <ImageUploadField
+              previewUrl={shownIcon}
+              fileName={file?.name || (shownIcon ? "Current icon" : null)}
               accept={ACCEPT}
-              className="sr-only"
-              onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+              disabled={saving}
+              emptyLabel="Upload amenity icon"
+              hint={`PNG / SVG / WebP · square works best · max ${MAX_MB}MB`}
+              onPick={pickFile}
+              onRemove={removeIcon}
+              onPreview={() => setFullPreview(true)}
             />
-
-            {!shownIcon ? (
-              <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
-                className="flex w-full cursor-pointer items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-left transition-colors hover:border-[#1a2744]/35"
-              >
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
-                  <ImagePlus className="h-5 w-5 text-slate-400" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-800">
-                    Upload amenity icon
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    PNG / SVG / WebP · square works best · max {MAX_MB}MB
-                  </p>
-                </div>
-              </button>
-            ) : (
-              <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                <div className="flex items-center gap-3">
-                  {localPreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={localPreview}
-                      alt="Icon preview"
-                      className="h-14 w-14 rounded-2xl border border-slate-100 object-contain p-1"
-                    />
-                  ) : (
-                    <AmenityIcon
-                      title={title || "Amenity"}
-                      iconUrl={existingIcon}
-                      iconKey={initial?.icon_key}
-                      size="lg"
-                    />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-800">
-                      {file?.name || "Current icon"}
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Optional — used on website amenity cards
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setFile(null);
-                      if (localPreview?.startsWith("blob:")) {
-                        URL.revokeObjectURL(localPreview);
-                      }
-                      setLocalPreview(null);
-                      if (existingIcon) setClearIcon(true);
-                    }}
-                    disabled={saving}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                    Close
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => setFullPreview(true)}
-                    disabled={saving}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                    Preview
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => inputRef.current?.click()}
-                    disabled={saving}
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Change
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
 
-          {formError && (
-            <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-xs text-red-600">
-              {formError}
-            </p>
-          )}
+          {formError && <AlertBanner variant="error">{formError}</AlertBanner>}
 
           <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:gap-3">
             <Button
               type="button"
               variant="outline"
-              className="cursor-pointer"
               onClick={() => onOpenChange(false)}
               disabled={saving}
             >
               Cancel
             </Button>
-            <Button type="submit" className="cursor-pointer" disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : mode === "add" ? (
-                "Add"
-              ) : (
-                "Save Changes"
-              )}
+            <Button type="submit" loading={saving}>
+              {saving ? "Saving..." : mode === "add" ? "Add" : "Save Changes"}
             </Button>
           </div>
         </form>
       </DialogContent>
 
       {fullPreview && shownIcon && (
-        <div
-          className="fixed inset-0 z-[80] flex cursor-pointer items-center justify-center bg-black/70 p-6"
-          onClick={() => setFullPreview(false)}
-        >
-          <button
-            type="button"
-            className="absolute right-4 top-4 cursor-pointer rounded-full bg-white/10 p-2 text-white"
-            onClick={() => setFullPreview(false)}
-            aria-label="Close preview"
-          >
-            <X className="h-5 w-5" />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={shownIcon}
-            alt="Icon preview"
-            className="max-h-[70vh] max-w-full rounded-2xl bg-white object-contain p-6"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+        <ImagePreviewOverlay src={shownIcon} onClose={() => setFullPreview(false)} />
       )}
     </>
   );

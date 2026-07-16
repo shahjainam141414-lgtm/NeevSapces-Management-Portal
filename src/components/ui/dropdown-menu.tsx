@@ -17,7 +17,7 @@ const DropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "z-50 min-w-[12rem] overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 text-slate-900 shadow-[0_20px_50px_rgba(15,23,42,0.12)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "animate-popover-in z-50 min-w-[12rem] overflow-hidden rounded-xl border border-slate-200/80 bg-white/98 p-1.5 text-slate-900 shadow-[0_20px_50px_rgba(16,25,46,0.14)] backdrop-blur-sm",
         className,
       )}
       {...props}
@@ -36,10 +36,10 @@ const DropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex cursor-pointer select-none items-center rounded-lg px-3 py-2.5 text-sm outline-none transition-colors focus:bg-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
+      "relative flex cursor-pointer select-none items-center rounded-lg px-3 py-2.5 text-sm outline-none transition-colors duration-150 focus:bg-slate-50 data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
       destructive
         ? "text-red-500 focus:bg-red-50 focus:text-red-600"
-        : "text-slate-700",
+        : "text-slate-700 focus:text-[#16233f]",
       inset && "pl-8",
       className,
     )}

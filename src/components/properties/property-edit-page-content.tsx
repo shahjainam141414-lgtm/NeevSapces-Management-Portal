@@ -2,8 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  Eye,
   ImagePlus,
   Loader2,
   Plus,
@@ -16,6 +18,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ChipGroup, ChipToggle } from "@/components/ui/chip-toggle";
+import {
+  ImageUploadField,
+  ImagePreviewOverlay,
+} from "@/components/ui/image-upload-field";
+import { AlertBanner } from "@/components/ui/alert-banner";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Select,
   SelectContent,
@@ -24,6 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { listAmenities } from "@/lib/amenities-api";
 import { listBuilders } from "@/lib/builders-api";
@@ -36,6 +48,7 @@ import {
   CONSTRUCTION_STATUS_OPTIONS,
   PARKING_OPTIONS,
   buildPropertySlug,
+  statusBadgeVariant,
   type PropertyDetail,
   type PropertyFloorPlan,
   type PropertyStatus,
@@ -54,6 +67,26 @@ import {
 } from "@/lib/properties-api";
 
 const ACCEPT_IMG = "image/jpeg,image/png,image/webp,image/jpg";
+
+const EDIT_TABS = [
+  { value: "basics", label: "Basics" },
+  { value: "details", label: "Project details" },
+  { value: "pricing", label: "Rate card" },
+  { value: "plans", label: "Floor plans" },
+  { value: "media", label: "Photos" },
+  { value: "amenities", label: "Amenities" },
+  { value: "content", label: "Why / Specs / FAQ" },
+] as const;
+
+const cardMotion = (index: number) => ({
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0 },
+  transition: {
+    delay: index * 0.06,
+    duration: 0.4,
+    ease: [0.22, 1, 0.36, 1] as const,
+  },
+});
 
 function parseLines(text: string) {
   return text
@@ -154,6 +187,9 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [categories, setCategories] = useState<EntityItem[]>([]);
   const [propertyTypes, setPropertyTypes] = useState<EntityItem[]>([]);
 
+  const [activeTab, setActiveTab] = useState<string>("basics");
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   // Core fields
   const [title, setTitle] = useState("");
   const [slug, setSlug] = useState("");
@@ -207,7 +243,6 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
 
-  const coverInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -285,6 +320,9 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   }, [propertyId]);
 
   useEffect(() => {
+    // Standard fetch-on-mount effect; load()'s internal setLoading(true)
+    // is what the rule flags, but this is the intentional initial load.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 
@@ -341,6 +379,30 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       setError(err instanceof Error ? err.message : "Gallery upload failed");
     } finally {
       setUploadingGallery(false);
+    }
+  };
+
+  const handleFloorPlanUpload = async (index: number, file: File) => {
+    try {
+      const uploaded = await uploadToCloudinary(
+        file,
+        "neev/properties/floor-plans",
+      );
+      setFloorPlans((prev) =>
+        prev.map((p, i) =>
+          i === index
+            ? {
+                ...p,
+                image_url: uploaded.secure_url,
+                cloudinary_public_id: uploaded.public_id,
+              }
+            : p,
+        ),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Floor plan upload failed",
+      );
     }
   };
 
@@ -474,6 +536,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
     return parts.join(", ");
   }, [locality, areaName, city, pincode]);
 
+  const activeTabIndex = EDIT_TABS.findIndex((t) => t.value === activeTab);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-2 py-24 text-sm text-slate-500">
@@ -485,8 +549,10 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
   if (!detail) {
     return (
-      <div className="space-y-4 py-12 text-center">
-        <p className="text-sm text-red-600">{error ?? "Property not found"}</p>
+      <div className="mx-auto max-w-md space-y-4 py-12 text-center">
+        <AlertBanner variant="error" className="text-left">
+          {error ?? "Property not found"}
+        </AlertBanner>
         <Button asChild variant="outline">
           <Link href="/customization/properties">Back to list</Link>
         </Button>
@@ -496,7 +562,12 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+      <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+      >
         <div>
           <Button
             asChild
@@ -508,7 +579,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
               All properties
             </Link>
           </Button>
-          <h1 className="text-2xl font-semibold tracking-tight text-[#1a2744]">
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-[#16233f]">
             {title || "Untitled property"}
           </h1>
           <p className="mt-1 text-sm text-slate-500">
@@ -516,522 +587,494 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge
-            variant={
-              status === "active"
-                ? "success"
-                : status === "draft"
-                  ? "warning"
-                  : "secondary"
-            }
-          >
-            {status}
-          </Badge>
+          <Badge variant={statusBadgeVariant(status)}>{status}</Badge>
           <Button
             className="gap-2"
-            disabled={saving}
+            loading={saving}
             onClick={() => void handleSave()}
           >
-            {saving ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Save className="size-4" />
-            )}
+            {!saving && <Save className="size-4" />}
             {saving ? "Saving…" : "Save all"}
           </Button>
         </div>
-      </div>
+      </motion.div>
 
-      {error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
-        </p>
-      ) : null}
-      {message ? (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
-          {message}
-        </p>
-      ) : null}
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+      {message ? <AlertBanner variant="success">{message}</AlertBanner> : null}
 
-      <Tabs defaultValue="basics" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        {/* Step progress indicator */}
+        <div className="mb-4 flex items-center gap-1 overflow-x-auto pb-1 sm:gap-1.5">
+          {EDIT_TABS.map((tab, i) => (
+            <div key={tab.value} className="flex shrink-0 items-center gap-1 sm:gap-1.5">
+              <div
+                className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold transition-colors duration-300",
+                  i < activeTabIndex
+                    ? "bg-[#16233f] text-white"
+                    : i === activeTabIndex
+                      ? "bg-[#16233f] text-white shadow-[0_0_0_4px_rgba(22,35,63,0.18)]"
+                      : "bg-slate-100 text-slate-400",
+                )}
+              >
+                {i + 1}
+              </div>
+              {i < EDIT_TABS.length - 1 && (
+                <div
+                  className={cn(
+                    "h-px w-4 transition-colors duration-300 sm:w-8",
+                    i < activeTabIndex ? "bg-[#16233f]" : "bg-slate-200",
+                  )}
+                />
+              )}
+            </div>
+          ))}
+          <span className="ml-2 shrink-0 text-xs font-medium whitespace-nowrap text-slate-500">
+            Step {activeTabIndex + 1} of {EDIT_TABS.length} —{" "}
+            {EDIT_TABS[activeTabIndex]?.label}
+          </span>
+        </div>
+
         <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
-          <TabsTrigger value="basics">Basics</TabsTrigger>
-          <TabsTrigger value="details">Project details</TabsTrigger>
-          <TabsTrigger value="pricing">Rate card</TabsTrigger>
-          <TabsTrigger value="plans">Floor plans</TabsTrigger>
-          <TabsTrigger value="media">Photos</TabsTrigger>
-          <TabsTrigger value="amenities">Amenities</TabsTrigger>
-          <TabsTrigger value="content">Why / Specs / FAQ</TabsTrigger>
+          {EDIT_TABS.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         {/* BASICS */}
         <TabsContent value="basics" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Identity &amp; location</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Title</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Slug (URL)</Label>
-                <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Area</Label>
-                <Select value={areaId || undefined} onValueChange={onAreaChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select area" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {areas.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Locality</Label>
-                <Input
-                  value={locality}
-                  onChange={(e) => setLocality(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>City</Label>
-                <Input value={city} onChange={(e) => setCity(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Pincode</Label>
-                <Input
-                  value={pincode}
-                  onChange={(e) => setPincode(e.target.value)}
-                  placeholder="382421"
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Full address</Label>
-                <Input
-                  value={fullAddress}
-                  onChange={(e) => setFullAddress(e.target.value)}
-                  placeholder="Kudasan, Kudasan, Gandhinagar (382421)"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Status</Label>
-                <Select
-                  value={status}
-                  onValueChange={(v) => setStatus(v as PropertyStatus)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Listing badge</Label>
-                <Input
-                  value={listingBadge}
-                  onChange={(e) => setListingBadge(e.target.value)}
-                  placeholder="For Sale"
-                />
-              </div>
-              <div className="flex items-center gap-2 sm:col-span-2">
-                <input
-                  id="featured"
-                  type="checkbox"
-                  checked={isFeatured}
-                  onChange={(e) => setIsFeatured(e.target.checked)}
-                  className="size-4 rounded border-slate-300"
-                />
-                <Label htmlFor="featured" className="cursor-pointer font-normal">
-                  Featured listing
-                </Label>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Cover image &amp; brochure</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex flex-wrap items-start gap-4">
-                <div className="relative size-36 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
-                  {coverUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={coverUrl}
-                      alt=""
-                      className="size-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex size-full items-center justify-center text-slate-400">
-                      <ImagePlus className="size-6" />
-                    </div>
-                  )}
+          <motion.div {...cardMotion(0)}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Identity &amp; location</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Title</Label>
+                  <Input value={title} onChange={(e) => setTitle(e.target.value)} />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Slug (URL)</Label>
+                  <Input value={slug} onChange={(e) => setSlug(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <input
-                    ref={coverInputRef}
-                    type="file"
-                    accept={ACCEPT_IMG}
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) void handleCoverUpload(file);
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={uploadingCover}
-                    onClick={() => coverInputRef.current?.click()}
-                  >
-                    {uploadingCover ? "Uploading…" : "Upload cover"}
-                  </Button>
-                  {coverUrl ? (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="text-red-600"
-                      onClick={() => {
-                        setCoverUrl(null);
-                        setCoverPublicId(null);
-                      }}
-                    >
-                      Remove
-                    </Button>
-                  ) : null}
+                  <Label>Area</Label>
+                  <Select value={areaId || undefined} onValueChange={onAreaChange}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select area" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {areas.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Brochure URL</Label>
-                <Input
-                  value={brochureUrl}
-                  onChange={(e) => setBrochureUrl(e.target.value)}
-                  placeholder="https://…"
-                />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-2">
+                  <Label>Locality</Label>
+                  <Input
+                    value={locality}
+                    onChange={(e) => setLocality(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>City</Label>
+                  <Input value={city} onChange={(e) => setCity(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Pincode</Label>
+                  <Input
+                    value={pincode}
+                    onChange={(e) => setPincode(e.target.value)}
+                    placeholder="382421"
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Full address</Label>
+                  <Input
+                    value={fullAddress}
+                    onChange={(e) => setFullAddress(e.target.value)}
+                    placeholder="Kudasan, Kudasan, Gandhinagar (382421)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={status}
+                    onValueChange={(v) => setStatus(v as PropertyStatus)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Listing badge</Label>
+                  <Input
+                    value={listingBadge}
+                    onChange={(e) => setListingBadge(e.target.value)}
+                    placeholder="For Sale"
+                  />
+                </div>
+                <div className="flex items-center gap-2.5 sm:col-span-2">
+                  <Checkbox
+                    id="featured"
+                    checked={isFeatured}
+                    onChange={(e) => setIsFeatured(e.target.checked)}
+                  />
+                  <Label htmlFor="featured" className="cursor-pointer font-normal">
+                    Featured listing
+                  </Label>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div {...cardMotion(1)}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Cover image &amp; brochure</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="max-w-[220px]">
+                  <ImageUploadField
+                    previewUrl={coverUrl}
+                    placeholder={<ImagePlus className="h-6 w-6 text-slate-400" />}
+                    accept={ACCEPT_IMG}
+                    disabled={uploadingCover}
+                    emptyLabel={uploadingCover ? "Uploading…" : "Upload cover image"}
+                    hint="JPG, PNG or WebP"
+                    aspect="square"
+                    onPick={(file) => void handleCoverUpload(file)}
+                    onRemove={() => {
+                      setCoverUrl(null);
+                      setCoverPublicId(null);
+                    }}
+                    onPreview={
+                      coverUrl ? () => setPreviewImage(coverUrl) : undefined
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Brochure URL</Label>
+                  <Input
+                    value={brochureUrl}
+                    onChange={(e) => setBrochureUrl(e.target.value)}
+                    placeholder="https://…"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </TabsContent>
 
         {/* DETAILS */}
         <TabsContent value="details" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Quick details strip</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Availability (BHK / configs)</Label>
-                <div className="flex flex-wrap gap-2">
-                  {AVAILABILITY_OPTIONS.map((opt) => {
-                    const on = availability.includes(opt);
-                    return (
-                      <button
+          <motion.div {...cardMotion(0)}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Quick details strip</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Availability (BHK / configs)</Label>
+                  <ChipGroup>
+                    {AVAILABILITY_OPTIONS.map((opt) => (
+                      <ChipToggle
                         key={opt}
-                        type="button"
+                        selected={availability.includes(opt)}
                         onClick={() =>
                           toggleMulti(availability, opt, setAvailability)
                         }
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                          on
-                            ? "border-[#1a2744] bg-[#1a2744] text-white"
-                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                        }`}
                       >
                         {opt}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Possession by</Label>
-                  <Input
-                    value={possessionBy}
-                    onChange={(e) => setPossessionBy(e.target.value)}
-                    placeholder="Dec, 2027"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Type</Label>
-                  <Input
-                    value={propertyTypeLabel}
-                    onChange={(e) => setPropertyTypeLabel(e.target.value)}
-                    placeholder="Flats / Apartments"
-                    list="property-type-suggestions"
-                  />
-                  <datalist id="property-type-suggestions">
-                    {propertyTypes.map((t) => (
-                      <option key={t.id} value={t.name} />
+                      </ChipToggle>
                     ))}
-                    <option value="Flats / Apartments" />
+                  </ChipGroup>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Possession by</Label>
+                    <Input
+                      value={possessionBy}
+                      onChange={(e) => setPossessionBy(e.target.value)}
+                      placeholder="Dec, 2027"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Type</Label>
+                    <Input
+                      value={propertyTypeLabel}
+                      onChange={(e) => setPropertyTypeLabel(e.target.value)}
+                      placeholder="Flats / Apartments"
+                      list="property-type-suggestions"
+                    />
+                    <datalist id="property-type-suggestions">
+                      {propertyTypes.map((t) => (
+                        <option key={t.id} value={t.name} />
+                      ))}
+                      <option value="Flats / Apartments" />
+                    </datalist>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Towers</Label>
+                    <Input
+                      type="number"
+                      value={towerCount}
+                      onChange={(e) => setTowerCount(e.target.value)}
+                      placeholder="2"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Units</Label>
+                    <Input
+                      type="number"
+                      value={unitCount}
+                      onChange={(e) => setUnitCount(e.target.value)}
+                      placeholder="144"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>RERA No</Label>
+                    <Input
+                      value={reraNo}
+                      onChange={(e) => setReraNo(e.target.value)}
+                      placeholder="RN137AA10037/270722"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>RERA URL</Label>
+                    <Input
+                      value={reraUrl}
+                      onChange={(e) => setReraUrl(e.target.value)}
+                      placeholder="https://gujrera.gujarat.gov.in"
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+
+          <motion.div {...cardMotion(1)}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">
+                  Extended project details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Developer / Builder</Label>
+                  <Select
+                    value={builderId || "__none__"}
+                    onValueChange={(v) => {
+                      const id = v === "__none__" ? "" : v;
+                      setBuilderId(id);
+                      const b = builders.find((x) => x.id === id);
+                      if (b) setDeveloperName(b.name);
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select builder" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">None</SelectItem>
+                      {builders
+                        .filter((b) => b.status === "active" || b.id === builderId)
+                        .map((b) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.name}
+                            {b.status !== "active" ? " (inactive)" : ""}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Developer name (display)</Label>
+                  <Input
+                    value={developerName}
+                    onChange={(e) => setDeveloperName(e.target.value)}
+                    placeholder="dev vinayak"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Input
+                    value={categoryLabel}
+                    onChange={(e) => setCategoryLabel(e.target.value)}
+                    placeholder="Residential - Flats / Apartments"
+                    list="category-suggestions"
+                  />
+                  <datalist id="category-suggestions">
+                    {categories.map((c) => (
+                      <option key={c.id} value={c.name} />
+                    ))}
+                    <option value="Residential - Flats / Apartments" />
                   </datalist>
                 </div>
                 <div className="space-y-2">
-                  <Label>Towers</Label>
+                  <Label>Construction status</Label>
+                  <Input
+                    value={constructionStatus}
+                    onChange={(e) => setConstructionStatus(e.target.value)}
+                    placeholder="Under Construction"
+                    list="construction-status-suggestions"
+                  />
+                  <datalist id="construction-status-suggestions">
+                    {CONSTRUCTION_STATUS_OPTIONS.map((o) => (
+                      <option key={o} value={o} />
+                    ))}
+                  </datalist>
+                </div>
+                <div className="space-y-2">
+                  <Label>Project size label</Label>
+                  <Input
+                    value={projectSizeLabel}
+                    onChange={(e) => setProjectSizeLabel(e.target.value)}
+                    placeholder="2 Tower - 144 Units"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>No. of floors</Label>
                   <Input
                     type="number"
-                    value={towerCount}
-                    onChange={(e) => setTowerCount(e.target.value)}
-                    placeholder="2"
+                    value={floorCount}
+                    onChange={(e) => setFloorCount(e.target.value)}
+                    placeholder="21"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Units</Label>
+                  <Label>Total plot area</Label>
+                  <Input
+                    value={totalPlotArea}
+                    onChange={(e) => setTotalPlotArea(e.target.value)}
+                    placeholder="5200 Sq Mt"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Open area %</Label>
                   <Input
                     type="number"
-                    value={unitCount}
-                    onChange={(e) => setUnitCount(e.target.value)}
-                    placeholder="144"
+                    value={openAreaPercent}
+                    onChange={(e) => setOpenAreaPercent(e.target.value)}
+                    placeholder="65"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>RERA No</Label>
+                  <Label>Facing</Label>
                   <Input
-                    value={reraNo}
-                    onChange={(e) => setReraNo(e.target.value)}
-                    placeholder="RN137AA10037/270722"
+                    value={facing}
+                    onChange={(e) => setFacing(e.target.value)}
+                    placeholder="East"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>RERA URL</Label>
+                  <Label>Project position</Label>
                   <Input
-                    value={reraUrl}
-                    onChange={(e) => setReraUrl(e.target.value)}
-                    placeholder="https://gujrera.gujarat.gov.in"
+                    value={projectPosition}
+                    onChange={(e) => setProjectPosition(e.target.value)}
+                    placeholder="2 Side Open"
                   />
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">
-                Extended project details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Developer / Builder</Label>
-                <Select
-                  value={builderId || "__none__"}
-                  onValueChange={(v) => {
-                    const id = v === "__none__" ? "" : v;
-                    setBuilderId(id);
-                    const b = builders.find((x) => x.id === id);
-                    if (b) setDeveloperName(b.name);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select builder" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__none__">None</SelectItem>
-                    {builders
-                      .filter((b) => b.status === "active" || b.id === builderId)
-                      .map((b) => (
-                        <SelectItem key={b.id} value={b.id}>
-                          {b.name}
-                          {b.status !== "active" ? " (inactive)" : ""}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>Developer name (display)</Label>
-                <Input
-                  value={developerName}
-                  onChange={(e) => setDeveloperName(e.target.value)}
-                  placeholder="dev vinayak"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Category</Label>
-                <Input
-                  value={categoryLabel}
-                  onChange={(e) => setCategoryLabel(e.target.value)}
-                  placeholder="Residential - Flats / Apartments"
-                  list="category-suggestions"
-                />
-                <datalist id="category-suggestions">
-                  {categories.map((c) => (
-                    <option key={c.id} value={c.name} />
-                  ))}
-                  <option value="Residential - Flats / Apartments" />
-                </datalist>
-              </div>
-              <div className="space-y-2">
-                <Label>Construction status</Label>
-                <Input
-                  value={constructionStatus}
-                  onChange={(e) => setConstructionStatus(e.target.value)}
-                  placeholder="Under Construction"
-                  list="construction-status-suggestions"
-                />
-                <datalist id="construction-status-suggestions">
-                  {CONSTRUCTION_STATUS_OPTIONS.map((o) => (
-                    <option key={o} value={o} />
-                  ))}
-                </datalist>
-              </div>
-              <div className="space-y-2">
-                <Label>Project size label</Label>
-                <Input
-                  value={projectSizeLabel}
-                  onChange={(e) => setProjectSizeLabel(e.target.value)}
-                  placeholder="2 Tower - 144 Units"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>No. of floors</Label>
-                <Input
-                  type="number"
-                  value={floorCount}
-                  onChange={(e) => setFloorCount(e.target.value)}
-                  placeholder="21"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Total plot area</Label>
-                <Input
-                  value={totalPlotArea}
-                  onChange={(e) => setTotalPlotArea(e.target.value)}
-                  placeholder="5200 Sq Mt"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Open area %</Label>
-                <Input
-                  type="number"
-                  value={openAreaPercent}
-                  onChange={(e) => setOpenAreaPercent(e.target.value)}
-                  placeholder="65"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Facing</Label>
-                <Input
-                  value={facing}
-                  onChange={(e) => setFacing(e.target.value)}
-                  placeholder="East"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Project position</Label>
-                <Input
-                  value={projectPosition}
-                  onChange={(e) => setProjectPosition(e.target.value)}
-                  placeholder="2 Side Open"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Road connectivity</Label>
-                <Input
-                  value={roadConnectivity}
-                  onChange={(e) => setRoadConnectivity(e.target.value)}
-                  placeholder="100 feet"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Current status</Label>
-                <Input
-                  value={currentStatus}
-                  onChange={(e) => setCurrentStatus(e.target.value)}
-                  placeholder="Available"
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Parking types</Label>
-                <div className="flex flex-wrap gap-2">
-                  {PARKING_OPTIONS.map((opt) => {
-                    const on = parkingTypes.includes(opt);
-                    return (
-                      <button
+                <div className="space-y-2">
+                  <Label>Road connectivity</Label>
+                  <Input
+                    value={roadConnectivity}
+                    onChange={(e) => setRoadConnectivity(e.target.value)}
+                    placeholder="100 feet"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Current status</Label>
+                  <Input
+                    value={currentStatus}
+                    onChange={(e) => setCurrentStatus(e.target.value)}
+                    placeholder="Available"
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Parking types</Label>
+                  <ChipGroup>
+                    {PARKING_OPTIONS.map((opt) => (
+                      <ChipToggle
                         key={opt}
-                        type="button"
+                        selected={parkingTypes.includes(opt)}
                         onClick={() =>
                           toggleMulti(parkingTypes, opt, setParkingTypes)
                         }
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                          on
-                            ? "border-[#1a2744] bg-[#1a2744] text-white"
-                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                        }`}
                       >
                         {opt}
-                      </button>
-                    );
-                  })}
+                      </ChipToggle>
+                    ))}
+                  </ChipGroup>
                 </div>
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label>About</Label>
-                <textarea
-                  value={about}
-                  onChange={(e) => setAbout(e.target.value)}
-                  rows={5}
-                  className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#1a2744]/20"
-                  placeholder="Project description shown on the detail page…"
-                />
-              </div>
-            </CardContent>
-          </Card>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>About</Label>
+                  <Textarea
+                    value={about}
+                    onChange={(e) => setAbout(e.target.value)}
+                    rows={5}
+                    placeholder="Project description shown on the detail page…"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </TabsContent>
 
         {/* PRICING */}
         <TabsContent value="pricing">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Rate card</CardTitle>
-            </CardHeader>
-            <CardContent className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Package price</Label>
-                <Input
-                  value={packagePrice}
-                  onChange={(e) => setPackagePrice(e.target.value)}
-                  placeholder="1.55 Cr.*"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Price per sq.ft.</Label>
-                <Input
-                  value={pricePerSqft}
-                  onChange={(e) => setPricePerSqft(e.target.value)}
-                  placeholder="Price on Request/ Sq.Ft.*"
-                />
-              </div>
-              <div className="space-y-2 sm:col-span-2">
-                <Label>Package price notes</Label>
-                <Input
-                  value={priceNotes}
-                  onChange={(e) => setPriceNotes(e.target.value)}
-                  placeholder="Incl All Charges - Onwards*"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <motion.div {...cardMotion(0)}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Rate card</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Package price</Label>
+                  <Input
+                    value={packagePrice}
+                    onChange={(e) => setPackagePrice(e.target.value)}
+                    placeholder="1.55 Cr.*"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Price per sq.ft.</Label>
+                  <Input
+                    value={pricePerSqft}
+                    onChange={(e) => setPricePerSqft(e.target.value)}
+                    placeholder="Price on Request/ Sq.Ft.*"
+                  />
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Package price notes</Label>
+                  <Input
+                    value={priceNotes}
+                    onChange={(e) => setPriceNotes(e.target.value)}
+                    placeholder="Incl All Charges - Onwards*"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
         </TabsContent>
 
         {/* FLOOR PLANS */}
         <TabsContent value="plans" className="space-y-4">
-          <div className="flex items-center justify-between">
+          <motion.div
+            {...cardMotion(0)}
+            className="flex items-center justify-between"
+          >
             <p className="text-sm text-slate-500">
               Add configs like &ldquo;3 BHK Type 1&rdquo; with area and price.
             </p>
@@ -1044,253 +1087,252 @@ export function PropertyEditPageContent({ propertyId }: Props) {
               <Plus className="size-4" />
               Add floor plan
             </Button>
-          </div>
+          </motion.div>
 
           {floorPlans.length === 0 ? (
-            <Card>
-              <CardContent className="py-10 text-center text-sm text-slate-500">
-                No floor plans yet.
-              </CardContent>
-            </Card>
-          ) : (
-            floorPlans.map((plan, index) => (
-              <Card key={plan.id ?? `new-${index}`}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                  <CardTitle className="text-base">
-                    Floor plan {index + 1}
-                  </CardTitle>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="text-red-600"
-                    onClick={() =>
-                      setFloorPlans((prev) => prev.filter((_, i) => i !== index))
-                    }
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
-                </CardHeader>
-                <CardContent className="grid gap-4 sm:grid-cols-3">
-                  <div className="space-y-2 sm:col-span-2">
-                    <Label>Name</Label>
-                    <Input
-                      value={plan.name}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setFloorPlans((prev) =>
-                          prev.map((p, i) =>
-                            i === index ? { ...p, name: v } : p,
-                          ),
-                        );
-                      }}
-                      placeholder="3 BHK Type 1"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>BHK label</Label>
-                    <Input
-                      value={plan.bhk_label}
-                      onChange={(e) => {
-                        const v = e.target.value;
-                        setFloorPlans((prev) =>
-                          prev.map((p, i) =>
-                            i === index ? { ...p, bhk_label: v } : p,
-                          ),
-                        );
-                      }}
-                      placeholder="3 BHK"
-                    />
-                  </div>
-                  {(
-                    [
-                      ["rooms", "Rooms"],
-                      ["balcony", "Balcony"],
-                      ["bathroom", "Bathroom"],
-                      ["servant_room", "Servant room"],
-                      ["area_sqft", "Area sq.ft."],
-                      ["area_sqyd", "Area sq.yd."],
-                      ["area_sqmt", "Area sq.mt."],
-                      ["price_label", "Price"],
-                    ] as const
-                  ).map(([key, label]) => (
-                    <div key={key} className="space-y-2">
-                      <Label>{label}</Label>
-                      <Input
-                        value={plan[key]}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setFloorPlans((prev) =>
-                            prev.map((p, i) =>
-                              i === index ? { ...p, [key]: v } : p,
-                            ),
-                          );
-                        }}
-                        placeholder={key === "price_label" ? "1.45 Cr.*" : ""}
-                      />
-                    </div>
-                  ))}
-                  <div className="space-y-2 sm:col-span-3">
-                    <Label>Floor plan image URL</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        value={plan.image_url ?? ""}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setFloorPlans((prev) =>
-                            prev.map((p, i) =>
-                              i === index
-                                ? { ...p, image_url: v || null }
-                                : p,
-                            ),
-                          );
-                        }}
-                        placeholder="Upload or paste URL"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          const input = document.createElement("input");
-                          input.type = "file";
-                          input.accept = ACCEPT_IMG;
-                          input.onchange = async () => {
-                            const file = input.files?.[0];
-                            if (!file) return;
-                            try {
-                              const uploaded = await uploadToCloudinary(
-                                file,
-                                "neev/properties/floor-plans",
-                              );
-                              setFloorPlans((prev) =>
-                                prev.map((p, i) =>
-                                  i === index
-                                    ? {
-                                        ...p,
-                                        image_url: uploaded.secure_url,
-                                        cloudinary_public_id: uploaded.public_id,
-                                      }
-                                    : p,
-                                ),
-                              );
-                            } catch (err) {
-                              setError(
-                                err instanceof Error
-                                  ? err.message
-                                  : "Floor plan upload failed",
-                              );
-                            }
-                          };
-                          input.click();
-                        }}
-                      >
-                        Upload
-                      </Button>
-                    </div>
-                  </div>
+            <motion.div {...cardMotion(1)}>
+              <Card>
+                <CardContent className="py-10">
+                  <EmptyState
+                    title="No floor plans yet"
+                    description="Add your first configuration to show area and price breakdowns."
+                  />
                 </CardContent>
               </Card>
+            </motion.div>
+          ) : (
+            floorPlans.map((plan, index) => (
+              <motion.div key={plan.id ?? `new-${index}`} {...cardMotion(index + 1)}>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <CardTitle className="text-base">
+                      Floor plan {index + 1}
+                    </CardTitle>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-600"
+                      onClick={() =>
+                        setFloorPlans((prev) => prev.filter((_, i) => i !== index))
+                      }
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="grid gap-4 sm:grid-cols-3">
+                    <div className="space-y-2 sm:col-span-2">
+                      <Label>Name</Label>
+                      <Input
+                        value={plan.name}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setFloorPlans((prev) =>
+                            prev.map((p, i) =>
+                              i === index ? { ...p, name: v } : p,
+                            ),
+                          );
+                        }}
+                        placeholder="3 BHK Type 1"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>BHK label</Label>
+                      <Input
+                        value={plan.bhk_label}
+                        onChange={(e) => {
+                          const v = e.target.value;
+                          setFloorPlans((prev) =>
+                            prev.map((p, i) =>
+                              i === index ? { ...p, bhk_label: v } : p,
+                            ),
+                          );
+                        }}
+                        placeholder="3 BHK"
+                      />
+                    </div>
+                    {(
+                      [
+                        ["rooms", "Rooms"],
+                        ["balcony", "Balcony"],
+                        ["bathroom", "Bathroom"],
+                        ["servant_room", "Servant room"],
+                        ["area_sqft", "Area sq.ft."],
+                        ["area_sqyd", "Area sq.yd."],
+                        ["area_sqmt", "Area sq.mt."],
+                        ["price_label", "Price"],
+                      ] as const
+                    ).map(([key, label]) => (
+                      <div key={key} className="space-y-2">
+                        <Label>{label}</Label>
+                        <Input
+                          value={plan[key]}
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            setFloorPlans((prev) =>
+                              prev.map((p, i) =>
+                                i === index ? { ...p, [key]: v } : p,
+                              ),
+                            );
+                          }}
+                          placeholder={key === "price_label" ? "1.45 Cr.*" : ""}
+                        />
+                      </div>
+                    ))}
+                    <div className="space-y-2 sm:col-span-3">
+                      <Label>Floor plan image</Label>
+                      <div className="max-w-xs">
+                        <ImageUploadField
+                          previewUrl={plan.image_url}
+                          placeholder={
+                            <ImagePlus className="h-6 w-6 text-slate-400" />
+                          }
+                          accept={ACCEPT_IMG}
+                          emptyLabel="Upload floor plan"
+                          aspect="wide"
+                          onPick={(file) => void handleFloorPlanUpload(index, file)}
+                          onRemove={() => {
+                            setFloorPlans((prev) =>
+                              prev.map((p, i) =>
+                                i === index
+                                  ? {
+                                      ...p,
+                                      image_url: null,
+                                      cloudinary_public_id: null,
+                                    }
+                                  : p,
+                              ),
+                            );
+                          }}
+                          onPreview={
+                            plan.image_url
+                              ? () => setPreviewImage(plan.image_url as string)
+                              : undefined
+                          }
+                        />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))
           )}
         </TabsContent>
 
         {/* MEDIA */}
         <TabsContent value="media" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-base">Gallery photos</CardTitle>
-              <div>
-                <input
-                  ref={galleryInputRef}
-                  type="file"
-                  accept={ACCEPT_IMG}
-                  multiple
-                  className="hidden"
-                  onChange={(e) => {
-                    void handleGalleryUpload(e.target.files);
-                    e.target.value = "";
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={uploadingGallery}
-                  onClick={() => galleryInputRef.current?.click()}
-                >
-                  {uploadingGallery ? "Uploading…" : "Add photos"}
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent>
-              {detail.media.length === 0 ? (
-                <p className="py-8 text-center text-sm text-slate-500">
-                  No gallery images yet.
-                </p>
-              ) : (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-                  {detail.media.map((m) => (
-                    <div
-                      key={m.id}
-                      className="group relative aspect-[4/3] overflow-hidden rounded-xl border border-slate-200"
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={m.image_url}
-                        alt=""
-                        className="size-full object-cover"
-                      />
-                      <button
-                        type="button"
-                        className="absolute top-2 right-2 rounded-full bg-white/90 p-1 text-red-600 opacity-0 shadow transition-opacity group-hover:opacity-100"
-                        onClick={() => {
-                          void deletePropertyMedia(m.id).then(() => {
-                            setDetail((prev) =>
-                              prev
-                                ? {
-                                    ...prev,
-                                    media: prev.media.filter((x) => x.id !== m.id),
-                                  }
-                                : prev,
-                            );
-                          });
-                        }}
-                      >
-                        <X className="size-3.5" />
-                      </button>
-                    </div>
-                  ))}
+          <motion.div {...cardMotion(0)}>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Gallery photos</CardTitle>
+                <div>
+                  <input
+                    ref={galleryInputRef}
+                    type="file"
+                    accept={ACCEPT_IMG}
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      void handleGalleryUpload(e.target.files);
+                      e.target.value = "";
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    loading={uploadingGallery}
+                    onClick={() => galleryInputRef.current?.click()}
+                  >
+                    {!uploadingGallery && <ImagePlus className="size-4" />}
+                    {uploadingGallery ? "Uploading…" : "Add photos"}
+                  </Button>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                {detail.media.length === 0 ? (
+                  <EmptyState
+                    icon={ImagePlus}
+                    title="No gallery images yet"
+                    description="Upload photos to build out the property gallery."
+                  />
+                ) : (
+                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                    {detail.media.map((m) => (
+                      <div
+                        key={m.id}
+                        className="group relative aspect-4/3 overflow-hidden rounded-2xl border border-slate-200 shadow-[0_1px_2px_rgba(16,25,46,0.03)]"
+                      >
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={m.image_url}
+                          alt=""
+                          className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center gap-2 bg-black/0 opacity-0 transition-all duration-200 group-hover:bg-black/40 group-hover:opacity-100">
+                          <button
+                            type="button"
+                            className="rounded-full bg-white/90 p-1.5 text-slate-700 shadow transition-colors hover:bg-white"
+                            onClick={() => setPreviewImage(m.image_url)}
+                            aria-label="Preview image"
+                          >
+                            <Eye className="size-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            className="rounded-full bg-white/90 p-1.5 text-red-600 shadow transition-colors hover:bg-white"
+                            onClick={() => {
+                              void deletePropertyMedia(m.id).then(() => {
+                                setDetail((prev) =>
+                                  prev
+                                    ? {
+                                        ...prev,
+                                        media: prev.media.filter(
+                                          (x) => x.id !== m.id,
+                                        ),
+                                      }
+                                    : prev,
+                                );
+                              });
+                            }}
+                            aria-label="Remove image"
+                          >
+                            <X className="size-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         </TabsContent>
 
         {/* AMENITIES */}
         <TabsContent value="amenities">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Select amenities</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {amenities.length === 0 ? (
-                <p className="text-sm text-slate-500">
-                  No amenities in master list.{" "}
-                  <Link
-                    href="/customization/amenities"
-                    className="underline underline-offset-2"
-                  >
-                    Add amenities
-                  </Link>
-                  .
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {amenities.map((a) => {
-                    const on = selectedAmenityIds.includes(a.id);
-                    return (
-                      <button
+          <motion.div {...cardMotion(0)}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Select amenities</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {amenities.length === 0 ? (
+                  <AlertBanner variant="info">
+                    No amenities in master list.{" "}
+                    <Link
+                      href="/customization/amenities"
+                      className="font-medium underline underline-offset-2"
+                    >
+                      Add amenities
+                    </Link>
+                    .
+                  </AlertBanner>
+                ) : (
+                  <ChipGroup>
+                    {amenities.map((a) => (
+                      <ChipToggle
                         key={a.id}
-                        type="button"
+                        selected={selectedAmenityIds.includes(a.id)}
                         onClick={() =>
                           toggleMulti(
                             selectedAmenityIds,
@@ -1298,101 +1340,109 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                             setSelectedAmenityIds,
                           )
                         }
-                        className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${
-                          on
-                            ? "border-[#1a2744] bg-[#1a2744] text-white"
-                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-                        }`}
                       >
                         {a.title}
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                      </ChipToggle>
+                    ))}
+                  </ChipGroup>
+                )}
+              </CardContent>
+            </Card>
+          </motion.div>
         </TabsContent>
 
         {/* CONTENT */}
         <TabsContent value="content" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Why this project</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Label className="mb-2 block text-slate-500">
-                One highlight per line
-              </Label>
-              <textarea
-                value={highlightsText}
-                onChange={(e) => setHighlightsText(e.target.value)}
-                rows={6}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#1a2744]/20"
-                placeholder={
-                  "Club-Class Amenities: …\nPrime Location with easy access to …\nLuxury Redefined: …"
-                }
-              />
-            </CardContent>
-          </Card>
+          <motion.div {...cardMotion(0)}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Why this project</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Label className="mb-2 block text-slate-500">
+                  One highlight per line
+                </Label>
+                <Textarea
+                  value={highlightsText}
+                  onChange={(e) => setHighlightsText(e.target.value)}
+                  rows={6}
+                  placeholder={
+                    "Club-Class Amenities: …\nPrime Location with easy access to …\nLuxury Redefined: …"
+                  }
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Specifications</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Label className="mb-2 block text-slate-500">
-                One specification per line
-              </Label>
-              <textarea
-                value={specsText}
-                onChange={(e) => setSpecsText(e.target.value)}
-                rows={6}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#1a2744]/20"
-                placeholder={
-                  "Bedrooms: Wooden finish vitrified tiles\nDouble Height Balcony and Infinity Swimming Pool\n21 Storey"
-                }
-              />
-            </CardContent>
-          </Card>
+          <motion.div {...cardMotion(1)}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Specifications</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Label className="mb-2 block text-slate-500">
+                  One specification per line
+                </Label>
+                <Textarea
+                  value={specsText}
+                  onChange={(e) => setSpecsText(e.target.value)}
+                  rows={6}
+                  placeholder={
+                    "Bedrooms: Wooden finish vitrified tiles\nDouble Height Balcony and Infinity Swimming Pool\n21 Storey"
+                  }
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">FAQs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Label className="mb-2 block text-slate-500">
-                Question on first line, answer on next line(s). Separate FAQs
-                with a blank line.
-              </Label>
-              <textarea
-                value={faqsText}
-                onChange={(e) => setFaqsText(e.target.value)}
-                rows={10}
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-[#1a2744]/20"
-                placeholder={
-                  "What is The Privilon location?\nThe Privilon is located in Kudasan, Gandhinagar, Gujarat.\n\nWhat is the possession timeline?\nReady for possession by December 2027"
-                }
-              />
-            </CardContent>
-          </Card>
+          <motion.div {...cardMotion(2)}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">FAQs</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Label className="mb-2 block text-slate-500">
+                  Question on first line, answer on next line(s). Separate FAQs
+                  with a blank line.
+                </Label>
+                <Textarea
+                  value={faqsText}
+                  onChange={(e) => setFaqsText(e.target.value)}
+                  rows={10}
+                  placeholder={
+                    "What is The Privilon location?\nThe Privilon is located in Kudasan, Gandhinagar, Gujarat.\n\nWhat is the possession timeline?\nReady for possession by December 2027"
+                  }
+                />
+              </CardContent>
+            </Card>
+          </motion.div>
         </TabsContent>
       </Tabs>
 
-      <div className="sticky bottom-4 z-10 flex justify-end">
-        <Button
-          className="gap-2 shadow-lg"
-          disabled={saving}
-          onClick={() => void handleSave()}
-        >
-          {saving ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <Save className="size-4" />
-          )}
-          {saving ? "Saving…" : "Save all changes"}
-        </Button>
-      </div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        className="sticky bottom-4 z-10 flex justify-end"
+      >
+        <div className="glass-card flex items-center gap-3 rounded-2xl p-2 shadow-[0_8px_30px_rgba(16,25,46,0.14)]">
+          <Button
+            className="gap-2"
+            loading={saving}
+            onClick={() => void handleSave()}
+          >
+            {!saving && <Save className="size-4" />}
+            {saving ? "Saving…" : "Save all changes"}
+          </Button>
+        </div>
+      </motion.div>
+
+      {previewImage && (
+        <ImagePreviewOverlay
+          src={previewImage}
+          onClose={() => setPreviewImage(null)}
+        />
+      )}
     </div>
   );
 }

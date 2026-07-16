@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import {
   Check,
   Inbox,
-  Loader2,
   Plus,
   Search,
   Star,
@@ -17,6 +16,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ActionsDropdown } from "@/components/ui/actions-dropdown";
+import { AlertBanner } from "@/components/ui/alert-banner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CardGridSkeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -72,29 +74,9 @@ export function AmenitiesPageContent() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    void listAmenities()
-      .then((rows) => {
-        if (cancelled) return;
-        setItems(rows);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load amenities. Run 005_amenities.sql and 012_amenities_is_default.sql in Supabase.",
-        );
-        setItems([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadItems();
+  }, [loadItems]);
 
   const filtered = useMemo(
     () =>
@@ -244,7 +226,7 @@ export function AmenitiesPageContent() {
 
   return (
     <>
-      <Card className="overflow-hidden border-slate-200/70 bg-white/90 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+      <Card className="overflow-hidden">
         <CardHeader className="gap-4 border-b border-slate-100/80 bg-gradient-to-b from-slate-50/80 to-white px-4 py-4 sm:px-6 sm:py-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
@@ -316,21 +298,21 @@ export function AmenitiesPageContent() {
           </div>
 
           {selectMode && (
-            <div className="flex flex-col gap-3 rounded-2xl border border-[#1a2744]/10 bg-[#1a2744]/3 px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+            <div className="flex flex-col gap-3 rounded-2xl border border-[#16233f]/10 bg-[#16233f]/[0.03] px-3 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-4">
               <div className="min-w-0 space-y-1">
-                <p className="text-sm font-semibold text-[#1a2744]">
+                <p className="text-sm font-semibold text-[#16233f]">
                   {selectMode === "set"
                     ? "Select amenities to mark as default"
                     : "Select default amenities to remove"}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[#1a2744] shadow-sm ring-1 ring-slate-200">
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-[#16233f] shadow-sm ring-1 ring-slate-200">
                     <Check className="h-3.5 w-3.5" />
                     {selectedCount} selected
                   </span>
                   <button
                     type="button"
-                    className="cursor-pointer text-xs font-semibold text-[#1a2744] underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
+                    className="cursor-pointer text-xs font-semibold text-[#16233f] underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={
                       allSelectableSelected
                         ? clearSelection
@@ -362,7 +344,7 @@ export function AmenitiesPageContent() {
 
         <CardContent className="p-3 sm:p-5">
           {error && (
-            <div className="mb-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <AlertBanner variant="warning" className="mb-4">
               {error}
               <button
                 type="button"
@@ -371,36 +353,46 @@ export function AmenitiesPageContent() {
               >
                 Retry
               </button>
-            </div>
+            </AlertBanner>
           )}
 
           {loading ? (
-            <p className="py-16 text-center text-sm text-slate-500">
-              Loading amenities...
-            </p>
+            <CardGridSkeleton items={12} />
           ) : filtered.length === 0 ? (
-            <EmptyState onAdd={() => setAddOpen(true)} />
+            <EmptyState
+              icon={Inbox}
+              title="No amenities yet"
+              description="Add premium amenities with clear icons for your listings."
+              action={
+                <Button className="cursor-pointer" onClick={() => setAddOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Add Amenity
+                </Button>
+              }
+            />
           ) : selectMode && selectableFiltered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center px-4 py-14 text-center">
-              <p className="text-sm font-semibold text-slate-800">
-                {selectMode === "set"
+            <EmptyState
+              title={
+                selectMode === "set"
                   ? "No amenities left to set as default"
-                  : "No default amenities to unset"}
-              </p>
-              <p className="mt-1 max-w-sm text-sm text-slate-500">
-                {selectMode === "set"
+                  : "No default amenities to unset"
+              }
+              description={
+                selectMode === "set"
                   ? "Everything matching your search is already marked default."
-                  : "Nothing matching your search is currently marked default."}
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-4 cursor-pointer"
-                onClick={exitSelectMode}
-              >
-                Done
-              </Button>
-            </div>
+                  : "Nothing matching your search is currently marked default."
+              }
+              action={
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="cursor-pointer"
+                  onClick={exitSelectMode}
+                >
+                  Done
+                </Button>
+              }
+            />
           ) : (
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
               {(selectMode ? selectableFiltered : filtered).map(
@@ -420,7 +412,7 @@ export function AmenitiesPageContent() {
                         "amenity-cube group relative flex aspect-square flex-col items-center justify-center rounded-2xl px-2.5 pb-3 pt-4 text-center transition-all duration-200 hover:-translate-y-0.5",
                         selectMode && "cursor-pointer",
                         selected &&
-                          "ring-2 ring-[#1a2744] ring-offset-2 ring-offset-white",
+                          "ring-2 ring-[#16233f] ring-offset-2 ring-offset-white",
                       )}
                     >
                       {selectMode ? (
@@ -438,8 +430,8 @@ export function AmenitiesPageContent() {
                           className={cn(
                             "absolute left-2 top-2 z-10 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md border transition-colors",
                             selected
-                              ? "border-[#1a2744] bg-[#1a2744] text-white"
-                              : "border-slate-300 bg-white text-transparent hover:border-[#1a2744]/50",
+                              ? "border-[#16233f] bg-[#16233f] text-white"
+                              : "border-slate-300 bg-white text-transparent hover:border-[#16233f]/50",
                           )}
                         >
                           <Check className="h-3.5 w-3.5" />
@@ -476,10 +468,7 @@ export function AmenitiesPageContent() {
                           {item.status}
                         </Badge>
                         {item.is_default && !selectMode && (
-                          <Badge
-                            variant="secondary"
-                            className="gap-1 text-[10px] text-[#1a2744]"
-                          >
+                          <Badge variant="premium" className="gap-1 text-[10px]">
                             <Star className="h-2.5 w-2.5 fill-current" />
                             Default
                           </Badge>
@@ -533,7 +522,7 @@ export function AmenitiesPageContent() {
               variant="destructive"
               className="cursor-pointer"
               onClick={() => void handleDelete()}
-              disabled={deleting}
+              loading={deleting}
             >
               {deleting ? "Deleting..." : "Delete"}
             </Button>
@@ -583,38 +572,13 @@ export function AmenitiesPageContent() {
             <Button
               className="cursor-pointer"
               onClick={() => void confirmAndSave()}
-              disabled={bulkSaving}
+              loading={bulkSaving}
             >
-              {bulkSaving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Confirm"
-              )}
+              {bulkSaving ? "Saving..." : "Confirm"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-function EmptyState({ onAdd }: { onAdd: () => void }) {
-  return (
-    <div className="flex flex-col items-center justify-center px-4 py-14 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-400 shadow-sm">
-        <Inbox className="h-5 w-5" />
-      </div>
-      <p className="text-sm font-semibold text-slate-800">No amenities yet</p>
-      <p className="mt-1 max-w-xs text-sm text-slate-500">
-        Add premium amenities with clear icons for your listings.
-      </p>
-      <Button className="mt-4 cursor-pointer" onClick={onAdd}>
-        <Plus className="h-4 w-4" />
-        Add Amenity
-      </Button>
-    </div>
   );
 }

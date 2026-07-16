@@ -219,14 +219,14 @@ function LoginFormContent() {
               <div className="flex items-center gap-3">
                 <Link
                   href="/forgot-password"
-                  className="auth-link text-[10px] font-semibold uppercase tracking-[0.1em]"
+                  className="auth-link text-[11px] font-semibold uppercase tracking-[0.1em]"
                 >
                   Forgot?
                 </Link>
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="cursor-pointer text-slate-400 transition-colors hover:text-slate-600"
+                  className="cursor-pointer text-slate-500 transition-colors hover:text-slate-700"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -242,10 +242,10 @@ function LoginFormContent() {
           <label className="flex cursor-pointer items-center gap-2.5">
             <input
               type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 accent-[#1a2744]"
+              className="h-4 w-4 rounded border-slate-300 accent-[#16233f]"
               {...register("remember")}
             />
-            <span className="text-sm text-slate-500">Keep me signed in</span>
+            <span className="text-sm text-slate-600">Keep me signed in</span>
           </label>
 
           {infoMessage && (
@@ -270,28 +270,25 @@ function LoginFormContent() {
           </button>
         </form>
 
-        <div className="relative my-6">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200/80" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase tracking-wider">
-            <span className="bg-white/80 px-3 text-slate-400">or</span>
-          </div>
+        <div className="relative my-7 flex items-center gap-3">
+          <div className="h-px flex-1 bg-gradient-to-r from-transparent to-slate-200" />
+          <span className="text-[13px] font-medium text-slate-500">or</span>
+          <div className="h-px flex-1 bg-gradient-to-l from-transparent to-slate-200" />
         </div>
 
         <button
           type="button"
           onClick={() => void signInWithGoogle()}
           disabled={googleLoading}
-          className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white py-3.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-60"
+          className="flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-xl border border-slate-200 bg-white py-3.5 text-sm font-medium text-slate-700 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 hover:shadow-md active:scale-[0.99] disabled:opacity-60"
         >
           <GoogleIcon className="h-5 w-5" />
-          {googleLoading ? "Redirecting…" : "Continue with Google"}
+          {googleLoading ? "Redirecting…" : "Sign in with Google"}
         </button>
 
-        <p className="mt-6 text-center text-sm text-slate-500">
+        <p className="mt-6 text-center text-sm text-slate-600">
           New associate?{" "}
-          <span className="font-semibold text-slate-700">
+          <span className="font-semibold text-slate-800">
             Contact Administration
           </span>
         </p>
@@ -305,7 +302,7 @@ function LoginFormContent() {
       >
         <DialogContent className="max-w-sm text-center sm:text-left">
           <DialogHeader className="items-center sm:items-start">
-            <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-[#1a2744]">
+            <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-[#16233f]">
               <UserX className="h-6 w-6" />
             </div>
             <DialogTitle className="text-xl">

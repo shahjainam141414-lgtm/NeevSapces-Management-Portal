@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Eye,
   ImagePlus,
-  Loader2,
   Pencil,
   RefreshCw,
   Trash2,
@@ -15,6 +14,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { AlertBanner } from "@/components/ui/alert-banner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -22,13 +24,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ImageUploadField } from "@/components/ui/image-upload-field";
 import { clearMainBanner, getMainBanner, upsertMainBanner } from "@/lib/banners-api";
 import {
   isCloudinaryConfigured,
   uploadToCloudinary,
 } from "@/lib/cloudinary";
 import type { SiteBanner } from "@/lib/banners";
-import { cn } from "@/lib/utils";
+import { useRemountKey } from "@/hooks/use-remount-key";
 
 const ACCEPT = "image/jpeg,image/png,image/webp,image/jpg";
 const MAX_MB = 5;
@@ -59,28 +62,9 @@ export function MainBannerPageContent() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    void getMainBanner()
-      .then((row) => {
-        if (cancelled) return;
-        setBanner(row);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load banner. Run the site_banners SQL migration first.",
-        );
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void load();
+  }, [load]);
 
   const handleSaved = (saved: SiteBanner) => {
     setBanner(saved);
@@ -102,7 +86,7 @@ export function MainBannerPageContent() {
 
   return (
     <>
-      <Card className="overflow-hidden border-slate-200/70 bg-white/90 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+      <Card className="overflow-hidden">
         <CardHeader className="flex flex-col gap-4 border-b border-slate-100/80 bg-gradient-to-b from-slate-50/80 to-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div>
             <CardTitle className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
@@ -113,7 +97,7 @@ export function MainBannerPageContent() {
             </p>
           </div>
           <Button
-            className="h-10 w-full cursor-pointer sm:w-auto"
+            className="h-10 w-full sm:w-auto"
             onClick={() => setEditorOpen(true)}
           >
             {banner ? (
@@ -132,7 +116,7 @@ export function MainBannerPageContent() {
 
         <CardContent className="space-y-4 p-4 sm:p-6">
           {!isCloudinaryConfigured() && (
-            <div className="rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <AlertBanner variant="warning">
               Cloudinary env vars are missing. You can still pick and preview images
               locally; upload will work after you add{" "}
               <code className="rounded bg-amber-100 px-1 text-xs">
@@ -143,11 +127,11 @@ export function MainBannerPageContent() {
                 NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
               </code>
               .
-            </div>
+            </AlertBanner>
           )}
 
           {error && (
-            <div className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <AlertBanner variant="error">
               {error}
               <button
                 type="button"
@@ -156,14 +140,11 @@ export function MainBannerPageContent() {
               >
                 Retry
               </button>
-            </div>
+            </AlertBanner>
           )}
 
           {loading ? (
-            <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 text-sm text-slate-500 sm:h-64">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading banner...
-            </div>
+            <Skeleton className="aspect-[21/9] w-full rounded-2xl sm:aspect-[3/1]" />
           ) : banner ? (
             <div className="space-y-3">
               <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
@@ -182,7 +163,7 @@ export function MainBannerPageContent() {
                     type="button"
                     variant="secondary"
                     size="sm"
-                    className="cursor-pointer bg-white/95"
+                    className="bg-white/95"
                     onClick={() => setLightboxOpen(true)}
                   >
                     <Eye className="h-3.5 w-3.5" />
@@ -191,7 +172,6 @@ export function MainBannerPageContent() {
                   <Button
                     type="button"
                     size="sm"
-                    className="cursor-pointer"
                     onClick={() => setEditorOpen(true)}
                   >
                     <RefreshCw className="h-3.5 w-3.5" />
@@ -207,7 +187,7 @@ export function MainBannerPageContent() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="cursor-pointer text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
                   onClick={() => void handleRemove()}
                   disabled={removing}
                 >
@@ -220,20 +200,19 @@ export function MainBannerPageContent() {
             <button
               type="button"
               onClick={() => setEditorOpen(true)}
-              className="flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 px-4 py-14 text-center transition-colors hover:border-[#1a2744]/35 hover:bg-slate-50 sm:py-20"
+              className="w-full cursor-pointer text-left"
             >
-              <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-                <ImagePlus className="h-5 w-5 text-slate-500" />
-              </div>
-              <p className="text-sm font-semibold text-slate-800">
-                No main banner yet
-              </p>
-              <p className="mt-1 max-w-sm text-sm text-slate-500">
-                Upload a wide website banner image for the homepage hero.
-              </p>
-              <span className="mt-4 inline-flex h-10 items-center rounded-lg bg-[#1a2744] px-4 text-sm font-medium text-white">
-                Add Banner
-              </span>
+              <EmptyState
+                icon={ImagePlus}
+                title="No main banner yet"
+                description="Upload a wide website banner image for the homepage hero."
+                className="py-14 transition-colors duration-200 hover:border-[#16233f]/35 hover:bg-slate-50 sm:py-20"
+                action={
+                  <span className="inline-flex h-10 items-center rounded-lg bg-[#16233f] px-4 text-sm font-medium text-white">
+                    Add Banner
+                  </span>
+                }
+              />
             </button>
           )}
         </CardContent>
@@ -278,13 +257,7 @@ function BannerEditorDialog({
   currentUrl,
   onSaved,
 }: BannerEditorDialogProps) {
-  const [wasOpen, setWasOpen] = useState(open);
-  const [formKey, setFormKey] = useState(0);
-
-  if (open !== wasOpen) {
-    setWasOpen(open);
-    if (open) setFormKey((k) => k + 1);
-  }
+  const formKey = useRemountKey(open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -305,7 +278,6 @@ function BannerEditorFields({
   onOpenChange,
   onSaved,
 }: Omit<BannerEditorDialogProps, "open">) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fullPreview, setFullPreview] = useState(false);
@@ -334,12 +306,14 @@ function BannerEditorFields({
     setPreviewUrl(URL.createObjectURL(next));
   };
 
-  const handleClose = () => {
-    onOpenChange(false);
+  const removeFile = () => {
+    setFile(null);
+    if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
+    setPreviewUrl(null);
   };
 
-  const handleChange = () => {
-    inputRef.current?.click();
+  const handleClose = () => {
+    onOpenChange(false);
   };
 
   const handleSave = async () => {
@@ -382,121 +356,49 @@ function BannerEditorFields({
         </div>
 
         <div className="space-y-4 px-5 py-5 sm:px-6">
-            <input
-              ref={inputRef}
-              type="file"
-              accept={ACCEPT}
-              className="sr-only"
-              onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
-            />
+          <ImageUploadField
+            previewUrl={shown}
+            placeholder={<Upload className="h-6 w-6 text-slate-400" />}
+            fileName={file ? `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB` : null}
+            accept={ACCEPT}
+            disabled={saving}
+            aspect="wide"
+            emptyLabel="Click to upload image"
+            hint={`JPG, PNG, WebP · max ${MAX_MB}MB · 1920×640 recommended`}
+            onPick={pickFile}
+            onRemove={removeFile}
+            onPreview={() => setFullPreview(true)}
+          />
 
-            {!shown ? (
-              <button
-                type="button"
-                onClick={handleChange}
-                className={cn(
-                  "flex w-full cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-12 transition-colors hover:border-[#1a2744]/40 hover:bg-slate-50",
-                )}
-              >
-                <Upload className="mb-2 h-6 w-6 text-slate-400" />
-                <p className="text-sm font-medium text-slate-800">
-                  Click to upload image
-                </p>
-                <p className="mt-1 text-xs text-slate-500">
-                  JPG, PNG, WebP · max {MAX_MB}MB · 1920×640 recommended
-                </p>
-              </button>
-            ) : (
-              <div className="space-y-3">
-                <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100">
-                  <div className="relative aspect-[21/9] w-full">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={shown}
-                      alt="Selected banner preview"
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                </div>
+          {formError && <AlertBanner variant="error">{formError}</AlertBanner>}
 
-                {file && (
-                  <p className="truncate text-xs text-slate-500">
-                    {file.name} · {(file.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                )}
-
-                <div className="grid grid-cols-3 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="cursor-pointer"
-                    onClick={handleClose}
-                    disabled={saving}
-                  >
-                    <X className="h-4 w-4" />
-                    Close
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="cursor-pointer"
-                    onClick={() => setFullPreview(true)}
-                    disabled={saving}
-                  >
-                    <Eye className="h-4 w-4" />
-                    Preview
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    className="cursor-pointer"
-                    onClick={handleChange}
-                    disabled={saving}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Change
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {formError && (
-              <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-xs text-red-600">
-                {formError}
-              </p>
-            )}
-
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                className="cursor-pointer"
-                onClick={handleClose}
-                disabled={saving}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="button"
-                className="cursor-pointer"
-                onClick={() => void handleSave()}
-                disabled={saving || !file}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="h-4 w-4" />
-                    Save Banner
-                  </>
-                )}
-              </Button>
-            </div>
+          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleSave()}
+              disabled={!file}
+              loading={saving}
+            >
+              {saving ? (
+                "Uploading..."
+              ) : (
+                <>
+                  <Upload className="h-4 w-4" />
+                  Save Banner
+                </>
+              )}
+            </Button>
           </div>
-        </DialogContent>
+        </div>
+      </DialogContent>
 
       <AnimatePresence>
         {fullPreview && shown && (

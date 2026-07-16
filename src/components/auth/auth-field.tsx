@@ -27,14 +27,14 @@ export function AuthField({
       <div className="flex items-center justify-between">
         <label
           htmlFor={id}
-          className="text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500"
+          className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-600"
         >
           {label}
         </label>
         {rightElement}
       </div>
       <div className="auth-input-glass relative flex items-center gap-2.5 rounded-xl px-3.5 py-1">
-        <Icon className="h-4 w-4 shrink-0 text-slate-400" />
+        <Icon className="h-4 w-4 shrink-0 text-slate-500" />
         <input
           id={id}
           type={type}

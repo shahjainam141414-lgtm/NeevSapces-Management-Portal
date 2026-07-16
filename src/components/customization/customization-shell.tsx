@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { customizationTabs } from "@/lib/nav-config";
+import { PageHeader } from "@/components/ui/page-header";
 
 export function CustomizationShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,12 +17,10 @@ export function CustomizationShell({ children }: { children: React.ReactNode }) 
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h2 className="text-xl font-semibold tracking-tight text-slate-900 sm:text-2xl">
-          Customization
-        </h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Areas, properties, banners, builders, amenities, and more
-        </p>
+        <PageHeader
+          title="Customization"
+          description="Areas, properties, banners, builders, amenities, and more"
+        />
       </motion.div>
 
       <div className="relative -mx-1 px-1">
@@ -43,7 +42,7 @@ export function CustomizationShell({ children }: { children: React.ReactNode }) 
                 {isActive && (
                   <motion.span
                     layoutId="customization-tab"
-                    className="absolute inset-0 rounded-xl bg-[#1a2744] shadow-md shadow-[#1a2744]/20"
+                    className="absolute inset-0 rounded-xl bg-[#16233f] shadow-[0_6px_18px_rgba(22,35,63,0.28),inset_0_1px_0_rgba(255,255,255,0.16)]"
                     transition={{ type: "spring", stiffness: 400, damping: 30 }}
                   />
                 )}

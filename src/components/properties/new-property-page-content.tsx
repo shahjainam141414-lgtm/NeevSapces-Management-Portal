@@ -3,11 +3,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Loader2, MapPin } from "lucide-react";
+import { motion } from "framer-motion";
+import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/ui/page-header";
+import { AlertBanner } from "@/components/ui/alert-banner";
 import {
   Select,
   SelectContent,
@@ -108,128 +111,126 @@ export function NewPropertyPageContent() {
             Back to properties
           </Link>
         </Button>
-        <h1 className="text-2xl font-semibold tracking-tight text-[#1a2744]">
-          Add property
-        </h1>
-        <p className="mt-1 text-sm text-slate-500">
-          Step 1 — select the area, then enter the project name. Full details
-          (gallery, rate card, floor plans, RERA, etc.) come next.
-        </p>
+        <PageHeader
+          eyebrow="New listing"
+          title="Add property"
+          description="Step 1 — select the area, then enter the project name. Full details (gallery, rate card, floor plans, RERA, etc.) come next."
+        />
       </div>
 
-      <Card className="border-slate-200/80 shadow-sm">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-medium">
-            <MapPin className="size-4 text-[#1a2744]" />
-            Location &amp; identity
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-5">
-          {error ? (
-            <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </p>
-          ) : null}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+      >
+        <Card className="border-slate-200/80 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base font-medium">
+              <MapPin className="size-4 text-[#16233f]" />
+              Location &amp; identity
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
 
-          <div className="space-y-2">
-            <Label htmlFor="area">
-              Area <span className="text-red-500">*</span>
-            </Label>
-            {loadingAreas ? (
-              <p className="text-sm text-slate-500">Loading areas…</p>
-            ) : areas.length === 0 ? (
-              <p className="text-sm text-amber-700">
-                No active areas found.{" "}
-                <Link
-                  href="/customization/areas"
-                  className="font-medium underline underline-offset-2"
-                >
-                  Add an area
-                </Link>{" "}
-                first, then come back.
-              </p>
-            ) : (
-              <Select
-                value={areaId || undefined}
-                onValueChange={handleAreaChange}
-              >
-                <SelectTrigger id="area" className="w-full">
-                  <SelectValue placeholder="Select area (e.g. Kudasan)" />
-                </SelectTrigger>
-                <SelectContent>
-                  {areas.map((area) => (
-                    <SelectItem key={area.id} value={area.id}>
-                      {area.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="title">
-              Project / property name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. The Privilon"
-              disabled={!areaId}
-            />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="locality">Locality</Label>
-              <Input
-                id="locality"
-                value={locality}
-                onChange={(e) => setLocality(e.target.value)}
-                placeholder="Locality within area"
-                disabled={!areaId}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
-              <Input
-                id="city"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                disabled={!areaId}
-              />
-            </div>
-          </div>
-
-          {previewSlug ? (
-            <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-              URL slug preview:{" "}
-              <span className="font-mono text-[#1a2744]">/{previewSlug}</span>
-            </div>
-          ) : null}
-
-          <div className="flex justify-end pt-2">
-            <Button
-              className="gap-2 bg-[#1a2744] hover:bg-[#243356]"
-              disabled={!canContinue || submitting}
-              onClick={() => void handleCreate()}
-            >
-              {submitting ? (
-                <>
-                  <Loader2 className="size-4 animate-spin" />
-                  Creating…
-                </>
+              <Label htmlFor="area">
+                Area <span className="text-red-500">*</span>
+              </Label>
+              {loadingAreas ? (
+                <p className="text-sm text-slate-500">Loading areas…</p>
+              ) : areas.length === 0 ? (
+                <AlertBanner variant="warning">
+                  No active areas found.{" "}
+                  <Link
+                    href="/customization/areas"
+                    className="font-medium underline underline-offset-2"
+                  >
+                    Add an area
+                  </Link>{" "}
+                  first, then come back.
+                </AlertBanner>
               ) : (
-                <>
-                  Continue to details
-                  <ArrowRight className="size-4" />
-                </>
+                <Select
+                  value={areaId || undefined}
+                  onValueChange={handleAreaChange}
+                >
+                  <SelectTrigger id="area" className="w-full">
+                    <SelectValue placeholder="Select area (e.g. Kudasan)" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {areas.map((area) => (
+                      <SelectItem key={area.id} value={area.id}>
+                        {area.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="title">
+                Project / property name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. The Privilon"
+                disabled={!areaId}
+              />
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="locality">Locality</Label>
+                <Input
+                  id="locality"
+                  value={locality}
+                  onChange={(e) => setLocality(e.target.value)}
+                  placeholder="Locality within area"
+                  disabled={!areaId}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  disabled={!areaId}
+                />
+              </div>
+            </div>
+
+            {previewSlug ? (
+              <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+                URL slug preview:{" "}
+                <span className="font-mono text-[#16233f]">/{previewSlug}</span>
+              </div>
+            ) : null}
+
+            <div className="flex justify-end pt-2">
+              <Button
+                className="gap-2"
+                disabled={!canContinue}
+                loading={submitting}
+                onClick={() => void handleCreate()}
+              >
+                {submitting ? (
+                  "Creating…"
+                ) : (
+                  <>
+                    Continue to details
+                    <ArrowRight className="size-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }

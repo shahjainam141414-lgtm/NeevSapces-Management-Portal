@@ -34,7 +34,7 @@ export function Sidebar({
     <div className="flex h-full flex-col">
       <div
         className={cn(
-          "flex border-b border-slate-100 px-3 py-4",
+          "flex border-b border-slate-100/80 px-3 py-4",
           collapsed
             ? "flex-col items-center gap-3"
             : "items-center justify-between px-4 py-5",
@@ -44,7 +44,7 @@ export function Sidebar({
           href="/dashboard"
           onClick={onMobileClose}
           className={cn(
-            "flex flex-col",
+            "flex flex-col transition-opacity hover:opacity-80",
             collapsed ? "items-center" : "items-start",
           )}
         >
@@ -60,7 +60,8 @@ export function Sidebar({
             priority
           />
           {!collapsed && (
-            <span className="mt-1.5 text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+            <span className="mt-1.5 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-400">
+              <span className="h-[3px] w-[3px] rounded-full bg-[#16233f]/50" />
               Management Portal
             </span>
           )}
@@ -68,7 +69,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onToggle}
-          className="hidden rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 lg:inline-flex"
+          className="hidden cursor-pointer rounded-lg p-1.5 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-600 active:scale-90 lg:inline-flex"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
@@ -89,27 +90,42 @@ export function Sidebar({
               href={item.href}
               onClick={onMobileClose}
               className={cn(
-                "group flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-200",
-                active
-                  ? "bg-[#1a2744] text-white shadow-md shadow-[#1a2744]/15"
-                  : "text-slate-500 hover:bg-slate-50 hover:text-slate-800",
+                "group relative flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200",
+                active ? "text-white" : "text-slate-500 hover:text-slate-800",
                 collapsed && "justify-center px-2",
               )}
               title={collapsed ? item.title : undefined}
             >
+              {active && (
+                <motion.span
+                  layoutId="sidebar-active-pill"
+                  className="absolute inset-0 rounded-xl bg-[#16233f] shadow-[0_6px_18px_rgba(22,35,63,0.28)]"
+                  transition={{ type: "spring", stiffness: 400, damping: 34 }}
+                />
+              )}
+              {!active && (
+                <span className="absolute inset-0 rounded-xl bg-slate-50 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+              )}
               <Icon
                 className={cn(
-                  "h-[18px] w-[18px] shrink-0",
-                  active
-                    ? "text-white"
-                    : "text-slate-400 group-hover:text-slate-600",
+                  "relative z-10 h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110",
+                  active ? "text-white" : "text-slate-400 group-hover:text-slate-600",
                 )}
               />
-              {!collapsed && <span>{item.title}</span>}
+              {!collapsed && <span className="relative z-10">{item.title}</span>}
             </Link>
           );
         })}
       </nav>
+
+      <div
+        className={cn(
+          "border-t border-slate-100/80 px-4 py-3.5 text-[10px] font-medium text-slate-400",
+          collapsed && "px-2 text-center",
+        )}
+      >
+        {collapsed ? "©" : "© Neev Spaces · Admin"}
+      </div>
     </div>
   );
 
@@ -121,7 +137,8 @@ export function Sidebar({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-40 bg-slate-900/30 backdrop-blur-sm lg:hidden"
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-40 bg-[#0b1220]/40 backdrop-blur-sm lg:hidden"
             onClick={onMobileClose}
           />
         )}
@@ -129,9 +146,9 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 border-r border-slate-100 bg-white shadow-[2px_0_20px_rgba(15,23,42,0.04)] transition-all duration-300 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 border-r border-slate-100/80 bg-white shadow-[2px_0_24px_rgba(16,25,46,0.05)] transition-[width,transform] duration-300 ease-out lg:static lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
-          collapsed ? "lg:w-[72px]" : "lg:w-[260px]",
+          collapsed ? "lg:w-[76px]" : "lg:w-[260px]",
         )}
       >
         {sidebarContent}

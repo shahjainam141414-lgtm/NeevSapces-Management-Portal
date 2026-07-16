@@ -21,7 +21,7 @@ export function ActionsDropdown({ onEdit, onDelete }: ActionsDropdownProps) {
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 cursor-pointer rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
+          className="h-8 w-8 cursor-pointer rounded-lg text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 active:scale-95"
           aria-label="Open actions menu"
         >
           <MoreHorizontal className="h-4 w-4" />

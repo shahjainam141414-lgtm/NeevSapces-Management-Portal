@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ActionsDropdown } from "@/components/ui/actions-dropdown";
+import { AlertBanner } from "@/components/ui/alert-banner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { CardGridSkeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -54,29 +57,9 @@ export function BuildersPageContent() {
   }, []);
 
   useEffect(() => {
-    let cancelled = false;
-    void listBuilders()
-      .then((rows) => {
-        if (cancelled) return;
-        setItems(rows);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to load builders. Run 006_builders.sql in Supabase.",
-        );
-        setItems([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadItems();
+  }, [loadItems]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
@@ -140,7 +123,7 @@ export function BuildersPageContent() {
 
   return (
     <>
-      <Card className="overflow-hidden border-slate-200/70 bg-white/90 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+      <Card className="overflow-hidden">
         <CardHeader className="gap-4 border-b border-slate-100/80 bg-gradient-to-b from-slate-50/80 to-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div className="min-w-0">
             <CardTitle className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
@@ -172,7 +155,7 @@ export function BuildersPageContent() {
 
         <CardContent className="p-3 sm:p-5">
           {error && (
-            <div className="mb-4 rounded-xl border border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <AlertBanner variant="warning" className="mb-4">
               {error}
               <button
                 type="button"
@@ -181,15 +164,23 @@ export function BuildersPageContent() {
               >
                 Retry
               </button>
-            </div>
+            </AlertBanner>
           )}
 
           {loading ? (
-            <p className="py-16 text-center text-sm text-slate-500">
-              Loading builders...
-            </p>
+            <CardGridSkeleton items={10} />
           ) : filtered.length === 0 ? (
-            <EmptyState onAdd={() => setAddOpen(true)} />
+            <EmptyState
+              icon={Inbox}
+              title="No builders found"
+              description="Add builders with clear logos for your listings."
+              action={
+                <Button className="cursor-pointer" onClick={() => setAddOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  Add Builder
+                </Button>
+              }
+            />
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
               {filtered.map((item, index) => (
@@ -269,7 +260,7 @@ export function BuildersPageContent() {
               variant="destructive"
               className="cursor-pointer"
               onClick={() => void handleDelete()}
-              disabled={deleting}
+              loading={deleting}
             >
               {deleting ? "Deleting..." : "Delete"}
             </Button>
@@ -277,23 +268,5 @@ export function BuildersPageContent() {
         </DialogContent>
       </Dialog>
     </>
-  );
-}
-
-function EmptyState({ onAdd }: { onAdd: () => void }) {
-  return (
-    <div className="flex flex-col items-center justify-center px-4 py-14 text-center">
-      <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-slate-200 bg-white text-slate-400 shadow-sm">
-        <Inbox className="h-5 w-5" />
-      </div>
-      <p className="text-sm font-semibold text-slate-800">No builders found</p>
-      <p className="mt-1 max-w-xs text-sm text-slate-500">
-        Add builders with clear logos for your listings.
-      </p>
-      <Button className="mt-4 cursor-pointer" onClick={onAdd}>
-        <Plus className="h-4 w-4" />
-        Add Builder
-      </Button>
-    </div>
   );
 }

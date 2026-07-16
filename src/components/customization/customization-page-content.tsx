@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ActionsDropdown } from "@/components/ui/actions-dropdown";
+import { AlertBanner } from "@/components/ui/alert-banner";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Skeleton, TableSkeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -73,29 +76,9 @@ export function CustomizationPageContent({
   }, [optionType]);
 
   useEffect(() => {
-    let cancelled = false;
-    void listStaticOptions(optionType)
-      .then((rows) => {
-        if (cancelled) return;
-        setItems(rows);
-        setError(null);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        const message =
-          err instanceof Error
-            ? err.message
-            : "Failed to load data from Supabase";
-        setError(message);
-        setItems([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [optionType]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void loadItems();
+  }, [loadItems]);
 
   const filtered = items.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase()),
@@ -145,7 +128,7 @@ export function CustomizationPageContent({
 
   return (
     <>
-      <Card className="overflow-hidden border-slate-200/70 bg-white/90 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
+      <Card className="overflow-hidden">
         <CardHeader className="gap-4 border-b border-slate-100/80 bg-gradient-to-b from-slate-50/80 to-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
           <div className="min-w-0">
             <CardTitle className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
@@ -179,26 +162,30 @@ export function CustomizationPageContent({
 
         <CardContent className="p-0">
           {error && (
-            <div className="border-b border-amber-100 bg-amber-50 px-4 py-3 text-sm text-amber-800 sm:px-6">
-              {error}
-              <button
-                type="button"
-                className="ml-2 cursor-pointer font-semibold underline underline-offset-2"
-                onClick={() => void loadItems()}
-              >
-                Retry
-              </button>
+            <div className="px-4 pt-4 sm:px-6">
+              <AlertBanner variant="warning">
+                {error}
+                <button
+                  type="button"
+                  className="ml-2 cursor-pointer font-semibold underline underline-offset-2"
+                  onClick={() => void loadItems()}
+                >
+                  Retry
+                </button>
+              </AlertBanner>
             </div>
           )}
 
           {/* Mobile cards */}
           <div className="space-y-2.5 p-3 sm:hidden">
             {loading ? (
-              <p className="py-10 text-center text-sm text-slate-500">
-                Loading {title.toLowerCase()}...
-              </p>
+              <div className="space-y-2.5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-[60px] rounded-xl" />
+                ))}
+              </div>
             ) : filtered.length === 0 ? (
-              <EmptyState
+              <ListEmptyState
                 title={title}
                 entityLabel={entityLabel}
                 onAdd={() => setAddOpen(true)}
@@ -242,17 +229,14 @@ export function CustomizationPageContent({
               <tbody>
                 {loading ? (
                   <tr>
-                    <td
-                      colSpan={3}
-                      className="px-6 py-14 text-center text-slate-500"
-                    >
-                      Loading {title.toLowerCase()}...
+                    <td colSpan={3} className="p-0">
+                      <TableSkeleton rows={6} columns={3} />
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
                     <td colSpan={3} className="px-6 py-6">
-                      <EmptyState
+                      <ListEmptyState
                         title={title}
                         entityLabel={entityLabel}
                         onAdd={() => setAddOpen(true)}
@@ -330,7 +314,7 @@ export function CustomizationPageContent({
               variant="destructive"
               className="cursor-pointer"
               onClick={() => void handleDelete()}
-              disabled={deleting}
+              loading={deleting}
             >
               {deleting ? "Deleting..." : "Delete"}
             </Button>
@@ -341,7 +325,7 @@ export function CustomizationPageContent({
   );
 }
 
-function EmptyState({
+function ListEmptyState({
   title,
   entityLabel,
   onAdd,
@@ -351,20 +335,16 @@ function EmptyState({
   onAdd: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center justify-center px-4 py-10 text-center">
-      <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">
-        <Inbox className="h-5 w-5" />
-      </div>
-      <p className="text-sm font-medium text-slate-800">
-        No {title.toLowerCase()} yet
-      </p>
-      <p className="mt-1 max-w-xs text-sm text-slate-500">
-        Add your first {entityLabel.toLowerCase()} to start building listings.
-      </p>
-      <Button className="mt-4 cursor-pointer" onClick={onAdd}>
-        <Plus className="h-4 w-4" />
-        Add {entityLabel}
-      </Button>
-    </div>
+    <EmptyState
+      icon={Inbox}
+      title={`No ${title.toLowerCase()} yet`}
+      description={`Add your first ${entityLabel.toLowerCase()} to start building listings.`}
+      action={
+        <Button className="cursor-pointer" onClick={onAdd}>
+          <Plus className="h-4 w-4" />
+          Add {entityLabel}
+        </Button>
+      }
+    />
   );
 }

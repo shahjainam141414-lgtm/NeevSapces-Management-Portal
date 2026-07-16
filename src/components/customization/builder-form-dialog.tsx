@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { z } from "zod";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, ImagePlus, Loader2, RefreshCw, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertBanner } from "@/components/ui/alert-banner";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImageUploadField, ImagePreviewOverlay } from "@/components/ui/image-upload-field";
+import { useRemountKey } from "@/hooks/use-remount-key";
 import { BuilderLogo } from "@/components/customization/builder-logo";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import type { Builder, BuilderStatus } from "@/lib/builders";
@@ -57,13 +59,7 @@ export function BuilderFormDialog({
   initial,
   onSubmit,
 }: BuilderFormDialogProps) {
-  const [wasOpen, setWasOpen] = useState(open);
-  const [formKey, setFormKey] = useState(0);
-
-  if (open !== wasOpen) {
-    setWasOpen(open);
-    if (open) setFormKey((k) => k + 1);
-  }
+  const formKey = useRemountKey(open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -93,10 +89,11 @@ function BuilderFormFields({
   onOpenChange,
   onSubmit,
 }: BuilderFormFieldsProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
-  const [existingLogo] = useState<string | null>(initial?.logo_url ?? null);
+  // `key={formKey}` on the parent remounts this component fresh on every
+  // open, so this never needs to change after mount — plain const.
+  const existingLogo: string | null = initial?.logo_url ?? null;
   const [clearLogo, setClearLogo] = useState(false);
   const [fullPreview, setFullPreview] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -142,6 +139,15 @@ function BuilderFormFields({
     setFile(next);
     setLocalPreview(URL.createObjectURL(next));
     setClearLogo(false);
+  };
+
+  const removeLogo = () => {
+    setFile(null);
+    if (localPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(localPreview);
+    }
+    setLocalPreview(null);
+    if (existingLogo) setClearLogo(true);
   };
 
   const submitForm = async (data: FormData) => {
@@ -225,170 +231,53 @@ function BuilderFormFields({
                 })
               }
             >
-              <SelectTrigger className="h-11 cursor-pointer">
+              <SelectTrigger className="h-11">
                 <SelectValue placeholder="Select status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="active" className="cursor-pointer">
-                  Active
-                </SelectItem>
-                <SelectItem value="inactive" className="cursor-pointer">
-                  Inactive
-                </SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
             <Label>Original Logo (optional)</Label>
-            <input
-              ref={inputRef}
-              type="file"
+            <ImageUploadField
+              previewUrl={shownLogo}
+              placeholder={<BuilderLogo name={name || "Builder"} />}
+              fileName={file?.name || (shownLogo ? "Current logo" : null)}
               accept={ACCEPT}
-              className="sr-only"
-              onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+              disabled={saving}
+              aspect="wide"
+              emptyLabel="Upload original logo"
+              hint="Saved to Cloudinary · URL stored in Supabase · PNG/SVG preferred"
+              onPick={pickFile}
+              onRemove={removeLogo}
+              onPreview={() => setFullPreview(true)}
             />
-
-            {!shownLogo ? (
-              <button
-                type="button"
-                onClick={() => inputRef.current?.click()}
-                className="flex w-full cursor-pointer flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center transition-colors hover:border-[#1a2744]/35"
-              >
-                <BuilderLogo name={name || "Builder"} />
-                <div>
-                  <p className="text-sm font-medium text-slate-800">
-                    Upload original logo
-                  </p>
-                  <p className="mt-0.5 text-xs text-slate-500">
-                    Saved to Cloudinary · URL stored in Supabase · PNG/SVG
-                    preferred
-                  </p>
-                </div>
-                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1a2744]">
-                  <ImagePlus className="h-3.5 w-3.5" />
-                  Choose file
-                </span>
-              </button>
-            ) : (
-              <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                <div className="flex flex-col items-center gap-3">
-                  {localPreview ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={localPreview}
-                      alt="Logo preview"
-                      className="h-20 w-full max-w-[200px] rounded-2xl border border-slate-100 object-contain p-2"
-                    />
-                  ) : (
-                    <BuilderLogo
-                      name={name || "Builder"}
-                      logoUrl={existingLogo}
-                    />
-                  )}
-                  <p className="truncate text-xs text-slate-500">
-                    {file?.name || "Current logo"}
-                  </p>
-                </div>
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => {
-                      setFile(null);
-                      if (localPreview?.startsWith("blob:")) {
-                        URL.revokeObjectURL(localPreview);
-                      }
-                      setLocalPreview(null);
-                      if (existingLogo) setClearLogo(true);
-                    }}
-                    disabled={saving}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                    Close
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => setFullPreview(true)}
-                    disabled={saving}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                    Preview
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => inputRef.current?.click()}
-                    disabled={saving}
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Change
-                  </Button>
-                </div>
-              </div>
-            )}
           </div>
 
-          {formError && (
-            <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-xs text-red-600">
-              {formError}
-            </p>
-          )}
+          {formError && <AlertBanner variant="error">{formError}</AlertBanner>}
 
           <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:gap-3">
             <Button
               type="button"
               variant="outline"
-              className="cursor-pointer"
               onClick={() => onOpenChange(false)}
               disabled={saving}
             >
               Cancel
             </Button>
-            <Button type="submit" className="cursor-pointer" disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : mode === "add" ? (
-                "Add"
-              ) : (
-                "Save Changes"
-              )}
+            <Button type="submit" loading={saving}>
+              {saving ? "Saving..." : mode === "add" ? "Add" : "Save Changes"}
             </Button>
           </div>
         </form>
       </DialogContent>
 
       {fullPreview && shownLogo && (
-        <div
-          className="fixed inset-0 z-[80] flex cursor-pointer items-center justify-center bg-black/70 p-6"
-          onClick={() => setFullPreview(false)}
-        >
-          <button
-            type="button"
-            className="absolute right-4 top-4 cursor-pointer rounded-full bg-white/10 p-2 text-white"
-            onClick={() => setFullPreview(false)}
-            aria-label="Close preview"
-          >
-            <X className="h-5 w-5" />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={shownLogo}
-            alt="Logo preview"
-            className="max-h-[70vh] max-w-full rounded-2xl bg-white object-contain p-8"
-            onClick={(e) => e.stopPropagation()}
-          />
-        </div>
+        <ImagePreviewOverlay src={shownLogo} onClose={() => setFullPreview(false)} />
       )}
     </>
   );

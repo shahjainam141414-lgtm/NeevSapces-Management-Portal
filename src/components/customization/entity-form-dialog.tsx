@@ -7,6 +7,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertBanner } from "@/components/ui/alert-banner";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { EntityItem, OptionStatus } from "@/lib/static-options";
+import { useRemountKey } from "@/hooks/use-remount-key";
 
 const formSchema = z.object({
   value: z.string().min(1, "This field is required").max(120),
@@ -47,13 +49,7 @@ export function EntityFormDialog({
   initial,
   onSubmit,
 }: EntityFormDialogProps) {
-  const [wasOpen, setWasOpen] = useState(open);
-  const [formKey, setFormKey] = useState(0);
-
-  if (open !== wasOpen) {
-    setWasOpen(open);
-    if (open) setFormKey((k) => k + 1);
-  }
+  const formKey = useRemountKey(open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -147,7 +143,7 @@ function EntityFormFields({
           <Input
             id="entity-value"
             placeholder={`Enter ${entityLabel.toLowerCase()}`}
-            className="h-11 border-slate-200 bg-white"
+            className="h-11"
             {...register("value")}
           />
           {errors.value && (
@@ -167,17 +163,17 @@ function EntityFormFields({
               })
             }
           >
-            <SelectTrigger className="h-11 cursor-pointer border-slate-200 bg-white">
+            <SelectTrigger className="h-11">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="active" className="cursor-pointer">
+              <SelectItem value="active">
                 <span className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                   Active
                 </span>
               </SelectItem>
-              <SelectItem value="inactive" className="cursor-pointer">
+              <SelectItem value="inactive">
                 <span className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
                   Inactive
@@ -190,17 +186,13 @@ function EntityFormFields({
           )}
         </div>
 
-        {formError && (
-          <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-xs text-red-600">
-            {formError}
-          </p>
-        )}
+        {formError && <AlertBanner variant="error">{formError}</AlertBanner>}
 
         <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:gap-3">
           <Button
             type="button"
             variant="outline"
-            className="h-10 cursor-pointer"
+            className="h-10"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
@@ -208,7 +200,7 @@ function EntityFormFields({
           </Button>
           <Button
             type="submit"
-            className="h-10 cursor-pointer"
+            className="h-10"
             disabled={isSubmitting}
           >
             {isSubmitting

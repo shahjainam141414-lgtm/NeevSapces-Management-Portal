@@ -157,3 +157,11 @@ export const CONSTRUCTION_STATUS_OPTIONS = [
   "Ongoing",
   "Upcoming",
 ] as const;
+
+export function statusBadgeVariant(
+  status: PropertyStatus,
+): "success" | "warning" | "secondary" {
+  if (status === "active") return "success";
+  if (status === "draft") return "warning";
+  return "secondary";
+}

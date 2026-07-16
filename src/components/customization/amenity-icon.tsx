@@ -184,7 +184,7 @@ export function AmenityIcon({
         />
       ) : (
         createElement(resolveDefaultIcon(title), {
-          className: cn("relative z-[1] text-[#1a2744]", glyphSize[size]),
+          className: cn("relative z-[1] text-[#16233f]", glyphSize[size]),
           strokeWidth: 1.75,
         })
       )}

@@ -3,12 +3,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { Building2, Inbox, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ActionsDropdown } from "@/components/ui/actions-dropdown";
+import { PageHeader } from "@/components/ui/page-header";
+import { EmptyState } from "@/components/ui/empty-state";
+import { AlertBanner } from "@/components/ui/alert-banner";
+import { Skeleton, TableSkeleton } from "@/components/ui/skeleton";
 import {
   Dialog,
   DialogContent,
@@ -17,13 +22,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { deleteProperty, listProperties } from "@/lib/properties-api";
-import type { Property } from "@/lib/properties";
-
-function statusBadge(status: Property["status"]) {
-  if (status === "active") return "bg-emerald-50 text-emerald-700 border-emerald-200";
-  if (status === "draft") return "bg-amber-50 text-amber-700 border-amber-200";
-  return "bg-slate-100 text-slate-600 border-slate-200";
-}
+import { statusBadgeVariant, type Property } from "@/lib/properties";
 
 export function PropertiesPageContent() {
   const router = useRouter();
@@ -53,6 +52,9 @@ export function PropertiesPageContent() {
   }, []);
 
   useEffect(() => {
+    // Standard fetch-on-mount effect; loadItems' internal setLoading(true)
+    // is what the rule flags, but this is the intentional initial load.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadItems();
   }, [loadItems]);
 
@@ -82,137 +84,231 @@ export function PropertiesPageContent() {
     }
   };
 
+  const addPropertyAction = (
+    <Button asChild className="h-10 w-full shrink-0 gap-2 sm:w-auto">
+      <Link href="/customization/properties/new">
+        <Plus className="size-4" />
+        Add Property
+      </Link>
+    </Button>
+  );
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
+      <PageHeader
+        eyebrow="Customization"
+        title="Properties"
+        description={
+          loading
+            ? "Loading properties…"
+            : `${filtered.length} listings — select area first, then add full details`
+        }
+        actions={addPropertyAction}
+      />
+
       <Card className="overflow-hidden border-slate-200/70 bg-white/90 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
         <CardHeader className="gap-4 border-b border-slate-100/80 bg-gradient-to-b from-slate-50/80 to-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <div className="min-w-0">
-            <CardTitle className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Properties
-            </CardTitle>
-            <p className="mt-1 text-sm text-slate-500">
-              {loading
-                ? "Loading properties…"
-                : `${filtered.length} listings — select area first, then add full details`}
-            </p>
-          </div>
-          <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center">
-            <div className="relative w-full sm:w-64">
-              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
-              <Input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search title, area, slug…"
-                className="h-10 border-slate-200 bg-white pl-9 shadow-none"
-              />
-            </div>
-            <Button asChild className="h-10 w-full shrink-0 sm:w-auto">
-              <Link href="/customization/properties/new">
-                <Plus className="size-4" />
-                Add Property
-              </Link>
-            </Button>
+          <CardTitle className="text-base font-semibold text-slate-900">
+            All listings
+          </CardTitle>
+          <div className="relative w-full sm:w-64">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search title, area, slug…"
+              className="h-10 border-slate-200 bg-white pl-9 shadow-none"
+            />
           </div>
         </CardHeader>
-        <CardContent className="px-4 py-4 sm:px-6">
+        <CardContent className="p-0">
           {error ? (
-            <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {error}
-            </p>
+            <div className="px-4 pt-4 sm:px-6">
+              <AlertBanner variant="error">{error}</AlertBanner>
+            </div>
           ) : null}
 
           {loading ? (
-            <p className="py-12 text-center text-sm text-slate-500">Loading…</p>
+            <>
+              <div className="space-y-2.5 p-3 sm:hidden">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white px-3.5 py-3"
+                  >
+                    <Skeleton className="size-10 shrink-0 rounded-lg" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-3.5 w-2/3" />
+                      <Skeleton className="h-3 w-1/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="hidden sm:block">
+                <TableSkeleton rows={6} columns={5} />
+              </div>
+            </>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-16 text-slate-500">
-              <Inbox className="size-10 opacity-40" />
-              <p className="text-sm">No properties yet. Start by selecting an area.</p>
-              <Button asChild variant="outline" className="gap-2">
-                <Link href="/customization/properties/new">
-                  <Plus className="size-4" />
-                  Add Property
-                </Link>
-              </Button>
+            <div className="p-4 sm:p-6">
+              <EmptyState
+                icon={Inbox}
+                title="No properties yet"
+                description="Start by selecting an area, then add full listing details."
+                action={
+                  <Button asChild variant="outline" className="gap-2">
+                    <Link href="/customization/properties/new">
+                      <Plus className="size-4" />
+                      Add Property
+                    </Link>
+                  </Button>
+                }
+              />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[720px] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 text-xs tracking-wide text-slate-500 uppercase">
-                    <th className="pb-3 font-medium">Property</th>
-                    <th className="pb-3 font-medium">Area</th>
-                    <th className="pb-3 font-medium">Price</th>
-                    <th className="pb-3 font-medium">Status</th>
-                    <th className="pb-3 font-medium text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="border-b border-slate-50 last:border-0"
-                    >
-                      <td className="py-3.5 pr-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
-                            {item.cover_image_url ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={item.cover_image_url}
-                                alt=""
-                                className="size-full object-cover"
-                              />
-                            ) : (
-                              <Building2 className="size-4 text-slate-400" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate font-medium text-[#1a2744]">
-                              {item.title}
-                            </p>
-                            <p className="truncate text-xs text-slate-400">
-                              /{item.slug}
-                            </p>
-                          </div>
+            <>
+              {/* Mobile cards */}
+              <div className="space-y-2.5 p-3 sm:hidden">
+                {filtered.map((item, index) => (
+                  <motion.div
+                    key={item.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                    className="rounded-xl border border-slate-100 bg-white px-3.5 py-3 shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                          {item.cover_image_url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.cover_image_url}
+                              alt=""
+                              className="size-full object-cover"
+                            />
+                          ) : (
+                            <Building2 className="size-4 text-slate-400" />
+                          )}
                         </div>
-                      </td>
-                      <td className="py-3.5 pr-4 text-slate-600">
-                        {item.area_name ?? "—"}
-                      </td>
-                      <td className="py-3.5 pr-4 text-slate-600">
-                        {item.package_price_label ?? "—"}
-                      </td>
-                      <td className="py-3.5 pr-4">
-                        <div className="flex flex-wrap items-center gap-1.5">
-                          <Badge
-                            variant="secondary"
-                            className={statusBadge(item.status)}
-                          >
-                            {item.status}
-                          </Badge>
-                          {item.is_featured ? (
-                            <Badge
-                              variant="secondary"
-                              className="border-sky-200 bg-sky-50 text-sky-700"
-                            >
-                              Featured
-                            </Badge>
-                          ) : null}
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-[#16233f]">
+                            {item.title}
+                          </p>
+                          <p className="truncate text-xs text-slate-400">
+                            /{item.slug}
+                          </p>
                         </div>
-                      </td>
-                      <td className="py-3.5 text-right">
-                        <ActionsDropdown
-                          onEdit={() =>
-                            router.push(`/customization/properties/${item.id}`)
-                          }
-                          onDelete={() => setDeleteItem(item)}
-                        />
-                      </td>
+                      </div>
+                      <ActionsDropdown
+                        onEdit={() =>
+                          router.push(`/customization/properties/${item.id}`)
+                        }
+                        onDelete={() => setDeleteItem(item)}
+                      />
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+                      <span>{item.area_name ?? "—"}</span>
+                      <span>{item.package_price_label ?? "—"}</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      <Badge variant={statusBadgeVariant(item.status)}>
+                        {item.status}
+                      </Badge>
+                      {item.is_featured ? (
+                        <Badge
+                          variant="secondary"
+                          className="border-sky-200 bg-sky-50 text-sky-700"
+                        >
+                          Featured
+                        </Badge>
+                      ) : null}
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+
+              {/* Desktop table */}
+              <div className="hidden overflow-auto sm:block sm:max-h-[70vh]">
+                <table className="w-full min-w-[720px] text-left text-sm">
+                  <thead className="sticky top-0 z-10 bg-white">
+                    <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] tracking-wide text-slate-500 uppercase">
+                      <th className="px-6 py-3.5 font-semibold">Property</th>
+                      <th className="px-6 py-3.5 font-semibold">Area</th>
+                      <th className="px-6 py-3.5 font-semibold">Price</th>
+                      <th className="px-6 py-3.5 font-semibold">Status</th>
+                      <th className="px-4 py-3.5 text-right font-semibold">
+                        Actions
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filtered.map((item, index) => (
+                      <motion.tr
+                        key={item.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.04, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                        className="border-b border-slate-50 transition-all duration-200 last:border-0 hover:-translate-y-px hover:bg-slate-50/80 hover:shadow-[0_4px_14px_rgba(16,25,46,0.06)]"
+                      >
+                        <td className="px-6 py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-slate-100">
+                              {item.cover_image_url ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={item.cover_image_url}
+                                  alt=""
+                                  className="size-full object-cover"
+                                />
+                              ) : (
+                                <Building2 className="size-4 text-slate-400" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-[#16233f]">
+                                {item.title}
+                              </p>
+                              <p className="truncate text-xs text-slate-400">
+                                /{item.slug}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-3.5 text-slate-600">
+                          {item.area_name ?? "—"}
+                        </td>
+                        <td className="px-6 py-3.5 text-slate-600">
+                          {item.package_price_label ?? "—"}
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Badge variant={statusBadgeVariant(item.status)}>
+                              {item.status}
+                            </Badge>
+                            {item.is_featured ? (
+                              <Badge
+                                variant="secondary"
+                                className="border-sky-200 bg-sky-50 text-sky-700"
+                              >
+                                Featured
+                              </Badge>
+                            ) : null}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 text-right">
+                          <ActionsDropdown
+                            onEdit={() =>
+                              router.push(`/customization/properties/${item.id}`)
+                            }
+                            onDelete={() => setDeleteItem(item)}
+                          />
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
@@ -235,10 +331,10 @@ export function PropertiesPageContent() {
             </Button>
             <Button
               variant="destructive"
-              disabled={deleting}
+              loading={deleting}
               onClick={() => void handleDelete()}
             >
-              {deleting ? "Deleting…" : "Delete"}
+              Delete
             </Button>
           </div>
         </DialogContent>

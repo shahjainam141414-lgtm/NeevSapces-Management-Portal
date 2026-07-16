@@ -34,20 +34,34 @@ export function UsersPageContent() {
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
-    setError(null);
     const result = await listAdminProfiles();
     if (!result.ok) {
       setError(result.error);
       setUsers([]);
     } else {
       setUsers(result.profiles);
+      setError(null);
     }
     setLoading(false);
   }, []);
 
   useEffect(() => {
-    void loadUsers();
-  }, [loadUsers]);
+    let cancelled = false;
+    void listAdminProfiles().then((result) => {
+      if (cancelled) return;
+      if (!result.ok) {
+        setError(result.error);
+        setUsers([]);
+      } else {
+        setUsers(result.profiles);
+        setError(null);
+      }
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filteredUsers = users.filter(
     (user) =>

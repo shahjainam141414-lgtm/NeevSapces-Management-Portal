@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { ArrowRight, Eye, EyeOff, Lock, Mail, UserX } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -74,23 +74,39 @@ function LoginFormContent() {
       ? "Password saved. Sign in with your email and the password you just created."
       : null,
   );
+  const [handledCallbackError, setHandledCallbackError] = useState<
+    string | null
+  >(null);
 
-  useEffect(() => {
-    if (callbackError === "not_invited") {
-      setAccessDialog({
-        title: "User not found",
-        description:
-          "This account is not registered in the admin panel. Please contact your administrator to get access.",
-      });
-      router.replace("/login", { scroll: false });
-    } else if (callbackError === "auth_callback") {
-      setAccessDialog({
-        title: "Sign-in failed",
-        description: "Something went wrong during sign-in. Please try again.",
-      });
+  const callbackDialog: AccessDialog =
+    callbackError === "not_invited"
+      ? {
+          title: "User not found",
+          description:
+            "This account is not registered in the admin panel. Please contact your administrator to get access.",
+        }
+      : callbackError === "auth_callback"
+        ? {
+            title: "Sign-in failed",
+            description:
+              "Something went wrong during sign-in. Please try again.",
+          }
+        : null;
+
+  const urlAccessDialog =
+    callbackError && handledCallbackError !== callbackError
+      ? callbackDialog
+      : null;
+
+  const shownAccessDialog = accessDialog ?? urlAccessDialog;
+
+  const clearAccessDialog = () => {
+    setAccessDialog(null);
+    if (callbackError) {
+      setHandledCallbackError(callbackError);
       router.replace("/login", { scroll: false });
     }
-  }, [callbackError, router]);
+  };
 
   const {
     register,
@@ -282,9 +298,9 @@ function LoginFormContent() {
       </AuthLayout>
 
       <Dialog
-        open={!!accessDialog}
+        open={!!shownAccessDialog}
         onOpenChange={(open) => {
-          if (!open) setAccessDialog(null);
+          if (!open) clearAccessDialog();
         }}
       >
         <DialogContent className="max-w-sm text-center sm:text-left">
@@ -293,17 +309,17 @@ function LoginFormContent() {
               <UserX className="h-6 w-6" />
             </div>
             <DialogTitle className="text-xl">
-              {accessDialog?.title ?? "User not found"}
+              {shownAccessDialog?.title ?? "User not found"}
             </DialogTitle>
             <DialogDescription className="text-sm leading-relaxed text-slate-500">
-              {accessDialog?.description}
+              {shownAccessDialog?.description}
             </DialogDescription>
           </DialogHeader>
           <div className="flex justify-center sm:justify-end">
             <Button
               type="button"
               className="cursor-pointer"
-              onClick={() => setAccessDialog(null)}
+              onClick={clearAccessDialog}
             >
               OK
             </Button>

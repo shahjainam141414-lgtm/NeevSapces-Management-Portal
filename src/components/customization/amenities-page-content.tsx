@@ -55,10 +55,10 @@ export function AmenitiesPageContent() {
 
   const loadItems = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const rows = await listAmenities();
       setItems(rows);
+      setError(null);
     } catch (err) {
       setError(
         err instanceof Error
@@ -72,8 +72,29 @@ export function AmenitiesPageContent() {
   }, []);
 
   useEffect(() => {
-    void loadItems();
-  }, [loadItems]);
+    let cancelled = false;
+    void listAmenities()
+      .then((rows) => {
+        if (cancelled) return;
+        setItems(rows);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load amenities. Run 005_amenities.sql and 012_amenities_is_default.sql in Supabase.",
+        );
+        setItems([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = useMemo(
     () =>

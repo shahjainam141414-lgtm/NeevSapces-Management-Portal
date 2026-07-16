@@ -19,6 +19,7 @@ function isProtectedPath(pathname: string) {
   if (pathname === "/") return false;
   return (
     pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/properties") ||
     pathname.startsWith("/users") ||
     pathname.startsWith("/customization") ||
     pathname.startsWith("/profile") ||

@@ -37,10 +37,10 @@ export function BuildersPageContent() {
 
   const loadItems = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const rows = await listBuilders();
       setItems(rows);
+      setError(null);
     } catch (err) {
       setError(
         err instanceof Error
@@ -54,8 +54,29 @@ export function BuildersPageContent() {
   }, []);
 
   useEffect(() => {
-    void loadItems();
-  }, [loadItems]);
+    let cancelled = false;
+    void listBuilders()
+      .then((rows) => {
+        if (cancelled) return;
+        setItems(rows);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load builders. Run 006_builders.sql in Supabase.",
+        );
+        setItems([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();

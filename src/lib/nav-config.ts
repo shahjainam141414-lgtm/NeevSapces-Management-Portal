@@ -13,13 +13,21 @@ export type NavItem = {
 
 export const mainNav: NavItem[] = [
   { title: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { title: "Customization", href: "/customization/areas", icon: SlidersHorizontal },
+  {
+    title: "Customization",
+    href: "/customization/areas",
+    icon: SlidersHorizontal,
+  },
   { title: "Users", href: "/users", icon: Users },
 ];
 
 export const customizationTabs = [
   { id: "areas", label: "Areas", href: "/customization/areas" },
-  { id: "projects", label: "Projects", href: "/customization/projects" },
+  {
+    id: "properties",
+    label: "Properties",
+    href: "/customization/properties",
+  },
   { id: "main-banner", label: "Main Banner", href: "/customization/main-banner" },
   { id: "builders", label: "Builders", href: "/customization/builders" },
   { id: "amenities", label: "Amenities", href: "/customization/amenities" },

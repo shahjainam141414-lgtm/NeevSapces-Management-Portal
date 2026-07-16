@@ -43,10 +43,10 @@ export function MainBannerPageContent() {
 
   const load = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const row = await getMainBanner();
       setBanner(row);
+      setError(null);
     } catch (err) {
       setError(
         err instanceof Error
@@ -59,8 +59,28 @@ export function MainBannerPageContent() {
   }, []);
 
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    void getMainBanner()
+      .then((row) => {
+        if (cancelled) return;
+        setBanner(row);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to load banner. Run the site_banners SQL migration first.",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleSaved = (saved: SiteBanner) => {
     setBanner(saved);
@@ -258,21 +278,39 @@ function BannerEditorDialog({
   currentUrl,
   onSaved,
 }: BannerEditorDialogProps) {
+  const [wasOpen, setWasOpen] = useState(open);
+  const [formKey, setFormKey] = useState(0);
+
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setFormKey((k) => k + 1);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open ? (
+        <BannerEditorFields
+          key={formKey}
+          currentUrl={currentUrl}
+          onOpenChange={onOpenChange}
+          onSaved={onSaved}
+        />
+      ) : null}
+    </Dialog>
+  );
+}
+
+function BannerEditorFields({
+  currentUrl,
+  onOpenChange,
+  onSaved,
+}: Omit<BannerEditorDialogProps, "open">) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fullPreview, setFullPreview] = useState(false);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    setFile(null);
-    setPreviewUrl(null);
-    setFullPreview(false);
-    setFormError(null);
-    setSaving(false);
-  }, [open]);
 
   useEffect(() => {
     return () => {
@@ -331,20 +369,19 @@ function BannerEditorDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] gap-0 overflow-hidden p-0 sm:max-w-lg">
-          <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-5 py-5 sm:px-6">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-semibold tracking-tight">
-                {currentUrl ? "Change Banner" : "Add Banner"}
-              </DialogTitle>
-              <DialogDescription>
-                Upload a wide image for the website homepage banner.
-              </DialogDescription>
-            </DialogHeader>
-          </div>
+      <DialogContent className="max-w-[calc(100vw-2rem)] gap-0 overflow-hidden p-0 sm:max-w-lg">
+        <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-5 py-5 sm:px-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold tracking-tight">
+              {currentUrl ? "Change Banner" : "Add Banner"}
+            </DialogTitle>
+            <DialogDescription>
+              Upload a wide image for the website homepage banner.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
 
-          <div className="space-y-4 px-5 py-5 sm:px-6">
+        <div className="space-y-4 px-5 py-5 sm:px-6">
             <input
               ref={inputRef}
               type="file"
@@ -460,7 +497,6 @@ function BannerEditorDialog({
             </div>
           </div>
         </DialogContent>
-      </Dialog>
 
       <AnimatePresence>
         {fullPreview && shown && (

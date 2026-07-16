@@ -1,5 +1,6 @@
 "use client";
 
+import { createElement } from "react";
 import Image from "next/image";
 import {
   Accessibility,
@@ -158,11 +159,9 @@ function resolveDefaultIcon(title: string): LucideIcon {
 export function AmenityIcon({
   title,
   iconUrl,
-  iconKey: _iconKey,
   className,
   size = "md",
 }: AmenityIconProps) {
-  const Icon = resolveDefaultIcon(title);
   const hasCustom = Boolean(iconUrl);
 
   return (
@@ -184,10 +183,10 @@ export function AmenityIcon({
           sizes="64px"
         />
       ) : (
-        <Icon
-          className={cn("relative z-[1] text-[#1a2744]", glyphSize[size])}
-          strokeWidth={1.75}
-        />
+        createElement(resolveDefaultIcon(title), {
+          className: cn("relative z-[1] text-[#1a2744]", glyphSize[size]),
+          strokeWidth: 1.75,
+        })
       )}
     </div>
   );

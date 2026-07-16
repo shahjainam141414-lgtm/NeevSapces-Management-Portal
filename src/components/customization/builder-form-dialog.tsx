@@ -57,10 +57,46 @@ export function BuilderFormDialog({
   initial,
   onSubmit,
 }: BuilderFormDialogProps) {
+  const [wasOpen, setWasOpen] = useState(open);
+  const [formKey, setFormKey] = useState(0);
+
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setFormKey((k) => k + 1);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {open ? (
+        <BuilderFormFields
+          key={formKey}
+          mode={mode}
+          initial={initial}
+          onOpenChange={onOpenChange}
+          onSubmit={onSubmit}
+        />
+      ) : null}
+    </Dialog>
+  );
+}
+
+type BuilderFormFieldsProps = {
+  mode: "add" | "edit";
+  initial?: Builder | null;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: BuilderFormDialogProps["onSubmit"];
+};
+
+function BuilderFormFields({
+  mode,
+  initial,
+  onOpenChange,
+  onSubmit,
+}: BuilderFormFieldsProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
-  const [existingLogo, setExistingLogo] = useState<string | null>(null);
+  const [existingLogo] = useState<string | null>(initial?.logo_url ?? null);
   const [clearLogo, setClearLogo] = useState(false);
   const [fullPreview, setFullPreview] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -71,33 +107,17 @@ export function BuilderFormDialog({
     handleSubmit,
     setValue,
     control,
-    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      status: "active",
+      name: initial?.name ?? "",
+      status: initial?.status ?? "active",
     },
   });
 
   const status = useWatch({ control, name: "status" });
   const name = useWatch({ control, name: "name" });
-
-  useEffect(() => {
-    if (!open) return;
-    setFile(null);
-    setLocalPreview(null);
-    setClearLogo(false);
-    setFullPreview(false);
-    setFormError(null);
-    setSaving(false);
-    setExistingLogo(initial?.logo_url ?? null);
-    reset({
-      name: initial?.name ?? "",
-      status: initial?.status ?? "active",
-    });
-  }, [open, initial, reset]);
 
   useEffect(() => {
     return () => {
@@ -160,195 +180,193 @@ export function BuilderFormDialog({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] gap-0 overflow-hidden p-0 sm:max-w-md">
-          <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-5 py-5 sm:px-6">
-            <DialogHeader>
-              <DialogTitle className="text-lg font-semibold tracking-tight">
-                {mode === "add" ? "Add Builder" : "Edit Builder"}
-              </DialogTitle>
-              <DialogDescription>
-                Name and status are required. Upload the builder&apos;s{" "}
-                <strong>original logo</strong> — it is stored on Cloudinary and
-                the URL is saved in the database (same as Godrej / Shivalik).
-              </DialogDescription>
-            </DialogHeader>
+      <DialogContent className="max-w-[calc(100vw-2rem)] gap-0 overflow-hidden p-0 sm:max-w-md">
+        <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-5 py-5 sm:px-6">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold tracking-tight">
+              {mode === "add" ? "Add Builder" : "Edit Builder"}
+            </DialogTitle>
+            <DialogDescription>
+              Name and status are required. Upload the builder&apos;s{" "}
+              <strong>original logo</strong> — it is stored on Cloudinary and
+              the URL is saved in the database (same as Godrej / Shivalik).
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <form
+          onSubmit={handleSubmit(submitForm)}
+          className="space-y-4 px-5 py-5 sm:px-6"
+        >
+          <div className="space-y-2">
+            <Label htmlFor="builder-name">
+              Builder Name <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="builder-name"
+              placeholder="e.g. Godrej Properties"
+              className="h-11"
+              {...register("name")}
+            />
+            {errors.name && (
+              <p className="text-xs text-red-500">{errors.name.message}</p>
+            )}
           </div>
 
-          <form
-            onSubmit={handleSubmit(submitForm)}
-            className="space-y-4 px-5 py-5 sm:px-6"
-          >
-            <div className="space-y-2">
-              <Label htmlFor="builder-name">
-                Builder Name <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="builder-name"
-                placeholder="e.g. Godrej Properties"
-                className="h-11"
-                {...register("name")}
-              />
-              {errors.name && (
-                <p className="text-xs text-red-500">{errors.name.message}</p>
-              )}
-            </div>
+          <div className="space-y-2">
+            <Label>
+              Status <span className="text-red-500">*</span>
+            </Label>
+            <Select
+              value={status}
+              onValueChange={(value) =>
+                setValue("status", value as BuilderStatus, {
+                  shouldValidate: true,
+                })
+              }
+            >
+              <SelectTrigger className="h-11 cursor-pointer">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="active" className="cursor-pointer">
+                  Active
+                </SelectItem>
+                <SelectItem value="inactive" className="cursor-pointer">
+                  Inactive
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="space-y-2">
-              <Label>
-                Status <span className="text-red-500">*</span>
-              </Label>
-              <Select
-                value={status}
-                onValueChange={(value) =>
-                  setValue("status", value as BuilderStatus, {
-                    shouldValidate: true,
-                  })
-                }
-              >
-                <SelectTrigger className="h-11 cursor-pointer">
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active" className="cursor-pointer">
-                    Active
-                  </SelectItem>
-                  <SelectItem value="inactive" className="cursor-pointer">
-                    Inactive
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Original Logo (optional)</Label>
+            <input
+              ref={inputRef}
+              type="file"
+              accept={ACCEPT}
+              className="sr-only"
+              onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
+            />
 
-            <div className="space-y-2">
-              <Label>Original Logo (optional)</Label>
-              <input
-                ref={inputRef}
-                type="file"
-                accept={ACCEPT}
-                className="sr-only"
-                onChange={(e) => pickFile(e.target.files?.[0] ?? null)}
-              />
-
-              {!shownLogo ? (
-                <button
-                  type="button"
-                  onClick={() => inputRef.current?.click()}
-                  className="flex w-full cursor-pointer flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center transition-colors hover:border-[#1a2744]/35"
-                >
-                  <BuilderLogo name={name || "Builder"} />
-                  <div>
-                    <p className="text-sm font-medium text-slate-800">
-                      Upload original logo
-                    </p>
-                    <p className="mt-0.5 text-xs text-slate-500">
-                      Saved to Cloudinary · URL stored in Supabase · PNG/SVG
-                      preferred
-                    </p>
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1a2744]">
-                    <ImagePlus className="h-3.5 w-3.5" />
-                    Choose file
-                  </span>
-                </button>
-              ) : (
-                <div className="rounded-2xl border border-slate-200 bg-white p-3">
-                  <div className="flex flex-col items-center gap-3">
-                    {localPreview ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={localPreview}
-                        alt="Logo preview"
-                        className="h-20 w-full max-w-[200px] rounded-2xl border border-slate-100 object-contain p-2"
-                      />
-                    ) : (
-                      <BuilderLogo
-                        name={name || "Builder"}
-                        logoUrl={existingLogo}
-                      />
-                    )}
-                    <p className="truncate text-xs text-slate-500">
-                      {file?.name || "Current logo"}
-                    </p>
-                  </div>
-                  <div className="mt-3 grid grid-cols-3 gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="cursor-pointer"
-                      onClick={() => {
-                        setFile(null);
-                        if (localPreview?.startsWith("blob:")) {
-                          URL.revokeObjectURL(localPreview);
-                        }
-                        setLocalPreview(null);
-                        if (existingLogo) setClearLogo(true);
-                      }}
-                      disabled={saving}
-                    >
-                      <X className="h-3.5 w-3.5" />
-                      Close
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="cursor-pointer"
-                      onClick={() => setFullPreview(true)}
-                      disabled={saving}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      Preview
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      className="cursor-pointer"
-                      onClick={() => inputRef.current?.click()}
-                      disabled={saving}
-                    >
-                      <RefreshCw className="h-3.5 w-3.5" />
-                      Change
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {formError && (
-              <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-xs text-red-600">
-                {formError}
-              </p>
-            )}
-
-            <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:gap-3">
-              <Button
+            {!shownLogo ? (
+              <button
                 type="button"
-                variant="outline"
-                className="cursor-pointer"
-                onClick={() => onOpenChange(false)}
-                disabled={saving}
+                onClick={() => inputRef.current?.click()}
+                className="flex w-full cursor-pointer flex-col items-center gap-3 rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-center transition-colors hover:border-[#1a2744]/35"
               >
-                Cancel
-              </Button>
-              <Button type="submit" className="cursor-pointer" disabled={saving}>
-                {saving ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : mode === "add" ? (
-                  "Add"
-                ) : (
-                  "Save Changes"
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
+                <BuilderLogo name={name || "Builder"} />
+                <div>
+                  <p className="text-sm font-medium text-slate-800">
+                    Upload original logo
+                  </p>
+                  <p className="mt-0.5 text-xs text-slate-500">
+                    Saved to Cloudinary · URL stored in Supabase · PNG/SVG
+                    preferred
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#1a2744]">
+                  <ImagePlus className="h-3.5 w-3.5" />
+                  Choose file
+                </span>
+              </button>
+            ) : (
+              <div className="rounded-2xl border border-slate-200 bg-white p-3">
+                <div className="flex flex-col items-center gap-3">
+                  {localPreview ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={localPreview}
+                      alt="Logo preview"
+                      className="h-20 w-full max-w-[200px] rounded-2xl border border-slate-100 object-contain p-2"
+                    />
+                  ) : (
+                    <BuilderLogo
+                      name={name || "Builder"}
+                      logoUrl={existingLogo}
+                    />
+                  )}
+                  <p className="truncate text-xs text-slate-500">
+                    {file?.name || "Current logo"}
+                  </p>
+                </div>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={() => {
+                      setFile(null);
+                      if (localPreview?.startsWith("blob:")) {
+                        URL.revokeObjectURL(localPreview);
+                      }
+                      setLocalPreview(null);
+                      if (existingLogo) setClearLogo(true);
+                    }}
+                    disabled={saving}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Close
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={() => setFullPreview(true)}
+                    disabled={saving}
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                    Preview
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="cursor-pointer"
+                    onClick={() => inputRef.current?.click()}
+                    disabled={saving}
+                  >
+                    <RefreshCw className="h-3.5 w-3.5" />
+                    Change
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {formError && (
+            <p className="rounded-xl border border-red-100 bg-red-50 px-3 py-2.5 text-xs text-red-600">
+              {formError}
+            </p>
+          )}
+
+          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end sm:gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              className="cursor-pointer"
+              onClick={() => onOpenChange(false)}
+              disabled={saving}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" className="cursor-pointer" disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : mode === "add" ? (
+                "Add"
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
 
       {fullPreview && shownLogo && (
         <div

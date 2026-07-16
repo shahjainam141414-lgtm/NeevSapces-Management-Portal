@@ -20,14 +20,15 @@ export function CustomizationShell({ children }: { children: React.ReactNode }) 
           Customization
         </h2>
         <p className="mt-1 text-sm text-slate-500">
-          Manage your content modules
+          Areas, properties, banners, builders, amenities, and more
         </p>
       </motion.div>
 
       <div className="relative -mx-1 px-1">
         <div className="glass-card flex items-center gap-1 overflow-x-auto rounded-2xl p-1.5 scrollbar-none">
           {customizationTabs.map((tab) => {
-            const isActive = pathname === tab.href;
+            const isActive =
+              pathname === tab.href || pathname.startsWith(`${tab.href}/`);
             return (
               <Link
                 key={tab.id}

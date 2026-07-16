@@ -1,0 +1,29 @@
+---
+description: Use personal GitHub account only for commits and pushes in this repo
+alwaysApply: true
+---
+
+# Git identity — personal account only
+
+This repo must use the personal GitHub account, never the Dash/work account.
+
+## Required identity
+
+- **Author name:** Jainam Shah
+- **Author email:** shahjainam141414@gmail.com
+- **GitHub account:** shahjainam141414-lgtm
+- **Remote:** `shahjainam141414-lgtm/NeevSapces-Management-Portal`
+
+## Do not use
+
+- Dash Jainam Shah / `Jainam.S@dashtechinc.com`
+- GitHub account `dash-jainamshah` (or any work/org account)
+
+## Before every commit or push
+
+1. Confirm local config is personal:
+   - `git config user.name` → `Jainam Shah`
+   - `git config user.email` → `shahjainam141414@gmail.com`
+2. Confirm `gh auth status` active account is `shahjainam141414-lgtm`
+3. If either is wrong, fix local config / switch `gh` account before committing or pushing
+4. Never amend or push with work email author metadata

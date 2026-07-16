@@ -1,13 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import { CustomizationPageContent } from "@/components/customization/customization-page-content";
-
-export default function ProjectsPage() {
-  return (
-    <CustomizationPageContent
-      title="Projects"
-      entityLabel="Project"
-      optionType="project"
-    />
-  );
+/** Projects master-list removed — use Properties instead */
+export default function ProjectsRedirectPage() {
+  redirect("/customization/properties");
 }

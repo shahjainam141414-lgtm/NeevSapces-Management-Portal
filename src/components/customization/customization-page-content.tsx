@@ -58,10 +58,10 @@ export function CustomizationPageContent({
 
   const loadItems = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const rows = await listStaticOptions(optionType);
       setItems(rows);
+      setError(null);
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Failed to load data from Supabase";
@@ -73,8 +73,29 @@ export function CustomizationPageContent({
   }, [optionType]);
 
   useEffect(() => {
-    void loadItems();
-  }, [loadItems]);
+    let cancelled = false;
+    void listStaticOptions(optionType)
+      .then((rows) => {
+        if (cancelled) return;
+        setItems(rows);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to load data from Supabase";
+        setError(message);
+        setItems([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [optionType]);
 
   const filtered = items.filter((item) =>
     item.name.toLowerCase().includes(search.toLowerCase()),

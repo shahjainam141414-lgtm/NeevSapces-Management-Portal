@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 
 const stats = [
   {
-    title: "Total Projects",
+    title: "Total Properties",
     value: "128",
     change: "+12%",
     icon: FolderKanban,

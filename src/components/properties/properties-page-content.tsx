@@ -13,7 +13,6 @@ import {
   Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ActionsDropdown } from "@/components/ui/actions-dropdown";
@@ -146,14 +145,15 @@ export function PropertiesPageContent() {
 
   return (
     <>
-      <Card className="overflow-hidden border-slate-200/80 shadow-[0_8px_30px_rgba(15,23,42,0.04)]">
-        <CardHeader className="gap-4 border-b border-slate-100/80 bg-gradient-to-b from-[#eef1f6]/80 to-white px-4 py-4 sm:px-6 sm:py-5">
+      <div className="lux-card overflow-hidden">
+        <div className="gap-4 border-b border-[var(--border)] bg-gradient-to-b from-[var(--surface)] to-white px-4 py-5 sm:px-6">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
-              <CardTitle className="text-lg font-semibold tracking-tight text-[#16233f] sm:text-xl">
+              <p className="type-caption text-[var(--accent)]">Catalog</p>
+              <h1 className="font-display type-section mt-1 text-xl text-[var(--ink)] sm:text-2xl">
                 Properties
-              </CardTitle>
-              <p className="mt-1 text-sm text-slate-500">
+              </h1>
+              <p className="mt-1 text-sm text-[var(--muted)]">
                 {loading
                   ? "Loading listings…"
                   : `${counts.all} listings · ${counts.featured} featured on homepage`}
@@ -162,12 +162,12 @@ export function PropertiesPageContent() {
 
             <div className="flex w-full flex-col gap-2.5 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
               <div className="relative w-full sm:w-56 lg:w-64">
-                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-[var(--muted-foreground)]" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search title, area, slug…"
-                  className="h-10 border-slate-200 bg-white pl-9 shadow-none"
+                  className="h-10 border-[var(--border)] bg-white pl-9 shadow-none"
                 />
               </div>
               <Button asChild className="h-10 w-full shrink-0 gap-2 sm:w-auto">
@@ -179,26 +179,26 @@ export function PropertiesPageContent() {
             </div>
           </div>
 
-          <div className="flex flex-wrap gap-1.5">
+          <div className="mt-4 flex flex-wrap gap-1.5">
             {filters.map((f) => (
               <button
                 key={f.id}
                 type="button"
                 onClick={() => setStatusFilter(f.id)}
                 className={cn(
-                  "inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all",
+                  "inline-flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition-all",
                   statusFilter === f.id
-                    ? "bg-[#16233f] text-white shadow-[0_4px_14px_rgba(22,35,63,0.25)]"
-                    : "bg-white text-slate-600 ring-1 ring-slate-200/90 hover:bg-slate-50 hover:text-slate-900",
+                    ? "bg-[var(--ink)] text-white shadow-[0_6px_18px_rgba(20,32,51,0.2)]"
+                    : "bg-white text-[var(--muted)] ring-1 ring-[var(--border)] hover:bg-[var(--surface)] hover:text-[var(--ink)]",
                 )}
               >
                 {f.label}
                 <span
                   className={cn(
-                    "rounded-full px-1.5 py-0.5 text-[10px] tabular-nums",
+                    "rounded px-1.5 py-0.5 text-[10px] tabular-nums",
                     statusFilter === f.id
                       ? "bg-white/15 text-white"
-                      : "bg-slate-100 text-slate-500",
+                      : "bg-[var(--surface)] text-[var(--muted)]",
                   )}
                 >
                   {f.count}
@@ -206,9 +206,9 @@ export function PropertiesPageContent() {
               </button>
             ))}
           </div>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-0">
+        <div className="p-0">
           {error ? (
             <div className="px-4 pt-4 sm:px-6">
               <AlertBanner variant="error">{error}</AlertBanner>
@@ -218,7 +218,7 @@ export function PropertiesPageContent() {
           {loading ? (
             <div className="grid gap-3 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="h-52 w-full rounded-2xl" />
+                <Skeleton key={i} className="h-52 w-full rounded-lg" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
@@ -248,18 +248,18 @@ export function PropertiesPageContent() {
               {filtered.map((item, index) => (
                 <motion.article
                   key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 12 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
                     delay: Math.min(index, 12) * 0.03,
-                    duration: 0.35,
+                    duration: 0.4,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="group flex flex-col overflow-hidden rounded-2xl border border-slate-200/90 bg-white shadow-[0_1px_2px_rgba(16,25,46,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300/80 hover:shadow-[0_12px_28px_rgba(16,25,46,0.08)]"
+                  className="lux-card lux-card-hover group flex flex-col overflow-hidden"
                 >
                   <button
                     type="button"
-                    className="relative aspect-[16/10] w-full cursor-pointer overflow-hidden bg-[#eef1f6]"
+                    className="relative aspect-[16/10] w-full cursor-pointer overflow-hidden bg-[var(--surface)]"
                     onClick={() =>
                       router.push(`/customization/properties/${item.id}`)
                     }
@@ -269,17 +269,20 @@ export function PropertiesPageContent() {
                       <img
                         src={item.cover_image_url}
                         alt=""
-                        className="size-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                        className="size-full object-cover transition-transform duration-700 group-hover:scale-[1.06]"
                       />
                     ) : (
-                      <div className="flex size-full flex-col items-center justify-center gap-2 text-slate-400">
+                      <div className="flex size-full flex-col items-center justify-center gap-2 text-[var(--muted-foreground)]">
                         <Building2 className="size-8 opacity-50" />
                         <span className="text-[11px] font-medium">No cover</span>
                       </div>
                     )}
-                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[#16233f]/55 to-transparent" />
+                    <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-[var(--ink-deep)]/55 to-transparent" />
                     <div className="absolute top-2.5 left-2.5 flex flex-wrap gap-1.5">
-                      <StatusBadge status={item.status} className="bg-white/95 backdrop-blur-sm" />
+                      <StatusBadge
+                        status={item.status}
+                        className="bg-white/95 backdrop-blur-sm"
+                      />
                       {item.is_featured ? (
                         <Badge
                           variant="premium"
@@ -290,6 +293,11 @@ export function PropertiesPageContent() {
                         </Badge>
                       ) : null}
                     </div>
+                    {item.property_type_label ? (
+                      <span className="absolute right-2.5 bottom-2.5 rounded bg-[var(--ink-deep)]/70 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-white backdrop-blur-sm">
+                        {item.property_type_label}
+                      </span>
+                    ) : null}
                   </button>
 
                   <div className="flex flex-1 flex-col gap-3 p-3.5 sm:p-4">
@@ -301,10 +309,10 @@ export function PropertiesPageContent() {
                           router.push(`/customization/properties/${item.id}`)
                         }
                       >
-                        <h3 className="line-clamp-2 text-sm font-semibold text-[#16233f] transition-colors group-hover:text-[#1f3157]">
+                        <h3 className="font-display type-title line-clamp-2 text-sm text-[var(--ink)]">
                           {item.title}
                         </h3>
-                        <p className="mt-1 flex items-center gap-1 truncate text-xs text-slate-500">
+                        <p className="mt-1 flex items-center gap-1 truncate text-xs text-[var(--muted)]">
                           <MapPin className="size-3 shrink-0 opacity-60" />
                           {item.area_name || item.locality || item.city || "—"}
                         </p>
@@ -312,11 +320,11 @@ export function PropertiesPageContent() {
                       {propertyActions(item)}
                     </div>
 
-                    <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
-                      <p className="truncate text-sm font-semibold text-[#16233f]">
+                    <div className="mt-auto flex items-center justify-between gap-2 border-t border-[var(--border)] pt-3">
+                      <p className="truncate text-sm font-semibold text-[var(--ink)]">
                         {item.package_price_label || "Price on request"}
                       </p>
-                      <p className="truncate text-[10px] font-medium text-slate-400">
+                      <p className="truncate text-[10px] font-medium text-[var(--muted-foreground)]">
                         /{item.slug}
                       </p>
                     </div>
@@ -325,8 +333,8 @@ export function PropertiesPageContent() {
               ))}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <Dialog
         open={Boolean(deleteItem)}

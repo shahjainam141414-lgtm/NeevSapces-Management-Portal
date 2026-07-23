@@ -1,271 +1,494 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   ArrowUpRight,
   Building2,
-  FolderKanban,
+  FileEdit,
+  Layers3,
   MapPin,
-  TrendingUp,
+  Plus,
+  Sparkles,
   Users,
-  UserCheck,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { PageHeader } from "@/components/ui/page-header";
-import { TiltCard } from "@/components/ui/tilt-card";
+import { listProperties } from "@/lib/properties-api";
+import { listBuilders } from "@/lib/builders-api";
+import { listStaticOptions } from "@/lib/static-options-api";
+import { listAdminProfiles } from "@/app/actions/users";
+import type { AdminProfile } from "@/lib/admin-profiles";
+import type { Property } from "@/lib/properties";
+import { cn } from "@/lib/utils";
 
-const stats = [
-  {
-    title: "Total Properties",
-    value: "128",
-    change: "+12%",
-    icon: FolderKanban,
-    trend: [8, 10, 9, 13, 12, 15, 14, 18, 17, 20],
-  },
-  {
-    title: "Total Areas",
-    value: "24",
-    change: "+3",
-    icon: MapPin,
-    trend: [15, 16, 16, 17, 18, 18, 19, 20, 21, 24],
-  },
-  {
-    title: "Total Builders",
-    value: "18",
-    change: "+2",
-    icon: Building2,
-    trend: [12, 12, 13, 13, 14, 15, 15, 16, 17, 18],
-  },
-  {
-    title: "Active Listings",
-    value: "342",
-    change: "+8%",
-    icon: TrendingUp,
-    trend: [260, 270, 265, 290, 300, 295, 310, 320, 330, 342],
-  },
-];
+type Props = {
+  user: AdminProfile | null;
+};
 
-function Sparkline({
-  points,
-  color = "#16233f",
-}: {
-  points: number[];
-  color?: string;
-}) {
-  const width = 72;
-  const height = 26;
-  const max = Math.max(...points);
-  const min = Math.min(...points);
-  const range = max - min || 1;
-  const step = width / (points.length - 1);
-  const path = points
-    .map(
-      (p, i) =>
-        `${i === 0 ? "M" : "L"}${(i * step).toFixed(1)},${(
-          height - ((p - min) / range) * height
-        ).toFixed(1)}`,
-    )
-    .join(" ");
-  const areaPath = `${path} L${width},${height} L0,${height} Z`;
+function greetingForHour(h: number) {
+  if (h < 12) return "Good morning";
+  if (h < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function formatRelative(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  return `${days}d ago`;
+}
+
+function SkylineDecor() {
+  const mx = useMotionValue(0);
+  const my = useMotionValue(0);
+  const sx = useSpring(mx, { stiffness: 40, damping: 18 });
+  const sy = useSpring(my, { stiffness: 40, damping: 18 });
+  const x = useTransform(sx, [-0.5, 0.5], [-12, 12]);
+  const y = useTransform(sy, [-0.5, 0.5], [-8, 8]);
 
   return (
-    <svg
-      width={width}
-      height={height}
-      viewBox={`0 0 ${width} ${height}`}
-      className="overflow-visible"
+    <motion.div
+      className="pointer-events-none absolute inset-0 overflow-hidden"
+      onMouseMove={(e) => {
+        const r = e.currentTarget.getBoundingClientRect();
+        mx.set((e.clientX - r.left) / r.width - 0.5);
+        my.set((e.clientY - r.top) / r.height - 0.5);
+      }}
+      onMouseLeave={() => {
+        mx.set(0);
+        my.set(0);
+      }}
+      style={{ x, y }}
       aria-hidden
     >
-      <motion.path
-        d={areaPath}
-        fill={color}
-        fillOpacity={0.06}
-        stroke="none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.6, delay: 0.5 }}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_80%_20%,rgba(107,135,171,0.22),transparent_50%)]" />
+      <div
+        className="absolute inset-0 opacity-[0.07]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.55) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.55) 1px, transparent 1px)",
+          backgroundSize: "48px 48px",
+        }}
       />
-      <motion.path
-        d={path}
+      <svg
+        viewBox="0 0 640 280"
+        className="absolute bottom-0 right-0 h-[85%] w-[70%] opacity-40"
         fill="none"
-        stroke={color}
-        strokeWidth={1.75}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        initial={{ pathLength: 0, opacity: 0 }}
-        animate={{ pathLength: 1, opacity: 1 }}
-        transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.35 }}
-      />
-    </svg>
+      >
+        <rect x="40" y="120" width="70" height="160" fill="rgba(255,255,255,0.12)" />
+        <rect x="130" y="70" width="90" height="210" fill="rgba(255,255,255,0.16)" />
+        <rect x="240" y="100" width="60" height="180" fill="rgba(255,255,255,0.1)" />
+        <rect x="320" y="40" width="110" height="240" fill="rgba(255,255,255,0.18)" />
+        <rect x="450" y="90" width="80" height="190" fill="rgba(255,255,255,0.12)" />
+        <rect x="550" y="130" width="70" height="150" fill="rgba(255,255,255,0.09)" />
+        {[150, 180, 210, 240].map((yy) => (
+          <line
+            key={yy}
+            x1="140"
+            y1={yy}
+            x2="210"
+            y2={yy}
+            stroke="rgba(255,255,255,0.18)"
+            strokeWidth="1"
+          />
+        ))}
+        {[80, 110, 140, 170, 200].map((yy) => (
+          <line
+            key={`b-${yy}`}
+            x1="335"
+            y1={yy}
+            x2="415"
+            y2={yy}
+            stroke="rgba(255,255,255,0.15)"
+            strokeWidth="1"
+          />
+        ))}
+      </svg>
+    </motion.div>
   );
 }
 
-const recentLeads = [
-  { name: "Amit Patel", project: "Shilp One", time: "2 min ago" },
-  { name: "Sneha Desai", project: "Gala Empire", time: "15 min ago" },
-  { name: "Vikram Shah", project: "Sun Sky Park", time: "1 hr ago" },
-];
+export function DashboardPageContent({ user }: Props) {
+  const [loading, setLoading] = useState(true);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [areas, setAreas] = useState(0);
+  const [builders, setBuilders] = useState(0);
+  const [team, setTeam] = useState(0);
+  const [now, setNow] = useState(() => new Date());
 
-export function DashboardPageContent() {
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 30000);
+    return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const [props, areaItems, builderItems, profilesRes] = await Promise.all([
+          listProperties(),
+          listStaticOptions("area"),
+          listBuilders(),
+          listAdminProfiles().catch(() => ({ ok: false as const, error: "" })),
+        ]);
+        if (!alive) return;
+        setProperties(props);
+        setAreas(areaItems.length);
+        setBuilders(builderItems.length);
+        setTeam(profilesRes.ok ? profilesRes.profiles.length : 0);
+      } catch {
+        /* keep zeros */
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const stats = useMemo(() => {
+    const live = properties.filter((p) => p.status === "active").length;
+    const drafts = properties.filter((p) => p.status === "draft").length;
+    const inactive = properties.filter((p) => p.status === "inactive").length;
+    const featured = properties.filter((p) => p.is_featured).length;
+    return { live, drafts, inactive, featured, total: properties.length };
+  }, [properties]);
+
+  const recent = useMemo(
+    () =>
+      [...properties]
+        .sort((a, b) => {
+          const ta = a.updated_at ? new Date(a.updated_at).getTime() : 0;
+          const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0;
+          return tb - ta;
+        })
+        .slice(0, 6),
+    [properties],
+  );
+
+  const firstName = (user?.name ?? "there").split(" ")[0];
+  const greeting = greetingForHour(now.getHours());
+  const timeLabel = now.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  const dateLabel = now.toLocaleDateString([], {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  const metricCards = [
+    {
+      label: "Live properties",
+      value: stats.live,
+      icon: Building2,
+      href: "/customization/properties",
+      tone: "text-[var(--accent)]",
+    },
+    {
+      label: "Drafts",
+      value: stats.drafts,
+      icon: FileEdit,
+      href: "/customization/properties",
+      tone: "text-amber-700",
+    },
+    {
+      label: "Featured",
+      value: stats.featured,
+      icon: Sparkles,
+      href: "/customization/featured",
+      tone: "text-[var(--ink)]",
+    },
+    {
+      label: "Areas",
+      value: areas,
+      icon: MapPin,
+      href: "/customization/areas",
+      tone: "text-[var(--accent-deep)]",
+    },
+    {
+      label: "Builders",
+      value: builders,
+      icon: Layers3,
+      href: "/customization/builders",
+      tone: "text-[var(--ink-mid)]",
+    },
+    {
+      label: "Team",
+      value: team,
+      icon: Users,
+      href: "/users",
+      tone: "text-[var(--muted)]",
+    },
+  ];
+
   return (
-    <div className="space-y-6">
-      <PageHeader
-        eyebrow="Overview"
-        title="Welcome back, Parth"
-        description="Here's what's happening across your portfolio today."
-      />
+    <div className="space-y-8">
+      {/* Immersive welcome */}
+      <motion.section
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="relative overflow-hidden rounded-lg border border-white/10 bg-[var(--ink-deep)] text-white shadow-[var(--shadow-lift)]"
+      >
+        <SkylineDecor />
+        <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.4fr_1fr] lg:p-10">
+          <div>
+            <p className="type-caption text-[var(--accent-light)]">
+              Today&apos;s overview · {dateLabel}
+            </p>
+            <h1 className="font-display type-hero mt-4 text-[clamp(1.85rem,4vw,3rem)]">
+              {greeting},
+              <br />
+              {firstName}
+            </h1>
+            <p className="mt-4 max-w-lg text-sm leading-relaxed text-white/60 sm:text-base">
+              Welcome back to Neev Spaces OS. Your publishing pipeline, catalogs,
+              and team — one refined command center.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <Link
+                href="/customization/properties/new"
+                className="btn-brand inline-flex items-center gap-2 px-5 py-2.5"
+              >
+                <Plus className="h-4 w-4" strokeWidth={1.6} />
+                New Property
+              </Link>
+              <Link
+                href="/customization/properties"
+                className="inline-flex items-center gap-2 border border-white/20 bg-white/5 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-white hover:text-[var(--ink)]"
+              >
+                Manage listings
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+          </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+          <div className="flex flex-col justify-between gap-6 border-t border-white/10 pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+            <div>
+              <p className="type-caption text-white/40">Local time</p>
+              <p className="font-display type-hero mt-2 text-4xl tabular-nums">
+                {timeLabel}
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-md border border-white/10 bg-white/5 p-3">
+                <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">
+                  Pipeline
+                </p>
+                <p className="mt-1 text-lg font-semibold tabular-nums">
+                  {loading ? "—" : stats.total}
+                </p>
+                <p className="text-[11px] text-white/45">Total properties</p>
+              </div>
+              <div className="rounded-md border border-white/10 bg-white/5 p-3">
+                <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">
+                  Pending
+                </p>
+                <p className="mt-1 text-lg font-semibold tabular-nums">
+                  {loading ? "—" : stats.drafts}
+                </p>
+                <p className="text-[11px] text-white/45">Drafts to publish</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.section>
+
+      {/* Metrics */}
+      <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {metricCards.map((m, i) => (
+          <motion.div
+            key={m.label}
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 * i, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <Link
+              href={m.href}
+              className="lux-card lux-card-hover group block p-4"
             >
-              <TiltCard maxTilt={5}>
-                <Card className="glass-card-hover overflow-hidden">
-                  <CardContent className="relative overflow-hidden p-6">
-                    <div
-                      aria-hidden
-                      className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br from-[#16233f]/8 to-transparent"
-                    />
-                    <div className="relative flex items-start justify-between">
-                      <div>
-                        <p className="text-sm text-slate-500">{stat.title}</p>
-                        <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
-                          {stat.value}
-                        </p>
-                        <p className="mt-1.5 inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
-                          <ArrowUpRight className="h-3 w-3" />
-                          {stat.change} this month
-                        </p>
-                      </div>
-                      <div className="rounded-xl bg-gradient-to-br from-[#16233f]/12 to-[#1f3157]/6 p-3 text-[#16233f] shadow-[0_1px_2px_rgba(16,25,46,0.04)]">
-                        <Icon className="h-5 w-5" />
-                      </div>
-                    </div>
-                    <div className="relative mt-4 flex items-end justify-end border-t border-slate-100 pt-3">
-                      <Sparkline points={stat.trend} />
-                    </div>
-                  </CardContent>
-                </Card>
-              </TiltCard>
-            </motion.div>
-          );
-        })}
-      </div>
+              <div className="flex items-start justify-between">
+                <m.icon
+                  className={cn("h-4 w-4", m.tone)}
+                  strokeWidth={1.6}
+                />
+                <ArrowUpRight className="h-3.5 w-3.5 text-[var(--muted-foreground)] opacity-0 transition group-hover:opacity-100" />
+              </div>
+              <p className="font-display type-hero mt-4 text-2xl tabular-nums text-[var(--ink)]">
+                {loading ? "—" : m.value}
+              </p>
+              <p className="type-caption mt-1 text-[var(--muted)]">{m.label}</p>
+            </Link>
+          </motion.div>
+        ))}
+      </section>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-          className="lg:col-span-2"
-        >
-          <Card>
-            <CardHeader>
-              <CardTitle>Recent Activity</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {[
-                "New project 'Goyal Riviera' added to Science City",
-                "Builder 'Prestige Group' profile updated",
-                "12 new leads received from SG Highway area",
-                "Testimonial approved for homepage",
-              ].map((activity, index) => (
-                <div
-                  key={index}
-                  className="group flex items-start gap-3 rounded-xl border border-slate-100 p-4 transition-all duration-200 hover:border-slate-200 hover:bg-slate-50/60"
-                >
-                  <div className="mt-0.5 h-2 w-2 shrink-0 rounded-full bg-[#16233f] transition-transform duration-200 group-hover:scale-125" />
-                  <div>
-                    <p className="text-sm text-slate-700">{activity}</p>
-                    <p className="mt-1 text-xs text-slate-400">
-                      {index + 1} hour{index === 0 ? "" : "s"} ago
-                    </p>
+      {/* Recent activity */}
+      <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
+        <div className="lux-card overflow-hidden">
+          <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+            <div>
+              <p className="type-caption text-[var(--accent)]">Publishing</p>
+              <h2 className="font-display type-title mt-1 text-lg text-[var(--ink)]">
+                Recently edited
+              </h2>
+            </div>
+            <Link
+              href="/customization/properties"
+              className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent)] hover:text-[var(--ink)]"
+            >
+              View all
+            </Link>
+          </div>
+          <div className="divide-y divide-[var(--border)]">
+            {loading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex gap-3 p-4">
+                  <div className="skeleton h-14 w-14 shrink-0 rounded-md" />
+                  <div className="flex-1 space-y-2">
+                    <div className="skeleton h-4 w-2/3 rounded" />
+                    <div className="skeleton h-3 w-1/3 rounded" />
                   </div>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.26, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle>Latest Leads</CardTitle>
-              <Badge variant="premium">{recentLeads.length} new</Badge>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {recentLeads.map((lead) => (
-                <div
-                  key={lead.name}
-                  className="flex items-center justify-between rounded-xl bg-slate-50/80 p-3 transition-colors duration-200 hover:bg-slate-100/70"
+              ))
+            ) : recent.length === 0 ? (
+              <div className="px-5 py-12 text-center">
+                <p className="font-display type-title text-lg text-[var(--ink)]">
+                  No properties yet
+                </p>
+                <p className="mt-2 text-sm text-[var(--muted)]">
+                  Create your first residence to begin the pipeline.
+                </p>
+                <Link
+                  href="/customization/properties/new"
+                  className="btn-brand mt-5 inline-flex px-5 py-2.5"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-[#1f3157] to-[#16233f] text-xs font-semibold text-white">
-                      {lead.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                  New Property
+                </Link>
+              </div>
+            ) : (
+              recent.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.04 * i }}
+                >
+                  <Link
+                    href={`/customization/properties/${p.id}`}
+                    className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-[var(--surface)] sm:px-5"
+                  >
+                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-[var(--stone,#ededef)]">
+                      {p.cover_image_url ? (
+                        <Image
+                          src={p.cover_image_url}
+                          alt=""
+                          fill
+                          className="object-cover"
+                          sizes="56px"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-[10px] text-[var(--muted)]">
+                          No img
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">{lead.name}</p>
-                      <p className="text-xs text-slate-500">{lead.project}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold text-[var(--ink)]">
+                        {p.title}
+                      </p>
+                      <p className="truncate text-xs text-[var(--muted)]">
+                        {[p.area_name, p.city].filter(Boolean).join(" · ")}
+                      </p>
                     </div>
-                  </div>
-                  <span className="text-xs text-slate-400">{lead.time}</span>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+                    <div className="text-right">
+                      <span
+                        className={cn(
+                          "inline-block rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                          p.status === "active" &&
+                            "bg-emerald-50 text-emerald-700",
+                          p.status === "draft" && "bg-amber-50 text-amber-700",
+                          p.status === "inactive" &&
+                            "bg-slate-100 text-slate-600",
+                        )}
+                      >
+                        {p.status}
+                      </span>
+                      <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
+                        {p.updated_at ? formatRelative(p.updated_at) : "—"}
+                      </p>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))
+            )}
+          </div>
+        </div>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.32, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <Card className="glass-card-hover">
-            <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
-                <Users className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Total Users</p>
-                <p className="text-2xl font-bold text-slate-900">8</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.38, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <Card className="glass-card-hover">
-            <CardContent className="flex items-center gap-4 p-6">
-              <div className="rounded-xl bg-emerald-50 p-3 text-emerald-600">
-                <UserCheck className="h-5 w-5" />
-              </div>
-              <div>
-                <p className="text-sm text-slate-500">Leads This Week</p>
-                <p className="text-2xl font-bold text-slate-900">47</p>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </div>
+        <div className="lux-card p-5 sm:p-6">
+          <p className="type-caption text-[var(--accent)]">Quick actions</p>
+          <h2 className="font-display type-title mt-1 text-lg text-[var(--ink)]">
+            Move with intention
+          </h2>
+          <div className="mt-6 space-y-2">
+            {[
+              {
+                href: "/customization/properties/new",
+                label: "Create property",
+                hint: "Start a draft residence",
+              },
+              {
+                href: "/customization/featured",
+                label: "Curate featured",
+                hint: "Up to 8 homepage picks",
+              },
+              {
+                href: "/customization/main-banner",
+                label: "Update main banner",
+                hint: "Homepage hero imagery",
+              },
+              {
+                href: "/users",
+                label: "Invite teammate",
+                hint: "Grow the operating team",
+              },
+            ].map((a) => (
+              <Link
+                key={a.href}
+                href={a.href}
+                className="group flex items-center justify-between rounded-md border border-[var(--border)] px-4 py-3 transition hover:border-[var(--accent)]/35 hover:bg-[var(--surface)]"
+              >
+                <div>
+                  <p className="text-sm font-semibold text-[var(--ink)]">
+                    {a.label}
+                  </p>
+                  <p className="text-xs text-[var(--muted)]">{a.hint}</p>
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-[var(--muted-foreground)] transition group-hover:text-[var(--accent)]" />
+              </Link>
+            ))}
+          </div>
+          <p className="mt-6 text-[11px] text-[var(--muted-foreground)]">
+            Press{" "}
+            <kbd className="rounded border border-[var(--border)] bg-white px-1.5 py-0.5">
+              ⌘K
+            </kbd>{" "}
+            for global search ·{" "}
+            <kbd className="rounded border border-[var(--border)] bg-white px-1.5 py-0.5">
+              N
+            </kbd>{" "}
+            new property
+          </p>
+        </div>
+      </section>
     </div>
   );
 }

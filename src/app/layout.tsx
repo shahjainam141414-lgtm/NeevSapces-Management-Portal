@@ -1,21 +1,21 @@
 import type { Metadata } from "next";
-import { DM_Sans, Plus_Jakarta_Sans } from "next/font/google";
+import { Manrope } from "next/font/google";
 import "./globals.css";
 
-const sans = DM_Sans({
-  variable: "--font-sans",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
-});
-
-const displayFont = Plus_Jakarta_Sans({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700", "800"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "Neev Admin | Management Portal",
-  description: "Premium real estate management dashboard for Neev Spaces",
+  title: {
+    default: "Neev Spaces OS | Admin",
+    template: "%s | Neev Spaces OS",
+  },
+  description:
+    "The operating system for Neev Spaces — premium real estate CMS.",
 };
 
 export default function RootLayout({
@@ -24,11 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${sans.variable} ${displayFont.variable} h-full antialiased`}
-    >
-      <body className="min-h-full">{children}</body>
+    <html lang="en" className={`${manrope.variable} h-full antialiased`}>
+      <body className="min-h-full font-sans">{children}</body>
     </html>
   );
 }

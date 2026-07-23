@@ -34,7 +34,7 @@ export function Sidebar({
     <div className="flex h-full flex-col">
       <div
         className={cn(
-          "flex border-b border-slate-100/80 px-3 py-4",
+          "flex border-b border-[var(--border)]/80 px-3 py-4",
           collapsed
             ? "flex-col items-center gap-3"
             : "items-center justify-between px-4 py-5",
@@ -50,26 +50,22 @@ export function Sidebar({
         >
           <Image
             src="/logo.png"
-            alt="Neev"
+            alt="Neev Spaces"
             width={collapsed ? 40 : 120}
             height={40}
-            className={cn(
-              "w-auto object-contain",
-              collapsed ? "h-8" : "h-9",
-            )}
+            className={cn("w-auto object-contain", collapsed ? "h-8" : "h-9")}
             priority
           />
           {!collapsed && (
-              <span className="mt-1.5 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.28em] text-[var(--muted)]">
-              <span className="h-[3px] w-[3px] rounded-full bg-[var(--accent)]" />
-              Management Portal
+            <span className="type-caption mt-2 text-[var(--muted)]">
+              Operating System
             </span>
           )}
         </Link>
         <button
           type="button"
           onClick={onToggle}
-          className="hidden cursor-pointer rounded-lg p-1.5 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-600 active:scale-90 lg:inline-flex"
+          className="hidden cursor-pointer rounded-md p-1.5 text-[var(--muted)] transition duration-300 hover:bg-[var(--accent-soft)] hover:text-[var(--ink)] active:scale-95 lg:inline-flex"
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         >
           {collapsed ? (
@@ -90,8 +86,10 @@ export function Sidebar({
               href={item.href}
               onClick={onMobileClose}
               className={cn(
-                "group relative flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-200",
-                active ? "text-white" : "text-slate-500 hover:text-slate-800",
+                "group relative flex cursor-pointer items-center gap-3 rounded-md px-3 py-2.5 text-[13px] font-medium tracking-wide transition-colors duration-300",
+                active
+                  ? "text-white"
+                  : "text-[var(--muted)] hover:text-[var(--ink)]",
                 collapsed && "justify-center px-2",
               )}
               title={collapsed ? item.title : undefined}
@@ -99,20 +97,25 @@ export function Sidebar({
               {active && (
                 <motion.span
                   layoutId="sidebar-active-pill"
-                  className="absolute inset-0 rounded-xl bg-[var(--accent)] shadow-[0_6px_18px_rgba(47,111,237,0.32)]"
-                  transition={{ type: "spring", stiffness: 400, damping: 34 }}
+                  className="absolute inset-0 rounded-md bg-[var(--ink)] shadow-[0_8px_24px_rgba(20,32,51,0.22)]"
+                  transition={{ type: "spring", stiffness: 380, damping: 34 }}
                 />
               )}
               {!active && (
-                <span className="absolute inset-0 rounded-xl bg-slate-50 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                <span className="absolute inset-0 rounded-md bg-[var(--accent-soft)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
               )}
               <Icon
                 className={cn(
-                  "relative z-10 h-[18px] w-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110",
-                  active ? "text-white" : "text-slate-400 group-hover:text-slate-600",
+                  "relative z-10 h-[17px] w-[17px] shrink-0 transition duration-300 group-hover:scale-105",
+                  active
+                    ? "text-white"
+                    : "text-[var(--muted-foreground)] group-hover:text-[var(--accent)]",
                 )}
+                strokeWidth={1.6}
               />
-              {!collapsed && <span className="relative z-10">{item.title}</span>}
+              {!collapsed && (
+                <span className="relative z-10">{item.title}</span>
+              )}
             </Link>
           );
         })}
@@ -120,11 +123,11 @@ export function Sidebar({
 
       <div
         className={cn(
-          "border-t border-slate-100/80 px-4 py-3.5 text-[10px] font-medium text-slate-400",
+          "border-t border-[var(--border)]/80 px-4 py-3.5 text-[10px] font-medium tracking-wide text-[var(--muted-foreground)]",
           collapsed && "px-2 text-center",
         )}
       >
-        {collapsed ? "©" : "© Neev Spaces · Admin"}
+        {collapsed ? "©" : "© Neev Spaces · OS"}
       </div>
     </div>
   );
@@ -132,23 +135,23 @@ export function Sidebar({
   return (
     <>
       <AnimatePresence>
-        {mobileOpen && (
+        {mobileOpen ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-40 bg-[#0b1220]/40 backdrop-blur-sm lg:hidden"
+            className="fixed inset-0 z-40 bg-[var(--ink-deep)]/45 backdrop-blur-sm lg:hidden"
             onClick={onMobileClose}
           />
-        )}
+        ) : null}
       </AnimatePresence>
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 border-r border-[var(--border)] bg-white shadow-[2px_0_24px_rgba(20,32,51,0.05)] transition-[width,transform] duration-300 ease-out lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 border-r border-[var(--border)] bg-white/95 shadow-[2px_0_32px_rgba(20,32,51,0.04)] backdrop-blur-xl transition-[width,transform] duration-300 ease-out lg:static lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
-          collapsed ? "lg:w-[76px]" : "lg:w-[260px]",
+          collapsed ? "lg:w-[76px]" : "lg:w-[248px]",
         )}
       >
         {sidebarContent}

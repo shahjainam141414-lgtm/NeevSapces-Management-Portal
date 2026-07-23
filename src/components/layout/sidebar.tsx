@@ -60,8 +60,8 @@ export function Sidebar({
             priority
           />
           {!collapsed && (
-            <span className="mt-1.5 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.28em] text-slate-400">
-              <span className="h-[3px] w-[3px] rounded-full bg-[#16233f]/50" />
+              <span className="mt-1.5 flex items-center gap-1.5 text-[9px] font-semibold uppercase tracking-[0.28em] text-[var(--muted)]">
+              <span className="h-[3px] w-[3px] rounded-full bg-[var(--accent)]" />
               Management Portal
             </span>
           )}
@@ -99,7 +99,7 @@ export function Sidebar({
               {active && (
                 <motion.span
                   layoutId="sidebar-active-pill"
-                  className="absolute inset-0 rounded-xl bg-[#16233f] shadow-[0_6px_18px_rgba(22,35,63,0.28)]"
+                  className="absolute inset-0 rounded-xl bg-[var(--accent)] shadow-[0_6px_18px_rgba(47,111,237,0.32)]"
                   transition={{ type: "spring", stiffness: 400, damping: 34 }}
                 />
               )}
@@ -146,7 +146,7 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 border-r border-slate-100/80 bg-white shadow-[2px_0_24px_rgba(16,25,46,0.05)] transition-[width,transform] duration-300 ease-out lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 border-r border-[var(--border)] bg-white shadow-[2px_0_24px_rgba(20,32,51,0.05)] transition-[width,transform] duration-300 ease-out lg:static lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           collapsed ? "lg:w-[76px]" : "lg:w-[260px]",
         )}

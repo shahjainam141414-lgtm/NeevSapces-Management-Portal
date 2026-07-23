@@ -1,13 +1,5 @@
-"use client";
-
-import { CustomizationPageContent } from "@/components/customization/customization-page-content";
+import { redirect } from "next/navigation";
 
 export default function CategoriesPage() {
-  return (
-    <CustomizationPageContent
-      title="Categories"
-      entityLabel="Category"
-      optionType="category"
-    />
-  );
+  redirect("/customization/featured");
 }

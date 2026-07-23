@@ -17,8 +17,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ChipGroup, ChipToggle } from "@/components/ui/chip-toggle";
 import {
@@ -48,9 +48,10 @@ import {
   CONSTRUCTION_STATUS_OPTIONS,
   PARKING_OPTIONS,
   buildPropertySlug,
-  statusBadgeVariant,
+  seedRateCardsFromLegacy,
   type PropertyDetail,
   type PropertyFloorPlan,
+  type PropertyRateCard,
   type PropertyStatus,
 } from "@/lib/properties";
 import {
@@ -65,6 +66,17 @@ import {
   updateProperty,
   upsertFloorPlan,
 } from "@/lib/properties-api";
+import { RateCardsEditor } from "@/components/properties/rate-cards-editor";
+import { InlineTextRows, type TextRow } from "@/components/properties/inline-text-rows";
+import {
+  LabelValueRows,
+  type LabelValueRow,
+} from "@/components/properties/label-value-rows";
+import {
+  FaqAccordionEditor,
+  type FaqRow,
+} from "@/components/properties/faq-accordion-editor";
+import { AmenityPicker } from "@/components/properties/amenity-picker";
 
 const ACCEPT_IMG = "image/jpeg,image/png,image/webp,image/jpg";
 
@@ -87,33 +99,6 @@ const cardMotion = (index: number) => ({
     ease: [0.22, 1, 0.36, 1] as const,
   },
 });
-
-function parseLines(text: string) {
-  return text
-    .split("\n")
-    .map((l) => l.trim())
-    .filter(Boolean);
-}
-
-function parseFaqs(text: string) {
-  return text
-    .split(/\n{2,}/)
-    .map((block) => {
-      const lines = block
-        .split("\n")
-        .map((l) => l.trim())
-        .filter(Boolean);
-      if (lines.length < 2) return null;
-      return { question: lines[0], answer: lines.slice(1).join(" ") };
-    })
-    .filter((x): x is { question: string; answer: string } => Boolean(x));
-}
-
-function faqsToText(
-  faqs: { question: string; answer: string }[],
-) {
-  return faqs.map((f) => `${f.question}\n${f.answer}`).join("\n\n");
-}
 
 type EditableFloorPlan = {
   id?: string;
@@ -207,9 +192,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [coverPublicId, setCoverPublicId] = useState<string | null>(null);
   const [brochureUrl, setBrochureUrl] = useState("");
 
-  const [packagePrice, setPackagePrice] = useState("");
-  const [priceNotes, setPriceNotes] = useState("");
-  const [pricePerSqft, setPricePerSqft] = useState("");
+  const [rateCards, setRateCards] = useState<PropertyRateCard[]>([]);
 
   const [availability, setAvailability] = useState<string[]>([]);
   const [possessionBy, setPossessionBy] = useState("");
@@ -235,9 +218,9 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [currentStatus, setCurrentStatus] = useState("Available");
   const [about, setAbout] = useState("");
 
-  const [highlightsText, setHighlightsText] = useState("");
-  const [specsText, setSpecsText] = useState("");
-  const [faqsText, setFaqsText] = useState("");
+  const [highlightRows, setHighlightRows] = useState<TextRow[]>([]);
+  const [specRows, setSpecRows] = useState<LabelValueRow[]>([]);
+  const [faqRows, setFaqRows] = useState<FaqRow[]>([]);
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<string[]>([]);
   const [floorPlans, setFloorPlans] = useState<EditableFloorPlan[]>([]);
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -266,6 +249,15 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       setCategories(catRows.filter((c) => c.status === "active"));
       setPropertyTypes(typeRows.filter((t) => t.status === "active"));
 
+      const activeAmenities = amenityRows.filter((a) => a.status === "active");
+      const defaultAmenityIds = activeAmenities
+        .filter((a) => a.is_default)
+        .map((a) => a.id);
+      // New drafts (or properties with no amenities yet) start with defaults selected
+      setSelectedAmenityIds(
+        prop.amenity_ids.length > 0 ? prop.amenity_ids : defaultAmenityIds,
+      );
+
       setTitle(prop.title);
       setSlug(prop.slug);
       setStatus(prop.status);
@@ -280,9 +272,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       setCoverUrl(prop.cover_image_url);
       setCoverPublicId(prop.cover_cloudinary_public_id);
       setBrochureUrl(prop.brochure_url ?? "");
-      setPackagePrice(prop.package_price_label ?? "");
-      setPriceNotes(prop.package_price_notes ?? "");
-      setPricePerSqft(prop.price_per_sqft_label ?? "");
+      setRateCards(seedRateCardsFromLegacy(prop));
       setAvailability(prop.availability ?? []);
       setPossessionBy(prop.possession_by ?? "");
       setPropertyTypeLabel(prop.property_type_label ?? "");
@@ -306,10 +296,26 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       setRoadConnectivity(prop.road_connectivity ?? "");
       setCurrentStatus(prop.current_status ?? "Available");
       setAbout(prop.about ?? "");
-      setHighlightsText(prop.highlights.map((h) => h.content).join("\n"));
-      setSpecsText(prop.specs.map((s) => s.content).join("\n"));
-      setFaqsText(faqsToText(prop.faqs));
-      setSelectedAmenityIds(prop.amenity_ids);
+      setHighlightRows(
+        prop.highlights.map((h) => ({
+          id: h.id,
+          content: h.content,
+        })),
+      );
+      setSpecRows(
+        prop.specs.map((s) => ({
+          id: s.id,
+          label: s.label ?? "",
+          value: s.content,
+        })),
+      );
+      setFaqRows(
+        prop.faqs.map((f) => ({
+          id: f.id,
+          question: f.question,
+          answer: f.answer,
+        })),
+      );
       setFloorPlans(prop.floor_plans.map(planToEditable));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load property");
@@ -434,9 +440,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         cover_image_url: coverUrl,
         cover_cloudinary_public_id: coverPublicId,
         brochure_url: brochureUrl.trim() || null,
-        package_price_label: packagePrice.trim() || null,
-        package_price_notes: priceNotes.trim() || null,
-        price_per_sqft_label: pricePerSqft.trim() || null,
+        rate_cards: rateCards,
         availability,
         possession_by: possessionBy.trim() || null,
         property_type_label: propertyTypeLabel.trim() || null,
@@ -463,10 +467,22 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       await setPropertyAmenities(propertyId, selectedAmenityIds);
       const highlights = await replaceHighlights(
         propertyId,
-        parseLines(highlightsText),
+        highlightRows.map((r) => r.content),
       );
-      const specs = await replaceSpecs(propertyId, parseLines(specsText));
-      const faqs = await replaceFaqs(propertyId, parseFaqs(faqsText));
+      const specs = await replaceSpecs(
+        propertyId,
+        specRows.map((r) => ({
+          label: r.label,
+          content: r.value,
+        })),
+      );
+      const faqs = await replaceFaqs(
+        propertyId,
+        faqRows.map((r) => ({
+          question: r.question,
+          answer: r.answer,
+        })),
+      );
 
       // Persist floor plans (create/update); delete removed ones
       const existingIds = new Set(
@@ -504,6 +520,24 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       }
 
       setSlug(updated.slug);
+      setHighlightRows(
+        highlights.map((h) => ({ id: h.id, content: h.content })),
+      );
+      setSpecRows(
+        specs.map((s) => ({
+          id: s.id,
+          label: s.label ?? "",
+          value: s.content,
+        })),
+      );
+      setFaqRows(
+        faqs.map((f) => ({
+          id: f.id,
+          question: f.question,
+          answer: f.answer,
+        })),
+      );
+      setRateCards(updated.rate_cards ?? rateCards);
       setDetail((prev) =>
         prev
           ? {
@@ -566,30 +600,37 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between"
+        className="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_8px_30px_rgba(15,23,42,0.05)]"
       >
-        <div>
+        <div className="flex flex-col gap-4 border-b border-slate-100 bg-gradient-to-br from-[#eef1f6]/90 via-white to-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+          <div className="min-w-0">
+            <Button
+              asChild
+              variant="ghost"
+              className="-ml-2 mb-2 gap-1.5 text-slate-500"
+            >
+              <Link href="/customization/properties">
+                <ArrowLeft className="size-4" />
+                All properties
+              </Link>
+            </Button>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-[#16233f]">
+                {title || "Untitled property"}
+              </h1>
+              <StatusBadge status={status} />
+              {isFeatured ? (
+                <span className="rounded-full bg-[#16233f]/8 px-2.5 py-0.5 text-[11px] font-semibold text-[#16233f]">
+                  Featured
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1.5 truncate text-sm text-slate-500">
+              {addressPreview || "Fill location details"} · /{slug || "…"}
+            </p>
+          </div>
           <Button
-            asChild
-            variant="ghost"
-            className="-ml-2 mb-2 gap-1.5 text-slate-500"
-          >
-            <Link href="/customization/properties">
-              <ArrowLeft className="size-4" />
-              All properties
-            </Link>
-          </Button>
-          <h1 className="font-display text-2xl font-semibold tracking-tight text-[#16233f]">
-            {title || "Untitled property"}
-          </h1>
-          <p className="mt-1 text-sm text-slate-500">
-            {addressPreview || "Fill location details"} · /{slug || "…"}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={statusBadgeVariant(status)}>{status}</Badge>
-          <Button
-            className="gap-2"
+            className="gap-2 self-start sm:self-center"
             loading={saving}
             onClick={() => void handleSave()}
           >
@@ -597,45 +638,54 @@ export function PropertyEditPageContent({ propertyId }: Props) {
             {saving ? "Saving…" : "Save all"}
           </Button>
         </div>
+
+        <div className="px-3 py-3 sm:px-5 sm:py-4">
+          <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+            Step {activeTabIndex + 1} of {EDIT_TABS.length}
+          </p>
+          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {EDIT_TABS.map((tab, i) => {
+              const active = tab.value === activeTab;
+              const done = i < activeTabIndex;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  onClick={() => setActiveTab(tab.value)}
+                  className={cn(
+                    "flex shrink-0 cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-all duration-200",
+                    active
+                      ? "bg-[#16233f] text-white shadow-[0_6px_18px_rgba(22,35,63,0.28)]"
+                      : done
+                        ? "bg-[#eef1f6] text-[#16233f] hover:bg-[#e4e9f2]"
+                        : "bg-slate-50 text-slate-500 ring-1 ring-slate-200/80 hover:bg-white hover:text-slate-800",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
+                      active
+                        ? "bg-white/20 text-white"
+                        : done
+                          ? "bg-[#16233f]/12 text-[#16233f]"
+                          : "bg-slate-200/80 text-slate-500",
+                    )}
+                  >
+                    {i + 1}
+                  </span>
+                  <span className="whitespace-nowrap">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </motion.div>
 
       {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
       {message ? <AlertBanner variant="success">{message}</AlertBanner> : null}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        {/* Step progress indicator */}
-        <div className="mb-4 flex items-center gap-1 overflow-x-auto pb-1 sm:gap-1.5">
-          {EDIT_TABS.map((tab, i) => (
-            <div key={tab.value} className="flex shrink-0 items-center gap-1 sm:gap-1.5">
-              <div
-                className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold transition-colors duration-300",
-                  i < activeTabIndex
-                    ? "bg-[#16233f] text-white"
-                    : i === activeTabIndex
-                      ? "bg-[#16233f] text-white shadow-[0_0_0_4px_rgba(22,35,63,0.18)]"
-                      : "bg-slate-100 text-slate-400",
-                )}
-              >
-                {i + 1}
-              </div>
-              {i < EDIT_TABS.length - 1 && (
-                <div
-                  className={cn(
-                    "h-px w-4 transition-colors duration-300 sm:w-8",
-                    i < activeTabIndex ? "bg-[#16233f]" : "bg-slate-200",
-                  )}
-                />
-              )}
-            </div>
-          ))}
-          <span className="ml-2 shrink-0 text-xs font-medium whitespace-nowrap text-slate-500">
-            Step {activeTabIndex + 1} of {EDIT_TABS.length} —{" "}
-            {EDIT_TABS[activeTabIndex]?.label}
-          </span>
-        </div>
-
-        <TabsList className="flex h-auto w-full flex-wrap justify-start gap-1">
+        <TabsList className="sr-only">
           {EDIT_TABS.map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value}>
               {tab.label}
@@ -707,7 +757,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     value={status}
                     onValueChange={(v) => setStatus(v as PropertyStatus)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full cursor-pointer">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -716,6 +766,9 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                       <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
+                  <div className="pt-0.5">
+                    <StatusBadge status={status} />
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label>Listing badge</Label>
@@ -811,19 +864,27 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Type</Label>
-                    <Input
-                      value={propertyTypeLabel}
-                      onChange={(e) => setPropertyTypeLabel(e.target.value)}
-                      placeholder="Flats / Apartments"
-                      list="property-type-suggestions"
-                    />
-                    <datalist id="property-type-suggestions">
-                      {propertyTypes.map((t) => (
-                        <option key={t.id} value={t.name} />
-                      ))}
-                      <option value="Flats / Apartments" />
-                    </datalist>
+                    <Label>Property type</Label>
+                    <Select
+                      value={propertyTypeLabel || undefined}
+                      onValueChange={setPropertyTypeLabel}
+                    >
+                      <SelectTrigger className="w-full cursor-pointer">
+                        <SelectValue placeholder="Select property type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {propertyTypes.map((t) => (
+                          <SelectItem key={t.id} value={t.name}>
+                            {t.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {propertyTypes.length === 0 && (
+                      <p className="text-[11px] text-slate-500">
+                        Add types under Customization → Property types.
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <Label>Towers</Label>
@@ -1036,34 +1097,13 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         <TabsContent value="pricing">
           <motion.div {...cardMotion(0)}>
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Rate card</CardTitle>
+              <CardHeader className="border-b border-slate-100 bg-[#eef1f6]/30">
+                <CardTitle className="text-base text-[#16233f]">
+                  Rate card
+                </CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Package price</Label>
-                  <Input
-                    value={packagePrice}
-                    onChange={(e) => setPackagePrice(e.target.value)}
-                    placeholder="1.55 Cr.*"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Price per sq.ft.</Label>
-                  <Input
-                    value={pricePerSqft}
-                    onChange={(e) => setPricePerSqft(e.target.value)}
-                    placeholder="Price on Request/ Sq.Ft.*"
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Package price notes</Label>
-                  <Input
-                    value={priceNotes}
-                    onChange={(e) => setPriceNotes(e.target.value)}
-                    placeholder="Incl All Charges - Onwards*"
-                  />
-                </div>
+              <CardContent className="p-4 sm:p-5">
+                <RateCardsEditor value={rateCards} onChange={setRateCards} />
               </CardContent>
             </Card>
           </motion.div>
@@ -1312,40 +1352,18 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         <TabsContent value="amenities">
           <motion.div {...cardMotion(0)}>
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Select amenities</CardTitle>
+              <CardHeader className="border-b border-slate-100 bg-[#eef1f6]/30">
+                <CardTitle className="text-base text-[#16233f]">
+                  Amenities
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                {amenities.length === 0 ? (
-                  <AlertBanner variant="info">
-                    No amenities in master list.{" "}
-                    <Link
-                      href="/customization/amenities"
-                      className="font-medium underline underline-offset-2"
-                    >
-                      Add amenities
-                    </Link>
-                    .
-                  </AlertBanner>
-                ) : (
-                  <ChipGroup>
-                    {amenities.map((a) => (
-                      <ChipToggle
-                        key={a.id}
-                        selected={selectedAmenityIds.includes(a.id)}
-                        onClick={() =>
-                          toggleMulti(
-                            selectedAmenityIds,
-                            a.id,
-                            setSelectedAmenityIds,
-                          )
-                        }
-                      >
-                        {a.title}
-                      </ChipToggle>
-                    ))}
-                  </ChipGroup>
-                )}
+              <CardContent className="p-4 sm:p-5">
+                <AmenityPicker
+                  amenities={amenities}
+                  selectedIds={selectedAmenityIds}
+                  onSelectedChange={setSelectedAmenityIds}
+                  onAmenitiesChange={setAmenities}
+                />
               </CardContent>
             </Card>
           </motion.div>
@@ -1355,20 +1373,19 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         <TabsContent value="content" className="space-y-4">
           <motion.div {...cardMotion(0)}>
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Why this project</CardTitle>
+              <CardHeader className="border-b border-slate-100 bg-[#eef1f6]/30">
+                <CardTitle className="text-base text-[#16233f]">
+                  Why this project
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <Label className="mb-2 block text-slate-500">
-                  One highlight per line
-                </Label>
-                <Textarea
-                  value={highlightsText}
-                  onChange={(e) => setHighlightsText(e.target.value)}
-                  rows={6}
-                  placeholder={
-                    "Club-Class Amenities: …\nPrime Location with easy access to …\nLuxury Redefined: …"
-                  }
+              <CardContent className="p-4 sm:p-5">
+                <InlineTextRows
+                  label="Highlights"
+                  hint="Short reasons buyers should choose this project."
+                  placeholder="Club-class amenities with prime location access…"
+                  value={highlightRows}
+                  onChange={setHighlightRows}
+                  addLabel="Add highlight"
                 />
               </CardContent>
             </Card>
@@ -1376,20 +1393,20 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
           <motion.div {...cardMotion(1)}>
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">Specifications</CardTitle>
+              <CardHeader className="border-b border-slate-100 bg-[#eef1f6]/30">
+                <CardTitle className="text-base text-[#16233f]">
+                  Specifications
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <Label className="mb-2 block text-slate-500">
-                  One specification per line
-                </Label>
-                <Textarea
-                  value={specsText}
-                  onChange={(e) => setSpecsText(e.target.value)}
-                  rows={6}
-                  placeholder={
-                    "Bedrooms: Wooden finish vitrified tiles\nDouble Height Balcony and Infinity Swimming Pool\n21 Storey"
-                  }
+              <CardContent className="p-4 sm:p-5">
+                <LabelValueRows
+                  title="Spec fields"
+                  hint="Add label + value pairs (not a popup)."
+                  value={specRows}
+                  onChange={setSpecRows}
+                  addLabel="Add field"
+                  labelPlaceholder="e.g. Flooring"
+                  valuePlaceholder="e.g. Wooden finish vitrified tiles"
                 />
               </CardContent>
             </Card>
@@ -1397,22 +1414,13 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
           <motion.div {...cardMotion(2)}>
             <Card>
-              <CardHeader>
-                <CardTitle className="text-base">FAQs</CardTitle>
+              <CardHeader className="border-b border-slate-100 bg-[#eef1f6]/30">
+                <CardTitle className="text-base text-[#16233f]">
+                  FAQs
+                </CardTitle>
               </CardHeader>
-              <CardContent>
-                <Label className="mb-2 block text-slate-500">
-                  Question on first line, answer on next line(s). Separate FAQs
-                  with a blank line.
-                </Label>
-                <Textarea
-                  value={faqsText}
-                  onChange={(e) => setFaqsText(e.target.value)}
-                  rows={10}
-                  placeholder={
-                    "What is The Privilon location?\nThe Privilon is located in Kudasan, Gandhinagar, Gujarat.\n\nWhat is the possession timeline?\nReady for possession by December 2027"
-                  }
-                />
+              <CardContent className="p-4 sm:p-5">
+                <FaqAccordionEditor value={faqRows} onChange={setFaqRows} />
               </CardContent>
             </Card>
           </motion.div>

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
-import { ArrowRight, Eye, EyeOff, Lock } from "lucide-react";
+import { ArrowRight, Eye, EyeOff, Lock, Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -42,6 +42,7 @@ function SetPasswordForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [successEmail, setSuccessEmail] = useState<string | null>(null);
+  const [inviteEmail, setInviteEmail] = useState<string | null>(null);
   const [sessionReady, setSessionReady] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const [sessionUserId, setSessionUserId] = useState<string | null>(null);
@@ -59,57 +60,107 @@ function SetPasswordForm() {
   useEffect(() => {
     const supabase = createClient();
 
+    function markReady(userId: string, email?: string | null) {
+      setSessionUserId(userId);
+      setInviteEmail((email ?? "").trim().toLowerCase() || null);
+      setSessionReady(true);
+      setCheckingSession(false);
+      try {
+        sessionStorage.setItem("neev_set_password_ok", userId);
+      } catch {
+        // ignore
+      }
+    }
+
+    async function clearLeftoverSession() {
+      try {
+        await supabase.auth.signOut({ scope: "local" });
+      } catch {
+        // ignore
+      }
+    }
+
     async function ensureSession() {
+      const code = searchParams.get("code");
+      const tokenHash = searchParams.get("token_hash");
+      const otpType = searchParams.get("type");
+      const hash =
+        typeof window !== "undefined" ? window.location.hash : "";
+      const hashParams = hash.includes("access_token")
+        ? new URLSearchParams(hash.replace(/^#/, ""))
+        : null;
+
+      // Always prefer invite/recovery tokens over any leftover logged-in session
+      // (otherwise Super Admin email shows instead of the invited user)
+      if (code || tokenHash || hashParams) {
+        await clearLeftoverSession();
+
+        if (code) {
+          const { data, error } =
+            await supabase.auth.exchangeCodeForSession(code);
+          if (!error && data.user?.id) {
+            markReady(data.user.id, data.user.email);
+            window.history.replaceState(null, "", "/set-password");
+            return;
+          }
+          setFormError(error?.message || "Could not open invite session.");
+          setCheckingSession(false);
+          return;
+        }
+
+        if (tokenHash && otpType) {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: otpType as "invite" | "recovery" | "email",
+          });
+          if (!error && data.user?.id) {
+            markReady(data.user.id, data.user.email);
+            window.history.replaceState(null, "", "/set-password");
+            return;
+          }
+          setFormError(error?.message || "Could not open invite session.");
+          setCheckingSession(false);
+          return;
+        }
+
+        if (hashParams) {
+          const access_token = hashParams.get("access_token");
+          const refresh_token = hashParams.get("refresh_token");
+          if (access_token && refresh_token) {
+            const { data, error } = await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+            if (!error && data.user?.id) {
+              markReady(data.user.id, data.user.email);
+              window.history.replaceState(null, "", "/set-password");
+            } else {
+              setFormError(error?.message || "Could not open invite session.");
+            }
+            setCheckingSession(false);
+            return;
+          }
+        }
+      }
+
+      // After tokens are stripped from the URL, reuse only the invite session we just created
       const {
         data: { session },
       } = await supabase.auth.getSession();
-
-      if (session?.user?.id) {
-        setSessionUserId(session.user.id);
-        setSessionReady(true);
-        setCheckingSession(false);
-        return;
+      let expectedId: string | null = null;
+      try {
+        expectedId = sessionStorage.getItem("neev_set_password_ok");
+      } catch {
+        expectedId = null;
       }
 
-      const code = searchParams.get("code");
-      if (code) {
-        const { data, error } = await supabase.auth.exchangeCodeForSession(code);
-        if (!error && data.user?.id) {
-          setSessionUserId(data.user.id);
-          setSessionReady(true);
-          window.history.replaceState(null, "", "/set-password");
-          setCheckingSession(false);
-          return;
-        }
-        setFormError(error?.message || "Could not open invite session.");
-        setCheckingSession(false);
+      if (session?.user?.id && expectedId && session.user.id === expectedId) {
+        markReady(session.user.id, session.user.email);
         return;
-      }
-
-      const hash = typeof window !== "undefined" ? window.location.hash : "";
-      if (hash.includes("access_token")) {
-        const params = new URLSearchParams(hash.replace(/^#/, ""));
-        const access_token = params.get("access_token");
-        const refresh_token = params.get("refresh_token");
-        if (access_token && refresh_token) {
-          const { data, error } = await supabase.auth.setSession({
-            access_token,
-            refresh_token,
-          });
-          if (!error && data.user?.id) {
-            setSessionUserId(data.user.id);
-            setSessionReady(true);
-            window.history.replaceState(null, "", "/set-password");
-          } else {
-            setFormError(error?.message || "Could not open invite session.");
-          }
-          setCheckingSession(false);
-          return;
-        }
       }
 
       setFormError(
-        "This invite link is invalid or expired. Ask an admin to resend the invite.",
+        "This invite link is invalid or expired. Open the invite link from your email (do not stay signed in as another admin in this browser).",
       );
       setCheckingSession(false);
     }
@@ -119,10 +170,14 @@ function SetPasswordForm() {
 
   const goToLogin = async (email?: string | null) => {
     setGoingToLogin(true);
+    try {
+      sessionStorage.removeItem("neev_set_password_ok");
+    } catch {
+      // ignore
+    }
     await clearClientSession();
     const params = new URLSearchParams({ force_login: "1" });
     if (email) params.set("email", email);
-    // Hard navigation so middleware + cookies fully reset (no leftover invite session)
     window.location.assign(`/login?${params.toString()}`);
   };
 
@@ -135,13 +190,38 @@ function SetPasswordForm() {
     } = await supabase.auth.getUser();
     const userId = user?.id || sessionUserId || undefined;
 
+    // Guard: never set password for a different account than the one shown
+    if (
+      inviteEmail &&
+      user?.email &&
+      user.email.trim().toLowerCase() !== inviteEmail
+    ) {
+      setFormError(
+        "Session email does not match this invite. Open the invite link from your email again.",
+      );
+      return;
+    }
+
+    if (user?.id) {
+      const { error: clientUpdateError } = await supabase.auth.updateUser({
+        password: data.password,
+      });
+      if (clientUpdateError) {
+        // Admin API in setInvitedUserPassword is the fallback
+      }
+    }
+
     const result = await setInvitedUserPassword(data.password, userId);
     if (!result.ok) {
       setFormError(result.error);
       return;
     }
 
-    // Clear invite session immediately so Continue cannot open the dashboard
+    try {
+      sessionStorage.removeItem("neev_set_password_ok");
+    } catch {
+      // ignore
+    }
     await clearClientSession();
     setSuccessEmail(result.email);
   };
@@ -179,7 +259,7 @@ function SetPasswordForm() {
   return (
     <AuthLayout
       title="Set Your Password"
-      subtitle="Create a password for your Super Admin account"
+      subtitle="Create a password for your admin account"
     >
       {!sessionReady ? (
         <div className="space-y-4">
@@ -197,6 +277,18 @@ function SetPasswordForm() {
         </div>
       ) : (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          {inviteEmail && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-3">
+              <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+                Email
+              </p>
+              <p className="mt-1 flex items-center gap-2 text-sm font-medium text-slate-900">
+                <Mail className="h-4 w-4 shrink-0 text-slate-400" />
+                <span className="truncate">{inviteEmail}</span>
+              </p>
+            </div>
+          )}
+
           <AuthField
             id="password"
             label="New Password"

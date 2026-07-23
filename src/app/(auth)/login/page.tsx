@@ -125,21 +125,30 @@ function LoginFormContent() {
     setFormError(null);
     setInfoMessage(null);
     const supabase = createClient();
-    // Sign out any leftover invite session before password login
-    await supabase.auth.signOut({ scope: "global" }).catch(() => undefined);
+
+    // Clear leftover invite/recovery session without blocking a fresh password login
+    try {
+      await supabase.auth.signOut({ scope: "local" });
+    } catch {
+      // ignore
+    }
 
     const email = data.email.trim().toLowerCase();
+    const password = data.password;
+
     const { data: authData, error } = await supabase.auth.signInWithPassword({
       email,
-      password: data.password,
+      password,
     });
 
     if (error) {
+      const msg = error.message.toLowerCase();
       setAccessDialog({
         title: "Sign-in failed",
-        description:
-          error.message.toLowerCase().includes("invalid")
-            ? "Invalid email or password. Use the exact password you set on the invite page, or reset via Forgot password."
+        description: msg.includes("invalid") || msg.includes("credentials")
+          ? "Invalid email or password. If you just set your password, open a fresh invite email link, set it again, then sign in."
+          : msg.includes("confirm")
+            ? "Email is not confirmed yet. Open the invite link from your email, set your password, then try again."
             : error.message,
       });
       return;

@@ -65,6 +65,12 @@ export async function GET(request: Request) {
     const meta = user.user_metadata ?? {};
 
     if (isInviteFlow) {
+      const metaRole = meta.role;
+      const role =
+        metaRole === "Manager" || metaRole === "Super Admin"
+          ? metaRole
+          : "Manager";
+
       await admin.from("admin_profiles").upsert(
         {
           id: user.id,
@@ -77,7 +83,7 @@ export async function GET(request: Request) {
           phone: meta.phone ?? null,
           photo_url:
             meta.photo_url || meta.avatar_url || meta.picture || null,
-          role: "Super Admin",
+          role,
           status: "active",
         },
         { onConflict: "id" },
@@ -89,7 +95,7 @@ export async function GET(request: Request) {
     // Invite-only: must already be allowlisted in admin_profiles
     const { data: byId } = await admin
       .from("admin_profiles")
-      .select("id, email, status, name, phone, photo_url")
+      .select("id, email, status, name, phone, photo_url, role")
       .eq("id", user.id)
       .maybeSingle();
 
@@ -98,7 +104,7 @@ export async function GET(request: Request) {
     if (!profile && email) {
       const { data: byEmail } = await admin
         .from("admin_profiles")
-        .select("id, email, status, name, phone, photo_url")
+        .select("id, email, status, name, phone, photo_url, role")
         .eq("email", email)
         .maybeSingle();
       profile = byEmail;
@@ -123,7 +129,7 @@ export async function GET(request: Request) {
         email: profile.email,
         phone: profile.phone,
         photo_url: meta.avatar_url || meta.picture || profile.photo_url,
-        role: "Super Admin",
+        role: profile.role || "Manager",
         status: "active",
       });
       try {

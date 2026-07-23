@@ -16,6 +16,8 @@ export type StaticOption = {
   type: StaticOptionType;
   value: string;
   status: OptionStatus;
+  image_url?: string | null;
+  cloudinary_public_id?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -25,6 +27,8 @@ export type EntityItem = {
   id: string;
   name: string;
   status: OptionStatus;
+  image_url?: string | null;
+  cloudinary_public_id?: string | null;
 };
 
 export function toEntityItem(row: StaticOption): EntityItem {
@@ -32,5 +36,7 @@ export function toEntityItem(row: StaticOption): EntityItem {
     id: row.id,
     name: row.value,
     status: row.status,
+    image_url: row.image_url ?? null,
+    cloudinary_public_id: row.cloudinary_public_id ?? null,
   };
 }

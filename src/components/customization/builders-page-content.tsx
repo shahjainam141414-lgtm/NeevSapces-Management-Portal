@@ -6,7 +6,7 @@ import { Inbox, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { ActionsDropdown } from "@/components/ui/actions-dropdown";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -121,6 +121,42 @@ export function BuildersPageContent() {
     }
   };
 
+  const handleSetStatus = async (item: Builder, status: BuilderStatus) => {
+    if (item.status === status) return;
+    setError(null);
+    try {
+      const updated = await updateBuilder({
+        id: item.id,
+        name: item.name,
+        tier: item.tier,
+        status,
+        website: item.website,
+      });
+      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not update status.",
+      );
+    }
+  };
+
+  const builderActions = (item: Builder) => (
+    <ActionsDropdown
+      onEdit={() => setEditItem(item)}
+      onSetActive={
+        item.status !== "active"
+          ? () => void handleSetStatus(item, "active")
+          : undefined
+      }
+      onSetInactive={
+        item.status !== "inactive"
+          ? () => void handleSetStatus(item, "inactive")
+          : undefined
+      }
+      onDelete={() => setDeleteItem(item)}
+    />
+  );
+
   return (
     <>
       <Card className="overflow-hidden">
@@ -192,10 +228,7 @@ export function BuildersPageContent() {
                   className="builder-cube group relative flex flex-col items-center rounded-2xl px-3 pb-4 pt-5 text-center transition-all duration-200 hover:-translate-y-0.5"
                 >
                   <div className="absolute right-1 top-1 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
-                    <ActionsDropdown
-                      onEdit={() => setEditItem(item)}
-                      onDelete={() => setDeleteItem(item)}
-                    />
+                    {builderActions(item)}
                   </div>
 
                   <BuilderLogo name={item.name} logoUrl={item.logo_url} />
@@ -205,14 +238,10 @@ export function BuildersPageContent() {
                   </h4>
 
                   <div className="mt-2.5">
-                    <Badge
-                      variant={
-                        item.status === "active" ? "success" : "destructive"
-                      }
+                    <StatusBadge
+                      status={item.status}
                       className="text-[10px]"
-                    >
-                      {item.status}
-                    </Badge>
+                    />
                   </div>
                 </motion.article>
               ))}

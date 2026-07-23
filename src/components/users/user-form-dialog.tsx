@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { z } from "zod";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Camera, Check, Copy, Phone, UserPlus } from "lucide-react";
+import { Camera, Phone, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,60 +16,132 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { getInitials } from "@/lib/utils";
 import { uploadToCloudinary } from "@/lib/cloudinary";
-import { inviteAdminUser } from "@/app/actions/users";
+import { inviteAdminUser, updateAdminUser } from "@/app/actions/users";
 import type { AdminProfile } from "@/lib/admin-profiles";
+import type { UserRole } from "@/lib/nav-config";
+import { assignableRoles, canEditUser } from "@/lib/roles";
+
+const phoneDigitsOnly = (value: string) => value.replace(/\D/g, "").slice(0, 12);
 
 const userSchema = z.object({
   name: z.string().min(2, "Name is required"),
   email: z.string().email("Valid email is required"),
-  phone: z.string().optional(),
+  phone: z
+    .string()
+    .optional()
+    .refine((v) => !v || /^\d{1,12}$/.test(v), {
+      message: "Phone must be numbers only (max 12 digits)",
+    }),
+  role: z.enum(["Super Admin", "Manager"]),
+  status: z.enum(["active", "inactive"]),
 });
 
 type UserFormData = z.infer<typeof userSchema>;
 
 type UserFormDialogProps = {
+  mode?: "create" | "edit";
+  user?: AdminProfile | null;
+  actorRole: UserRole;
+  isSelf?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onCreated?: (profile: AdminProfile) => void;
+  onUpdated?: (profile: AdminProfile) => void;
+  trigger?: React.ReactNode;
 };
 
-export function UserFormDialog({ onCreated }: UserFormDialogProps) {
-  const [open, setOpen] = useState(false);
+export function UserFormDialog({
+  mode = "create",
+  user = null,
+  actorRole,
+  isSelf = false,
+  open: controlledOpen,
+  onOpenChange,
+  onCreated,
+  onUpdated,
+  trigger,
+}: UserFormDialogProps) {
+  const isEdit = mode === "edit";
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const open = controlledOpen ?? uncontrolledOpen;
+  const setOpen = onOpenChange ?? setUncontrolledOpen;
+
+  const roles = assignableRoles(actorRole);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [formSuccess, setFormSuccess] = useState<string | null>(null);
-  const [inviteLink, setInviteLink] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const formValues = useMemo<UserFormData>(() => {
+    if (isEdit && user) {
+      return {
+        name: user.name,
+        email: user.email,
+        phone: phoneDigitsOnly(user.phone ?? ""),
+        role: user.role,
+        status: user.status,
+      };
+    }
+    const roleOptions = assignableRoles(actorRole);
+    return {
+      name: "",
+      email: "",
+      phone: "",
+      role: roleOptions.includes("Manager")
+        ? "Manager"
+        : roleOptions[0] ?? "Manager",
+      status: "active",
+    };
+  }, [isEdit, user, actorRole]);
 
   const {
     register,
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<UserFormData>({
     resolver: zodResolver(userSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      phone: "",
-    },
+    values: formValues,
   });
 
   const name = useWatch({ control, name: "name" });
+  const role = useWatch({ control, name: "role" });
+  const status = useWatch({ control, name: "status" });
+
+  const displayPhoto = photoPreview ?? (isEdit ? user?.photo_url ?? null : null);
 
   const resetLocal = () => {
-    reset();
     setPhotoPreview(null);
     setPhotoFile(null);
     setFormError(null);
     setFormSuccess(null);
-    setInviteLink(null);
-    setCopied(false);
+  };
+
+  const handleOpenChange = (next: boolean) => {
+    setOpen(next);
+    if (!next) {
+      resetLocal();
+      reset(formValues);
+    } else {
+      setPhotoFile(null);
+      setPhotoPreview(null);
+      setFormError(null);
+      setFormSuccess(null);
+    }
   };
 
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,30 +153,46 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
     reader.readAsDataURL(file);
   };
 
-  const copyInviteLink = async () => {
-    if (!inviteLink) return;
-    await navigator.clipboard.writeText(inviteLink);
-    setCopied(true);
-    window.setTimeout(() => setCopied(false), 2000);
-  };
-
   const submitForm = async (data: UserFormData) => {
     setFormError(null);
     setFormSuccess(null);
-    setInviteLink(null);
-    setCopied(false);
     try {
-      let photoUrl: string | null = null;
+      let photoUrl: string | null = isEdit ? (user?.photo_url ?? null) : null;
       if (photoFile) {
         const uploaded = await uploadToCloudinary(photoFile, "neev/admins");
         photoUrl = uploaded.secure_url;
       }
 
+      const phone = data.phone ? phoneDigitsOnly(data.phone) : "";
+
+      if (isEdit && user) {
+        const result = await updateAdminUser({
+          id: user.id,
+          name: data.name,
+          phone: phone || undefined,
+          photoUrl,
+          role: data.role,
+          status: data.status,
+        });
+        if (!result.ok) {
+          setFormError(result.error);
+          return;
+        }
+        onUpdated?.(result.profile);
+        setFormSuccess("User updated.");
+        window.setTimeout(() => {
+          setFormSuccess(null);
+          setOpen(false);
+        }, 1200);
+        return;
+      }
+
       const result = await inviteAdminUser({
         name: data.name,
         email: data.email,
-        phone: data.phone,
+        phone: phone || undefined,
         photoUrl,
+        role: data.role,
       });
 
       if (!result.ok) {
@@ -114,14 +202,15 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
 
       onCreated?.(result.profile);
       setFormSuccess(result.message);
-      reset();
+      reset({
+        name: "",
+        email: "",
+        phone: "",
+        role: roles.includes("Manager") ? "Manager" : roles[0] ?? "Manager",
+        status: "active",
+      });
       setPhotoPreview(null);
       setPhotoFile(null);
-
-      if (result.inviteLink) {
-        setInviteLink(result.inviteLink);
-        return;
-      }
 
       window.setTimeout(() => {
         setFormSuccess(null);
@@ -129,31 +218,43 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
       }, 2200);
     } catch (err) {
       setFormError(
-        err instanceof Error ? err.message : "Failed to invite user.",
+        err instanceof Error ? err.message : "Failed to save user.",
       );
     }
   };
 
+  const lockRole = isSelf;
+  const mayEditTarget =
+    !isEdit ||
+    !user ||
+    canEditUser(actorRole, user.role, isSelf);
+
+  if (isEdit && !mayEditTarget) {
+    return null;
+  }
+
   return (
     <Dialog
       open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (!next) resetLocal();
-      }}
+      onOpenChange={handleOpenChange}
     >
-      <DialogTrigger asChild>
-        <Button>
-          <UserPlus className="h-4 w-4" />
-          Add User
-        </Button>
-      </DialogTrigger>
+      {!isEdit && (
+        <DialogTrigger asChild>
+          {trigger ?? (
+            <Button>
+              <UserPlus className="h-4 w-4" />
+              Add User
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add New User</DialogTitle>
+          <DialogTitle>{isEdit ? "Edit User" : "Add New User"}</DialogTitle>
           <DialogDescription>
-            Sends a welcome invite email so they can set a password. Only
-            emails you add here can access the admin panel.
+            {isEdit
+              ? "Update profile details and role permissions."
+              : "Sends a welcome invite email so they can set a password."}
           </DialogDescription>
         </DialogHeader>
 
@@ -161,8 +262,8 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
           <div className="flex items-center gap-4 rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
             <div className="relative shrink-0">
               <Avatar className="h-16 w-16 ring-2 ring-white shadow-[0_1px_2px_rgba(16,25,46,0.06),0_8px_20px_rgba(22,35,63,0.1)]">
-                {photoPreview ? (
-                  <AvatarImage src={photoPreview} alt="Profile preview" />
+                {displayPhoto ? (
+                  <AvatarImage src={displayPhoto} alt="Profile preview" />
                 ) : (
                   <AvatarFallback className="text-base">
                     {name ? getInitials(name) : "NA"}
@@ -213,6 +314,8 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
                 id="email"
                 type="email"
                 placeholder="user@neevspaces.com"
+                disabled={isEdit}
+                className={isEdit ? "bg-slate-50 text-slate-500" : undefined}
                 {...register("email")}
               />
               {errors.email && (
@@ -226,50 +329,82 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
                 <Phone className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input
                   id="phone"
-                  placeholder="+91 98765 43210"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  maxLength={12}
+                  placeholder="9876543210"
                   className="pl-9"
-                  {...register("phone")}
+                  {...register("phone", {
+                    onChange: (e) => {
+                      const digits = phoneDigitsOnly(e.target.value);
+                      e.target.value = digits;
+                      setValue("phone", digits, { shouldValidate: true });
+                    },
+                  })}
                 />
               </div>
+              {errors.phone && (
+                <p className="text-xs text-red-500">{errors.phone.message}</p>
+              )}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Role</Label>
+                <Select
+                  value={role}
+                  disabled={lockRole || roles.length === 0}
+                  onValueChange={(v) =>
+                    setValue("role", v as UserRole, { shouldValidate: true })
+                  }
+                >
+                  <SelectTrigger className="w-full cursor-pointer">
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(lockRole ? [role] : roles).map((r) => (
+                      <SelectItem key={r} value={r}>
+                        {r}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {lockRole && (
+                  <p className="text-[11px] text-slate-500">
+                    You cannot change your own role here.
+                  </p>
+                )}
+              </div>
+
+              {isEdit && !isSelf && (
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={status}
+                    onValueChange={(v) =>
+                      setValue("status", v as "active" | "inactive", {
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    <SelectTrigger className="w-full cursor-pointer">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="inactive">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
             </div>
           </div>
 
           {formError && <AlertBanner variant="error">{formError}</AlertBanner>}
 
           {formSuccess && (
-            <AlertBanner variant="success">
-              <div className="space-y-3">
-                <p>{formSuccess}</p>
-                {inviteLink && (
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold text-emerald-900">
-                      Invite link
-                    </p>
-                    <p className="break-all rounded-lg bg-white/80 px-2 py-1.5 text-[11px] text-slate-600">
-                      {inviteLink}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => void copyInviteLink()}
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="h-3.5 w-3.5" />
-                          Copied
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="h-3.5 w-3.5" />
-                          Copy link
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </AlertBanner>
+            <AlertBanner variant="success">{formSuccess}</AlertBanner>
           )}
 
           <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end sm:gap-3">
@@ -281,13 +416,17 @@ export function UserFormDialog({ onCreated }: UserFormDialogProps) {
                 setOpen(false);
               }}
             >
-              {inviteLink ? "Done" : "Cancel"}
+              Cancel
             </Button>
-            {!inviteLink && (
-              <Button type="submit" loading={isSubmitting}>
-                {isSubmitting ? "Sending invite..." : "Send Invite"}
-              </Button>
-            )}
+            <Button type="submit" loading={isSubmitting}>
+              {isSubmitting
+                ? isEdit
+                  ? "Saving..."
+                  : "Sending invite..."
+                : isEdit
+                  ? "Save Changes"
+                  : "Send Invite"}
+            </Button>
           </div>
         </form>
       </DialogContent>

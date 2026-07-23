@@ -1,3 +1,10 @@
+export type PropertyRateCard = {
+  id: string;
+  title: string;
+  price: string;
+  notes: string;
+};
+
 export type PropertyStatus = "draft" | "active" | "inactive";
 
 export type Property = {
@@ -22,6 +29,8 @@ export type Property = {
   package_price_label: string | null;
   package_price_notes: string | null;
   price_per_sqft_label: string | null;
+  /** Structured rate cards; legacy price columns stay in sync for list cards */
+  rate_cards: PropertyRateCard[];
 
   availability: string[];
   possession_by: string | null;
@@ -90,6 +99,7 @@ export type PropertyHighlight = {
 export type PropertySpec = {
   id: string;
   property_id: string;
+  label: string | null;
   content: string;
   sort_order: number;
 };
@@ -113,7 +123,72 @@ export type PropertyDetail = Property & {
 };
 
 export const PROPERTY_COLUMNS =
-  "id, title, slug, status, is_featured, listing_badge, area_id, area_name, locality, city, pincode, full_address, cover_image_url, cover_cloudinary_public_id, brochure_url, package_price_label, package_price_notes, price_per_sqft_label, availability, possession_by, property_type_label, tower_count, unit_count, rera_no, rera_url, builder_id, developer_name, category_label, construction_status, project_size_label, floor_count, total_plot_area, open_area_percent, parking_types, facing, project_position, road_connectivity, current_status, about, sort_order, created_at, updated_at";
+  "id, title, slug, status, is_featured, listing_badge, area_id, area_name, locality, city, pincode, full_address, cover_image_url, cover_cloudinary_public_id, brochure_url, package_price_label, package_price_notes, price_per_sqft_label, rate_cards, availability, possession_by, property_type_label, tower_count, unit_count, rera_no, rera_url, builder_id, developer_name, category_label, construction_status, project_size_label, floor_count, total_plot_area, open_area_percent, parking_types, facing, project_position, road_connectivity, current_status, about, sort_order, created_at, updated_at";
+
+export function normalizeRateCards(value: unknown): PropertyRateCard[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item, index) => {
+      const row = item as Partial<PropertyRateCard>;
+      return {
+        id:
+          typeof row.id === "string" && row.id
+            ? row.id
+            : `card-${index}-${Date.now()}`,
+        title: typeof row.title === "string" ? row.title : "",
+        price: typeof row.price === "string" ? row.price : "",
+        notes: typeof row.notes === "string" ? row.notes : "",
+      };
+    })
+    .filter((c) => c.title.trim() || c.price.trim() || c.notes.trim());
+}
+
+/** Derive legacy flat price columns from structured rate cards. */
+export function deriveLegacyPricesFromRateCards(cards: PropertyRateCard[]) {
+  const cleaned = cards.filter(
+    (c) => c.title.trim() || c.price.trim() || c.notes.trim(),
+  );
+  const first = cleaned[0];
+  const sqft =
+    cleaned.find((c) => /sq\.?\s*ft|sqft|per\s*sq/i.test(c.title)) ??
+    cleaned[1];
+
+  return {
+    package_price_label: first?.price.trim() || null,
+    package_price_notes: first?.notes.trim() || null,
+    price_per_sqft_label: sqft?.price.trim() || null,
+  };
+}
+
+/** Seed rate cards from legacy columns when JSON is empty. */
+export function seedRateCardsFromLegacy(prop: {
+  rate_cards?: unknown;
+  package_price_label?: string | null;
+  package_price_notes?: string | null;
+  price_per_sqft_label?: string | null;
+}): PropertyRateCard[] {
+  const existing = normalizeRateCards(prop.rate_cards);
+  if (existing.length > 0) return existing;
+
+  const cards: PropertyRateCard[] = [];
+  if (prop.package_price_label || prop.package_price_notes) {
+    cards.push({
+      id: crypto.randomUUID(),
+      title: "Package price",
+      price: prop.package_price_label ?? "",
+      notes: prop.package_price_notes ?? "",
+    });
+  }
+  if (prop.price_per_sqft_label) {
+    cards.push({
+      id: crypto.randomUUID(),
+      title: "Price per sq.ft.",
+      price: prop.price_per_sqft_label,
+      notes: "",
+    });
+  }
+  return cards;
+}
 
 export function slugify(input: string): string {
   return input

@@ -50,7 +50,7 @@ export function Header({ onMenuClick, user }: HeaderProps) {
   };
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-slate-100/80 bg-white/85 px-4 backdrop-blur-md sm:px-6">
+    <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[var(--border)] bg-white px-4 sm:px-6">
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -77,7 +77,7 @@ export function Header({ onMenuClick, user }: HeaderProps) {
               {user?.photo_url ? (
                 <AvatarImage src={user.photo_url} alt={displayName} />
               ) : null}
-              <AvatarFallback className="bg-[#16233f] text-[11px] font-semibold text-white">
+              <AvatarFallback className="bg-[var(--accent)] text-[11px] font-semibold text-white">
                 {getInitials(displayName)}
               </AvatarFallback>
             </Avatar>

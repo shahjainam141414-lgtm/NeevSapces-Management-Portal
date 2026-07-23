@@ -2,11 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Inbox, Plus, Search } from "lucide-react";
+import { Inbox, ImageIcon, Plus, Search } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { ActionsDropdown } from "@/components/ui/actions-dropdown";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -19,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EntityFormDialog } from "@/components/customization/entity-form-dialog";
+import type { EntityFormSubmitData } from "@/components/customization/entity-form-dialog";
 import {
   createStaticOption,
   deleteStaticOption,
@@ -37,19 +39,12 @@ type CustomizationPageContentProps = {
   optionType: StaticOptionType;
 };
 
-function StatusBadge({ status }: { status: OptionStatus }) {
-  return (
-    <Badge variant={status === "active" ? "success" : "destructive"}>
-      {status}
-    </Badge>
-  );
-}
-
 export function CustomizationPageContent({
   title,
   entityLabel,
   optionType,
 }: CustomizationPageContentProps) {
+  const enableImage = optionType === "area";
   const [items, setItems] = useState<EntityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,23 +79,28 @@ export function CustomizationPageContent({
     item.name.toLowerCase().includes(search.toLowerCase()),
   );
 
-  const handleAdd = async (data: { value: string; status: OptionStatus }) => {
+  const handleAdd = async (data: EntityFormSubmitData) => {
     const created = await createStaticOption({
       type: optionType,
       value: data.value,
       status: data.status,
+      image_url: data.image_url,
+      cloudinary_public_id: data.cloudinary_public_id,
     });
     setItems((prev) =>
       [...prev, created].sort((a, b) => a.name.localeCompare(b.name)),
     );
   };
 
-  const handleEdit = async (data: { value: string; status: OptionStatus }) => {
+  const handleEdit = async (data: EntityFormSubmitData) => {
     if (!editItem) return;
     const updated = await updateStaticOption({
       id: editItem.id,
       value: data.value,
       status: data.status,
+      image_url: data.image_url,
+      cloudinary_public_id: data.cloudinary_public_id,
+      clearImage: data.clearImage,
     });
     setItems((prev) =>
       prev
@@ -125,6 +125,44 @@ export function CustomizationPageContent({
       setDeleting(false);
     }
   };
+
+  const handleSetStatus = async (item: EntityItem, status: OptionStatus) => {
+    if (item.status === status) return;
+    setError(null);
+    try {
+      const updated = await updateStaticOption({
+        id: item.id,
+        value: item.name,
+        status,
+      });
+      setItems((prev) =>
+        prev
+          .map((i) => (i.id === updated.id ? updated : i))
+          .sort((a, b) => a.name.localeCompare(b.name)),
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not update status.",
+      );
+    }
+  };
+
+  const entityActions = (item: EntityItem) => (
+    <ActionsDropdown
+      onEdit={() => setEditItem(item)}
+      onSetActive={
+        item.status !== "active"
+          ? () => void handleSetStatus(item, "active")
+          : undefined
+      }
+      onSetInactive={
+        item.status !== "inactive"
+          ? () => void handleSetStatus(item, "inactive")
+          : undefined
+      }
+      onDelete={() => setDeleteItem(item)}
+    />
+  );
 
   return (
     <>
@@ -199,16 +237,18 @@ export function CustomizationPageContent({
                   transition={{ delay: index * 0.03 }}
                   className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-white px-3.5 py-3 shadow-sm"
                 >
-                  <div className="min-w-0 space-y-1.5">
-                    <p className="truncate font-medium text-slate-900">
-                      {item.name}
-                    </p>
-                    <StatusBadge status={item.status} />
+                  <div className="flex min-w-0 items-center gap-3">
+                    {enableImage ? (
+                      <AreaThumb name={item.name} imageUrl={item.image_url} />
+                    ) : null}
+                    <div className="min-w-0 space-y-1.5">
+                      <p className="truncate font-medium text-slate-900">
+                        {item.name}
+                      </p>
+                      <StatusBadge status={item.status} />
+                    </div>
                   </div>
-                  <ActionsDropdown
-                    onEdit={() => setEditItem(item)}
-                    onDelete={() => setDeleteItem(item)}
-                  />
+                  {entityActions(item)}
                 </motion.div>
               ))
             )}
@@ -253,16 +293,21 @@ export function CustomizationPageContent({
                       className="border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/70"
                     >
                       <td className="px-6 py-4 font-medium text-slate-900">
-                        {item.name}
+                        <div className="flex items-center gap-3">
+                          {enableImage ? (
+                            <AreaThumb
+                              name={item.name}
+                              imageUrl={item.image_url}
+                            />
+                          ) : null}
+                          <span>{item.name}</span>
+                        </div>
                       </td>
                       <td className="px-6 py-4">
                         <StatusBadge status={item.status} />
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <ActionsDropdown
-                          onEdit={() => setEditItem(item)}
-                          onDelete={() => setDeleteItem(item)}
-                        />
+                        {entityActions(item)}
                       </td>
                     </motion.tr>
                   ))
@@ -278,6 +323,7 @@ export function CustomizationPageContent({
         onOpenChange={setAddOpen}
         entityLabel={entityLabel}
         mode="add"
+        enableImage={enableImage}
         onSubmit={handleAdd}
       />
 
@@ -289,6 +335,7 @@ export function CustomizationPageContent({
         entityLabel={entityLabel}
         mode="edit"
         initial={editItem}
+        enableImage={enableImage}
         onSubmit={handleEdit}
       />
 
@@ -322,6 +369,32 @@ export function CustomizationPageContent({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function AreaThumb({
+  name,
+  imageUrl,
+}: {
+  name: string;
+  imageUrl?: string | null;
+}) {
+  return (
+    <div className="relative h-10 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+      {imageUrl ? (
+        <Image
+          src={imageUrl}
+          alt={name}
+          fill
+          className="object-cover"
+          sizes="56px"
+        />
+      ) : (
+        <div className="flex h-full w-full items-center justify-center text-slate-300">
+          <ImageIcon className="h-4 w-4" />
+        </div>
+      )}
+    </div>
   );
 }
 

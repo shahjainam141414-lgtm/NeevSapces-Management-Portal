@@ -2,6 +2,8 @@ import { createClient } from "@/lib/supabase/client";
 import {
   PROPERTY_COLUMNS,
   buildPropertySlug,
+  deriveLegacyPricesFromRateCards,
+  normalizeRateCards,
   type Property,
   type PropertyDetail,
   type PropertyFaq,
@@ -24,6 +26,15 @@ function toFriendlyError(error: { message?: string; code?: string; hint?: string
     );
   }
   if (
+    msg.toLowerCase().includes("rate_cards") ||
+    (msg.toLowerCase().includes("column") &&
+      msg.toLowerCase().includes("does not exist"))
+  ) {
+    return new Error(
+      "Property schema outdated. Run supabase/migrations/015_property_rate_cards_and_spec_labels.sql in the Supabase SQL Editor, then retry.",
+    );
+  }
+  if (
     error.code === "42501" ||
     msg.toLowerCase().includes("permission") ||
     msg.toLowerCase().includes("policy")
@@ -40,6 +51,7 @@ function normalizeProperty(row: Property): Property {
     ...row,
     availability: Array.isArray(row.availability) ? row.availability : [],
     parking_types: Array.isArray(row.parking_types) ? row.parking_types : [],
+    rate_cards: normalizeRateCards(row.rate_cards),
     is_featured: Boolean(row.is_featured),
   };
 }
@@ -54,6 +66,30 @@ export async function listProperties(): Promise<Property[]> {
 
   if (error) throw toFriendlyError(error);
   return ((data ?? []) as Property[]).map(normalizeProperty);
+}
+
+/** Mark the given property IDs as featured (max 8); clear featured on all others. */
+export async function setFeaturedProperties(
+  propertyIds: string[],
+): Promise<void> {
+  const supabase = createClient();
+  const unique = [...new Set(propertyIds)].slice(0, 8);
+
+  const { error: clearError } = await supabase
+    .from("properties")
+    .update({ is_featured: false })
+    .eq("is_featured", true);
+
+  if (clearError) throw toFriendlyError(clearError);
+
+  if (unique.length === 0) return;
+
+  const { error: setError } = await supabase
+    .from("properties")
+    .update({ is_featured: true })
+    .in("id", unique);
+
+  if (setError) throw toFriendlyError(setError);
 }
 
 export async function getPropertyDetail(id: string): Promise<PropertyDetail> {
@@ -99,7 +135,7 @@ export async function getPropertyDetail(id: string): Promise<PropertyDetail> {
       .order("sort_order", { ascending: true }),
     supabase
       .from("property_specs")
-      .select("id, property_id, content, sort_order")
+      .select("id, property_id, label, content, sort_order")
       .eq("property_id", id)
       .order("sort_order", { ascending: true }),
     supabase
@@ -145,6 +181,7 @@ export type CreatePropertyInput = {
   locality?: string | null;
   city?: string;
   status?: PropertyStatus;
+  property_type_label?: string | null;
 };
 
 export async function createProperty(input: CreatePropertyInput): Promise<Property> {
@@ -158,18 +195,21 @@ export async function createProperty(input: CreatePropertyInput): Promise<Proper
     .limit(1)
     .maybeSingle();
 
+  const payload = {
+    title: input.title.trim(),
+    slug,
+    area_id: input.area_id,
+    area_name: input.area_name,
+    locality: input.locality?.trim() || input.area_name,
+    city: input.city?.trim() || "Gandhinagar",
+    status: input.status ?? "draft",
+    property_type_label: input.property_type_label?.trim() || null,
+    sort_order: (maxRow?.sort_order ?? 0) + 1,
+  };
+
   const { data, error } = await supabase
     .from("properties")
-    .insert({
-      title: input.title.trim(),
-      slug,
-      area_id: input.area_id,
-      area_name: input.area_name,
-      locality: input.locality?.trim() || input.area_name,
-      city: input.city?.trim() || "Gandhinagar",
-      status: input.status ?? "draft",
-      sort_order: (maxRow?.sort_order ?? 0) + 1,
-    })
+    .insert(payload)
     .select(PROPERTY_COLUMNS)
     .single();
 
@@ -178,25 +218,20 @@ export async function createProperty(input: CreatePropertyInput): Promise<Proper
       const uniqueSlug = `${slug}-${Date.now().toString(36)}`;
       const retry = await supabase
         .from("properties")
-        .insert({
-          title: input.title.trim(),
-          slug: uniqueSlug,
-          area_id: input.area_id,
-          area_name: input.area_name,
-          locality: input.locality?.trim() || input.area_name,
-          city: input.city?.trim() || "Gandhinagar",
-          status: input.status ?? "draft",
-          sort_order: (maxRow?.sort_order ?? 0) + 1,
-        })
+        .insert({ ...payload, slug: uniqueSlug })
         .select(PROPERTY_COLUMNS)
         .single();
       if (retry.error) throw toFriendlyError(retry.error);
-      return normalizeProperty(retry.data as Property);
+      const created = normalizeProperty(retry.data as Property);
+      await attachDefaultAmenities(created.id);
+      return created;
     }
     throw toFriendlyError(error);
   }
 
-  return normalizeProperty(data as Property);
+  const created = normalizeProperty(data as Property);
+  await attachDefaultAmenities(created.id);
+  return created;
 }
 
 export type UpdatePropertyInput = Partial<
@@ -217,6 +252,21 @@ export async function updateProperty(input: UpdatePropertyInput): Promise<Proper
   }
   if (typeof payload.slug === "string") {
     payload.slug = payload.slug.trim();
+  }
+
+  if (Array.isArray(payload.rate_cards)) {
+    const cards = normalizeRateCards(payload.rate_cards);
+    payload.rate_cards = cards;
+    const legacy = deriveLegacyPricesFromRateCards(cards);
+    if (payload.package_price_label === undefined) {
+      payload.package_price_label = legacy.package_price_label;
+    }
+    if (payload.package_price_notes === undefined) {
+      payload.package_price_notes = legacy.package_price_notes;
+    }
+    if (payload.price_per_sqft_label === undefined) {
+      payload.price_per_sqft_label = legacy.price_per_sqft_label;
+    }
   }
 
   const { data, error } = await supabase
@@ -339,6 +389,22 @@ export async function deleteFloorPlan(id: string): Promise<void> {
 
 // --- Amenities ---
 
+async function attachDefaultAmenities(propertyId: string): Promise<void> {
+  const supabase = createClient();
+  const { data, error } = await supabase
+    .from("amenities")
+    .select("id")
+    .eq("is_default", true)
+    .eq("status", "active")
+    .order("sort_order", { ascending: true });
+
+  if (error) throw toFriendlyError(error);
+
+  const ids = ((data ?? []) as { id: string }[]).map((row) => row.id);
+  if (ids.length === 0) return;
+  await setPropertyAmenities(propertyId, ids);
+}
+
 export async function setPropertyAmenities(
   propertyId: string,
   amenityIds: string[],
@@ -396,7 +462,7 @@ export async function replaceHighlights(
 
 export async function replaceSpecs(
   propertyId: string,
-  items: string[],
+  items: { label?: string | null; content: string }[] | string[],
 ): Promise<PropertySpec[]> {
   const supabase = createClient();
   const { error: delError } = await supabase
@@ -405,19 +471,31 @@ export async function replaceSpecs(
     .eq("property_id", propertyId);
   if (delError) throw toFriendlyError(delError);
 
-  const cleaned = items.map((c) => c.trim()).filter(Boolean);
-  if (cleaned.length === 0) return [];
+  const rows = items
+    .map((item) => {
+      if (typeof item === "string") {
+        return { label: null as string | null, content: item.trim() };
+      }
+      return {
+        label: item.label?.trim() || null,
+        content: item.content.trim(),
+      };
+    })
+    .filter((i) => i.content || i.label);
+
+  if (rows.length === 0) return [];
 
   const { data, error } = await supabase
     .from("property_specs")
     .insert(
-      cleaned.map((content, index) => ({
+      rows.map((item, index) => ({
         property_id: propertyId,
-        content,
+        label: item.label,
+        content: item.content || item.label || "",
         sort_order: index + 1,
       })),
     )
-    .select("id, property_id, content, sort_order");
+    .select("id, property_id, label, content, sort_order");
 
   if (error) throw toFriendlyError(error);
   return (data ?? []) as PropertySpec[];

@@ -47,7 +47,7 @@ export async function getCurrentAdminProfile(): Promise<AdminProfile | null> {
 /**
  * Set password for an invited user.
  * Password is stored ONLY in Supabase Auth (bcrypt hash in auth.users) — never in our tables.
- * Prefer Admin API so the hash is applied even if the invite cookie session is flaky.
+ * Uses Admin API, then verifies sign-in works before returning success.
  */
 export async function setInvitedUserPassword(
   password: string,
@@ -85,7 +85,17 @@ export async function setInvitedUserPassword(
     const email = authUser.user.email.trim().toLowerCase();
     const meta = authUser.user.user_metadata ?? {};
 
-    // Single source of truth: Admin API writes the bcrypt hash + confirms email
+    // Prefer session update (invite/recovery cookie) — this activates password login
+    if (sessionUser?.id) {
+      const { error: sessionPasswordError } = await supabase.auth.updateUser({
+        password,
+      });
+      if (sessionPasswordError) {
+        // Fall through to Admin API below
+      }
+    }
+
+    // Ensure hash + confirmed email via Admin API (covers flaky invite cookies)
     const { error: passwordError } = await admin.auth.admin.updateUserById(
       userId,
       {
@@ -102,6 +112,34 @@ export async function setInvitedUserPassword(
       return { ok: false, error: passwordError.message };
     }
 
+    // Verify the new password actually works for sign-in
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (url && anon) {
+      const { createClient } = await import("@supabase/supabase-js");
+      const verifier = createClient(url, anon, {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { error: verifyError } = await verifier.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (verifyError) {
+        return {
+          ok: false,
+          error:
+            "Password could not be activated for sign-in. Open a fresh invite link from your email and try again.",
+        };
+      }
+      await verifier.auth.signOut().catch(() => undefined);
+    }
+
+    const metaRole = meta.role;
+    const role =
+      metaRole === "Manager" || metaRole === "Super Admin"
+        ? metaRole
+        : "Manager";
+
     const profilePayload = {
       id: userId,
       name:
@@ -113,7 +151,7 @@ export async function setInvitedUserPassword(
       phone: (meta.phone as string) ?? null,
       photo_url:
         (meta.photo_url as string) || (meta.avatar_url as string) || null,
-      role: "Super Admin" as const,
+      role,
       status: "active" as const,
     };
 

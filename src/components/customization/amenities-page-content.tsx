@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { ActionsDropdown } from "@/components/ui/actions-dropdown";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -219,6 +220,71 @@ export function AmenitiesPageContent() {
       setDeleting(false);
     }
   };
+
+  const handleSetStatus = async (item: Amenity, status: AmenityStatus) => {
+    if (item.status === status) return;
+    setError(null);
+    try {
+      const updated = await updateAmenity({
+        id: item.id,
+        title: item.title,
+        status,
+        is_default: item.is_default,
+      });
+      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not update status.",
+      );
+    }
+  };
+
+  const handleSetDefault = async (item: Amenity, isDefault: boolean) => {
+    if (item.is_default === isDefault) return;
+    setError(null);
+    try {
+      const updated = await updateAmenity({
+        id: item.id,
+        title: item.title,
+        status: item.status,
+        is_default: isDefault,
+      });
+      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Could not update default. Run 012_amenities_is_default.sql in Supabase.",
+      );
+    }
+  };
+
+  const amenityActions = (item: Amenity) => (
+    <ActionsDropdown
+      onEdit={() => setEditItem(item)}
+      onSetActive={
+        item.status !== "active"
+          ? () => void handleSetStatus(item, "active")
+          : undefined
+      }
+      onSetInactive={
+        item.status !== "inactive"
+          ? () => void handleSetStatus(item, "inactive")
+          : undefined
+      }
+      onSetDefault={
+        !item.is_default
+          ? () => void handleSetDefault(item, true)
+          : undefined
+      }
+      onUnsetDefault={
+        item.is_default
+          ? () => void handleSetDefault(item, false)
+          : undefined
+      }
+      onDelete={() => setDeleteItem(item)}
+    />
+  );
 
   const selectedTitles = items
     .filter((item) => selectedIds.has(item.id))
@@ -438,10 +504,7 @@ export function AmenitiesPageContent() {
                         </button>
                       ) : (
                         <div className="absolute right-1 top-1 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100">
-                          <ActionsDropdown
-                            onEdit={() => setEditItem(item)}
-                            onDelete={() => setDeleteItem(item)}
-                          />
+                          {amenityActions(item)}
                         </div>
                       )}
 
@@ -457,16 +520,10 @@ export function AmenitiesPageContent() {
                       </h3>
 
                       <div className="mt-2 flex flex-wrap items-center justify-center gap-1.5">
-                        <Badge
-                          variant={
-                            item.status === "active"
-                              ? "success"
-                              : "destructive"
-                          }
+                        <StatusBadge
+                          status={item.status}
                           className="text-[10px]"
-                        >
-                          {item.status}
-                        </Badge>
+                        />
                         {item.is_default && !selectMode && (
                           <Badge variant="premium" className="gap-1 text-[10px]">
                             <Star className="h-2.5 w-2.5 fill-current" />

@@ -47,7 +47,8 @@ export function InlineTextRows({
 
       {value.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-200 bg-[#eef1f6]/35 px-3 py-6 text-center text-xs text-slate-500">
-          No items yet — click “{addLabel}” to add one.
+          No items yet — click “{addLabel}” to add one. Tip: press Enter to add
+          the next one quickly.
         </p>
       ) : (
         <ul className="space-y-2">
@@ -68,6 +69,17 @@ export function InlineTextRows({
                     ),
                   )
                 }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && row.content.trim()) {
+                    e.preventDefault();
+                    if (index === value.length - 1) {
+                      onChange([
+                        ...value,
+                        { id: crypto.randomUUID(), content: "" },
+                      ]);
+                    }
+                  }
+                }}
                 placeholder={placeholder}
                 className="flex-1"
               />

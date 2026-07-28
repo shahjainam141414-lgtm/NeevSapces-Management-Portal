@@ -45,7 +45,9 @@ export function AuthField({
           {...registration}
         />
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {typeof error === "string" && error ? (
+        <p className="text-xs text-red-500">{error}</p>
+      ) : null}
     </div>
   );
 }

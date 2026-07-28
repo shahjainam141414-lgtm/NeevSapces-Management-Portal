@@ -258,7 +258,11 @@ export async function updateProperty(input: UpdatePropertyInput): Promise<Proper
     const cards = normalizeRateCards(payload.rate_cards);
     payload.rate_cards = cards;
     const legacy = deriveLegacyPricesFromRateCards(cards);
-    if (payload.package_price_label === undefined) {
+    if (
+      payload.package_price_label === undefined ||
+      payload.package_price_label === null ||
+      payload.package_price_label === ""
+    ) {
       payload.package_price_label = legacy.package_price_label;
     }
     if (payload.package_price_notes === undefined) {

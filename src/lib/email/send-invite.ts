@@ -5,8 +5,20 @@ type SendInviteEmailArgs = {
   inviteUrl: string;
 };
 
-function inviteEmailHtml(args: SendInviteEmailArgs) {
-  const { name, role, inviteUrl } = args;
+type SendResetEmailArgs = {
+  to: string;
+  name?: string | null;
+  resetUrl: string;
+};
+
+function portalShell(args: {
+  heading: string;
+  bodyHtml: string;
+  ctaLabel: string;
+  ctaUrl: string;
+  footnote?: string;
+}) {
+  const { heading, bodyHtml, ctaLabel, ctaUrl, footnote } = args;
   return `<!DOCTYPE html>
 <html lang="en">
   <body style="margin:0;padding:0;background:#f4f6f8;font-family:Arial,Helvetica,sans-serif;">
@@ -21,25 +33,23 @@ function inviteEmailHtml(args: SendInviteEmailArgs) {
               </td>
             </tr>
             <tr>
-              <td style="padding:36px 32px 16px;">
-                <h2 style="margin:0 0 12px;font-size:22px;color:#1a2744;font-weight:normal;">You've been invited</h2>
-                <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#475569;">
-                  Hi ${name || "there"}, you have been invited to the <strong style="color:#1a2744;">Neev Management Portal</strong> as a <strong>${role}</strong>.
-                </p>
-                <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
-                  Click the button below to accept the invitation and set your password.
-                </p>
-                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 28px;">
+              <td style="padding:36px 32px 28px;">
+                <h2 style="margin:0 0 12px;font-size:22px;color:#1a2744;font-weight:normal;">${heading}</h2>
+                ${bodyHtml}
+                <table role="presentation" cellspacing="0" cellpadding="0" style="margin:8px auto 8px;">
                   <tr>
                     <td style="border-radius:10px;background:#1a2744;">
-                      <a href="${inviteUrl}" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">
-                        Accept invitation &amp; set password
+                      <a href="${ctaUrl}" style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;">
+                        ${ctaLabel}
                       </a>
                     </td>
                   </tr>
                 </table>
-                <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#64748b;">Or copy this link into your browser:</p>
-                <p style="margin:0;font-size:12px;line-height:1.5;color:#94a3b8;word-break:break-all;">${inviteUrl}</p>
+                ${
+                  footnote
+                    ? `<p style="margin:24px 0 0;font-size:13px;line-height:1.5;color:#64748b;">${footnote}</p>`
+                    : ""
+                }
               </td>
             </tr>
             <tr>
@@ -55,17 +65,53 @@ function inviteEmailHtml(args: SendInviteEmailArgs) {
 </html>`;
 }
 
+function inviteEmailHtml(args: SendInviteEmailArgs) {
+  const { name, role, inviteUrl } = args;
+  return portalShell({
+    heading: "You've been invited",
+    bodyHtml: `
+      <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#475569;">
+        Hi ${name || "there"}, you have been invited to the <strong style="color:#1a2744;">Neev Management Portal</strong> as a <strong>${role}</strong>.
+      </p>
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
+        Click the button below to accept the invitation and set your password.
+      </p>
+    `,
+    ctaLabel: "Accept invitation &amp; set password",
+    ctaUrl: inviteUrl,
+    footnote:
+      "If you were not expecting this invite, you can safely ignore this email.",
+  });
+}
+
+function resetEmailHtml(args: SendResetEmailArgs) {
+  const { name, resetUrl } = args;
+  return portalShell({
+    heading: "Reset your password",
+    bodyHtml: `
+      <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#475569;">
+        Hi ${name || "there"}, we received a request to reset the password for your <strong style="color:#1a2744;">Neev Management Portal</strong> account.
+      </p>
+      <p style="margin:0 0 24px;font-size:15px;line-height:1.6;color:#475569;">
+        Click the button below to choose a new password. This link expires in about an hour.
+      </p>
+    `,
+    ctaLabel: "Reset password",
+    ctaUrl: resetUrl,
+    footnote:
+      "If you did not request a password reset, you can safely ignore this email. Your password will stay the same.",
+  });
+}
+
 export function isResendConfigured() {
   return Boolean(process.env.RESEND_API_KEY?.trim());
 }
 
-/**
- * Send invite email via Resend API.
- * Requires RESEND_API_KEY + verified domain sender (RESEND_FROM_EMAIL).
- */
-export async function sendInviteEmail(
-  args: SendInviteEmailArgs,
-): Promise<{ ok: true } | { ok: false; error: string }> {
+async function sendViaResend(args: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<{ ok: true } | { ok: false; error: string }> {
   const apiKey = process.env.RESEND_API_KEY?.trim();
   if (!apiKey) {
     return {
@@ -89,8 +135,8 @@ export async function sendInviteEmail(
       body: JSON.stringify({
         from,
         to: [args.to],
-        subject: "You're invited to Neev Management Portal",
-        html: inviteEmailHtml(args),
+        subject: args.subject,
+        html: args.html,
       }),
     });
 
@@ -110,7 +156,35 @@ export async function sendInviteEmail(
   } catch (err) {
     return {
       ok: false,
-      error: err instanceof Error ? err.message : "Failed to send invite email.",
+      error: err instanceof Error ? err.message : "Failed to send email.",
     };
   }
+}
+
+/**
+ * Send invite email via Resend API.
+ * Requires RESEND_API_KEY + verified domain sender (RESEND_FROM_EMAIL).
+ */
+export async function sendInviteEmail(
+  args: SendInviteEmailArgs,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return sendViaResend({
+    to: args.to,
+    subject: "You're invited to Neev Management Portal",
+    html: inviteEmailHtml(args),
+  });
+}
+
+/**
+ * Send password-reset email via Resend (same path as welcome invites).
+ * No raw "copy this link" block — button only.
+ */
+export async function sendResetPasswordEmail(
+  args: SendResetEmailArgs,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  return sendViaResend({
+    to: args.to,
+    subject: "Reset your Neev Management Portal password",
+    html: resetEmailHtml(args),
+  });
 }

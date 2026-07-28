@@ -49,18 +49,16 @@ export function Sidebar({
           )}
         >
           <Image
-            src="/logo.png"
+            src={collapsed ? "/logo-mark.png" : "/logo.png"}
             alt="Neev Spaces"
-            width={collapsed ? 40 : 120}
-            height={40}
-            className={cn("w-auto object-contain", collapsed ? "h-8" : "h-9")}
+            width={collapsed ? 96 : 200}
+            height={collapsed ? 96 : 111}
+            className={cn(
+              "w-auto object-contain",
+              collapsed ? "h-9" : "h-11",
+            )}
             priority
           />
-          {!collapsed && (
-            <span className="type-caption mt-2 text-[var(--muted)]">
-              Operating System
-            </span>
-          )}
         </Link>
         <button
           type="button"

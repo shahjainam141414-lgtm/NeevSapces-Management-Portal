@@ -2,15 +2,20 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
+  ArrowRight,
+  Check,
   Eye,
+  FileText,
   ImagePlus,
   Loader2,
   Plus,
   Save,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,8 +51,11 @@ import type { EntityItem } from "@/lib/static-options";
 import {
   AVAILABILITY_OPTIONS,
   CONSTRUCTION_STATUS_OPTIONS,
+  CURRENT_STATUS_OPTIONS,
+  LISTING_BADGE_OPTIONS,
   PARKING_OPTIONS,
   buildPropertySlug,
+  autoPriceRangeFromCards,
   seedRateCardsFromLegacy,
   type PropertyDetail,
   type PropertyFloorPlan,
@@ -138,9 +146,9 @@ function emptyPlan(): EditableFloorPlan {
   return {
     name: "",
     bhk_label: "3 BHK",
-    rooms: "3",
-    balcony: "1",
-    bathroom: "3",
+    rooms: "",
+    balcony: "",
+    bathroom: "",
     servant_room: "",
     area_sqft: "",
     area_sqyd: "",
@@ -160,6 +168,7 @@ function toNum(v: string): number | null {
 type Props = { propertyId: string };
 
 export function PropertyEditPageContent({ propertyId }: Props) {
+  const router = useRouter();
   const [detail, setDetail] = useState<PropertyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -169,8 +178,6 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [areas, setAreas] = useState<EntityItem[]>([]);
   const [builders, setBuilders] = useState<Builder[]>([]);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
-  const [categories, setCategories] = useState<EntityItem[]>([]);
-  const [propertyTypes, setPropertyTypes] = useState<EntityItem[]>([]);
 
   const [activeTab, setActiveTab] = useState<string>("basics");
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -193,6 +200,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [brochureUrl, setBrochureUrl] = useState("");
 
   const [rateCards, setRateCards] = useState<PropertyRateCard[]>([]);
+  const [priceRangeLabel, setPriceRangeLabel] = useState("");
+  const [lockPriceRange, setLockPriceRange] = useState(false);
 
   const [availability, setAvailability] = useState<string[]>([]);
   const [possessionBy, setPossessionBy] = useState("");
@@ -225,29 +234,29 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [floorPlans, setFloorPlans] = useState<EditableFloorPlan[]>([]);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
+  const [uploadingBrochure, setUploadingBrochure] = useState(false);
+  const [uploadingPlans, setUploadingPlans] = useState(false);
 
   const galleryInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
+  const brochureInputRef = useRef<HTMLInputElement>(null);
+  const plansInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [prop, areaRows, builderRows, amenityRows, catRows, typeRows] =
-        await Promise.all([
-          getPropertyDetail(propertyId),
-          listStaticOptions("area"),
-          listBuilders(),
-          listAmenities(),
-          listStaticOptions("category"),
-          listStaticOptions("property_type"),
-        ]);
+      const [prop, areaRows, builderRows, amenityRows] = await Promise.all([
+        getPropertyDetail(propertyId),
+        listStaticOptions("area"),
+        listBuilders(),
+        listAmenities(),
+      ]);
 
       setDetail(prop);
       setAreas(areaRows.filter((a) => a.status === "active"));
       setBuilders(builderRows);
       setAmenities(amenityRows.filter((a) => a.status === "active"));
-      setCategories(catRows.filter((c) => c.status === "active"));
-      setPropertyTypes(typeRows.filter((t) => t.status === "active"));
 
       const activeAmenities = amenityRows.filter((a) => a.status === "active");
       const defaultAmenityIds = activeAmenities
@@ -272,7 +281,14 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       setCoverUrl(prop.cover_image_url);
       setCoverPublicId(prop.cover_cloudinary_public_id);
       setBrochureUrl(prop.brochure_url ?? "");
-      setRateCards(seedRateCardsFromLegacy(prop));
+      {
+        const cards = seedRateCardsFromLegacy(prop);
+        const auto = autoPriceRangeFromCards(cards);
+        const stored = (prop.package_price_label ?? "").trim();
+        setRateCards(cards);
+        setPriceRangeLabel(stored || auto);
+        setLockPriceRange(Boolean(stored && auto && stored !== auto));
+      }
       setAvailability(prop.availability ?? []);
       setPossessionBy(prop.possession_by ?? "");
       setPropertyTypeLabel(prop.property_type_label ?? "");
@@ -351,17 +367,85 @@ export function PropertyEditPageContent({ propertyId }: Props) {
     }
   };
 
-  const handleCoverUpload = async (file: File) => {
+  // Cover accepts multiple: first file becomes the cover, the rest are pushed
+  // straight into the gallery so the admin can drop everything in one go.
+  const handleCoverMultiUpload = async (files: FileList | null) => {
+    if (!files?.length) return;
+    const list = Array.from(files);
     setUploadingCover(true);
     setError(null);
     try {
-      const uploaded = await uploadToCloudinary(file, "neev/properties");
+      const [first, ...rest] = list;
+      const uploaded = await uploadToCloudinary(first, "neev/properties");
       setCoverUrl(uploaded.secure_url);
       setCoverPublicId(uploaded.public_id);
+      for (const file of rest) {
+        const up = await uploadToCloudinary(file, "neev/properties/gallery");
+        const media = await addPropertyMedia({
+          property_id: propertyId,
+          image_url: up.secure_url,
+          cloudinary_public_id: up.public_id,
+        });
+        setDetail((prev) =>
+          prev ? { ...prev, media: [...prev.media, media] } : prev,
+        );
+      }
+      if (rest.length > 0) {
+        setMessage(
+          `Cover set · ${rest.length} more photo${rest.length === 1 ? "" : "s"} added to the gallery.`,
+        );
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Cover upload failed");
+      setError(err instanceof Error ? err.message : "Image upload failed");
     } finally {
       setUploadingCover(false);
+    }
+  };
+
+  const handleBrochureUpload = async (file: File) => {
+    setUploadingBrochure(true);
+    setError(null);
+    try {
+      const uploaded = await uploadToCloudinary(
+        file,
+        "neev/properties/brochures",
+        "auto",
+      );
+      setBrochureUrl(uploaded.secure_url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Brochure upload failed");
+    } finally {
+      setUploadingBrochure(false);
+    }
+  };
+
+  // Bulk floor-plan images: each selected image spins up its own plan row.
+  const handleFloorPlansBulkUpload = async (files: FileList | null) => {
+    if (!files?.length) return;
+    setUploadingPlans(true);
+    setError(null);
+    try {
+      const startIndex = floorPlans.length;
+      const newPlans: EditableFloorPlan[] = [];
+      let i = 0;
+      for (const file of Array.from(files)) {
+        const uploaded = await uploadToCloudinary(
+          file,
+          "neev/properties/floor-plans",
+        );
+        newPlans.push({
+          ...emptyPlan(),
+          name: `Floor plan ${startIndex + i + 1}`,
+          image_url: uploaded.secure_url,
+          cloudinary_public_id: uploaded.public_id,
+        });
+        i += 1;
+      }
+      setFloorPlans((prev) => [...prev, ...newPlans]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Floor plan upload failed");
+    } finally {
+      setUploadingPlans(false);
     }
   };
 
@@ -412,10 +496,11 @@ export function PropertyEditPageContent({ propertyId }: Props) {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     if (!title.trim()) {
       setError("Title is required");
-      return;
+      setActiveTab("basics");
+      return false;
     }
     setSaving(true);
     setMessage(null);
@@ -441,6 +526,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         cover_cloudinary_public_id: coverPublicId,
         brochure_url: brochureUrl.trim() || null,
         rate_cards: rateCards,
+        package_price_label: priceRangeLabel.trim() || null,
         availability,
         possession_by: possessionBy.trim() || null,
         property_type_label: propertyTypeLabel.trim() || null,
@@ -537,7 +623,14 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           answer: f.answer,
         })),
       );
-      setRateCards(updated.rate_cards ?? rateCards);
+      {
+        const cards = updated.rate_cards ?? rateCards;
+        const auto = autoPriceRangeFromCards(cards);
+        const stored = (updated.package_price_label ?? "").trim();
+        setRateCards(cards);
+        setPriceRangeLabel(stored || auto);
+        setLockPriceRange(Boolean(stored && auto && stored !== auto));
+      }
       setDetail((prev) =>
         prev
           ? {
@@ -553,11 +646,32 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       );
       setFloorPlans(savedPlans.map(planToEditable));
       setMessage("Property saved successfully.");
+      return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
+      return false;
     } finally {
       setSaving(false);
     }
+  };
+
+  const isLastTab = activeTab === EDIT_TABS[EDIT_TABS.length - 1].value;
+
+  const handleSaveAndNext = async () => {
+    const ok = await handleSave();
+    if (!ok) return;
+    const idx = EDIT_TABS.findIndex((t) => t.value === activeTab);
+    if (idx < EDIT_TABS.length - 1) {
+      setActiveTab(EDIT_TABS[idx + 1].value);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  };
+
+  const handleSaveAndFinish = async () => {
+    const ok = await handleSave();
+    if (ok) router.push("/customization/properties");
   };
 
   const addressPreview = useMemo(() => {
@@ -629,14 +743,6 @@ export function PropertyEditPageContent({ propertyId }: Props) {
               {addressPreview || "Fill location details"} · /{slug || "…"}
             </p>
           </div>
-          <Button
-            className="gap-2 self-start sm:self-center"
-            loading={saving}
-            onClick={() => void handleSave()}
-          >
-            {!saving && <Save className="size-4" />}
-            {saving ? "Saving…" : "Save all"}
-          </Button>
         </div>
 
         <div className="px-3 py-3 sm:px-5 sm:py-4">
@@ -772,11 +878,21 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                 </div>
                 <div className="space-y-2">
                   <Label>Listing badge</Label>
-                  <Input
-                    value={listingBadge}
-                    onChange={(e) => setListingBadge(e.target.value)}
-                    placeholder="For Sale"
-                  />
+                  <Select
+                    value={listingBadge || undefined}
+                    onValueChange={setListingBadge}
+                  >
+                    <SelectTrigger className="w-full cursor-pointer">
+                      <SelectValue placeholder="Select badge" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LISTING_BADGE_OPTIONS.map((b) => (
+                        <SelectItem key={b} value={b}>
+                          {b}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex items-center gap-2.5 sm:col-span-2">
                   <Checkbox
@@ -797,33 +913,178 @@ export function PropertyEditPageContent({ propertyId }: Props) {
               <CardHeader>
                 <CardTitle className="text-base">Cover image &amp; brochure</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="max-w-[220px]">
-                  <ImageUploadField
-                    previewUrl={coverUrl}
-                    placeholder={<ImagePlus className="h-6 w-6 text-slate-400" />}
+              <CardContent className="grid gap-5 lg:grid-cols-2">
+                {/* Cover image (supports selecting many at once) */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <Label>Cover image</Label>
+                    <span className="text-[11px] text-slate-400">
+                      Shown as the listing hero
+                    </span>
+                  </div>
+                  <input
+                    ref={coverInputRef}
+                    type="file"
                     accept={ACCEPT_IMG}
-                    disabled={uploadingCover}
-                    emptyLabel={uploadingCover ? "Uploading…" : "Upload cover image"}
-                    hint="JPG, PNG or WebP"
-                    aspect="square"
-                    onPick={(file) => void handleCoverUpload(file)}
-                    onRemove={() => {
-                      setCoverUrl(null);
-                      setCoverPublicId(null);
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      void handleCoverMultiUpload(e.target.files);
+                      e.target.value = "";
                     }}
-                    onPreview={
-                      coverUrl ? () => setPreviewImage(coverUrl) : undefined
-                    }
                   />
+                  {coverUrl ? (
+                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(16,25,46,0.03)]">
+                      <div className="relative aspect-video w-full bg-slate-50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={coverUrl}
+                          alt="Cover"
+                          className="size-full object-cover"
+                        />
+                        {uploadingCover && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                            <Loader2 className="size-5 animate-spin text-[#16233f]" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 p-2.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPreviewImage(coverUrl)}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Preview
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={uploadingCover}
+                          onClick={() => coverInputRef.current?.click()}
+                        >
+                          <ImagePlus className="h-3.5 w-3.5" />
+                          Change
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600"
+                          onClick={() => {
+                            setCoverUrl(null);
+                            setCoverPublicId(null);
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={uploadingCover}
+                      onClick={() => coverInputRef.current?.click()}
+                      className="group flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 text-center transition-all duration-200 hover:border-[#16233f]/35 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {uploadingCover ? (
+                        <Loader2 className="size-6 animate-spin text-slate-400" />
+                      ) : (
+                        <ImagePlus className="size-6 text-slate-400 transition group-hover:text-[#16233f]" />
+                      )}
+                      <span className="text-sm font-medium text-slate-800">
+                        {uploadingCover ? "Uploading…" : "Upload cover image"}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        JPG, PNG or WebP · select several — first is the cover,
+                        rest go to gallery
+                      </span>
+                    </button>
+                  )}
                 </div>
-                <div className="space-y-2">
-                  <Label>Brochure URL</Label>
-                  <Input
-                    value={brochureUrl}
-                    onChange={(e) => setBrochureUrl(e.target.value)}
-                    placeholder="https://…"
+
+                {/* Brochure (file, not URL) */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <Label>Brochure</Label>
+                    <span className="text-[11px] text-slate-400">
+                      PDF or image
+                    </span>
+                  </div>
+                  <input
+                    ref={brochureInputRef}
+                    type="file"
+                    accept="application/pdf,image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) void handleBrochureUpload(file);
+                      e.target.value = "";
+                    }}
                   />
+                  {brochureUrl ? (
+                    <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-[0_1px_2px_rgba(16,25,46,0.03)]">
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#16233f]/8 text-[#16233f]">
+                        <FileText className="h-5 w-5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-slate-800">
+                          Brochure attached
+                        </p>
+                        <a
+                          href={brochureUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-xs font-medium text-[#16233f] underline underline-offset-2"
+                        >
+                          Open file
+                        </a>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={uploadingBrochure}
+                          onClick={() => brochureInputRef.current?.click()}
+                        >
+                          Change
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-red-600"
+                          onClick={() => setBrochureUrl("")}
+                          aria-label="Remove brochure"
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={uploadingBrochure}
+                      onClick={() => brochureInputRef.current?.click()}
+                      className="group flex aspect-video w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 text-center transition-all duration-200 hover:border-[#16233f]/35 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {uploadingBrochure ? (
+                        <Loader2 className="size-6 animate-spin text-slate-400" />
+                      ) : (
+                        <Upload className="size-6 text-slate-400 transition group-hover:text-[#16233f]" />
+                      )}
+                      <span className="text-sm font-medium text-slate-800">
+                        {uploadingBrochure ? "Uploading…" : "Upload brochure"}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        Choose a PDF or image file
+                      </span>
+                    </button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -835,9 +1096,9 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           <motion.div {...cardMotion(0)}>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Quick details strip</CardTitle>
+                <CardTitle className="text-base">Project details</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-5">
                 <div className="space-y-2">
                   <Label>Availability (BHK / configs)</Label>
                   <ChipGroup>
@@ -854,7 +1115,47 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     ))}
                   </ChipGroup>
                 </div>
+
+                <div className="h-px bg-slate-100" />
+
                 <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label>Developer / Builder</Label>
+                    <Select
+                      value={builderId || "__none__"}
+                      onValueChange={(v) => {
+                        const id = v === "__none__" ? "" : v;
+                        setBuilderId(id);
+                        const b = builders.find((x) => x.id === id);
+                        if (b) setDeveloperName(b.name);
+                      }}
+                    >
+                      <SelectTrigger className="w-full cursor-pointer">
+                        <SelectValue placeholder="Select builder" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {builders
+                          .filter(
+                            (b) => b.status === "active" || b.id === builderId,
+                          )
+                          .map((b) => (
+                            <SelectItem key={b.id} value={b.id}>
+                              {b.name}
+                              {b.status !== "active" ? " (inactive)" : ""}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Developer name (display)</Label>
+                    <Input
+                      value={developerName}
+                      onChange={(e) => setDeveloperName(e.target.value)}
+                      placeholder="e.g. Vinayak Developers"
+                    />
+                  </div>
                   <div className="space-y-2">
                     <Label>Possession by</Label>
                     <Input
@@ -864,27 +1165,48 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Property type</Label>
+                    <Label>Construction status</Label>
                     <Select
-                      value={propertyTypeLabel || undefined}
-                      onValueChange={setPropertyTypeLabel}
+                      value={constructionStatus || undefined}
+                      onValueChange={setConstructionStatus}
                     >
                       <SelectTrigger className="w-full cursor-pointer">
-                        <SelectValue placeholder="Select property type" />
+                        <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        {propertyTypes.map((t) => (
-                          <SelectItem key={t.id} value={t.name}>
-                            {t.name}
+                        {CONSTRUCTION_STATUS_OPTIONS.map((o) => (
+                          <SelectItem key={o} value={o}>
+                            {o}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    {propertyTypes.length === 0 && (
-                      <p className="text-[11px] text-slate-500">
-                        Add types under Customization → Property types.
-                      </p>
-                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Current status</Label>
+                    <Select
+                      value={currentStatus || undefined}
+                      onValueChange={setCurrentStatus}
+                    >
+                      <SelectTrigger className="w-full cursor-pointer">
+                        <SelectValue placeholder="Select current status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CURRENT_STATUS_OPTIONS.map((o) => (
+                          <SelectItem key={o} value={o}>
+                            {o}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>RERA No</Label>
+                    <Input
+                      value={reraNo}
+                      onChange={(e) => setReraNo(e.target.value)}
+                      placeholder="RN137AA10037/270722"
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Towers</Label>
@@ -905,165 +1227,58 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>RERA No</Label>
+                    <Label>No. of floors</Label>
                     <Input
-                      value={reraNo}
-                      onChange={(e) => setReraNo(e.target.value)}
-                      placeholder="RN137AA10037/270722"
+                      type="number"
+                      value={floorCount}
+                      onChange={(e) => setFloorCount(e.target.value)}
+                      placeholder="21"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>RERA URL</Label>
+                    <Label>Total plot area</Label>
                     <Input
-                      value={reraUrl}
-                      onChange={(e) => setReraUrl(e.target.value)}
-                      placeholder="https://gujrera.gujarat.gov.in"
+                      value={totalPlotArea}
+                      onChange={(e) => setTotalPlotArea(e.target.value)}
+                      placeholder="5200 Sq Mt"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Open area %</Label>
+                    <Input
+                      type="number"
+                      value={openAreaPercent}
+                      onChange={(e) => setOpenAreaPercent(e.target.value)}
+                      placeholder="65"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Facing</Label>
+                    <Input
+                      value={facing}
+                      onChange={(e) => setFacing(e.target.value)}
+                      placeholder="East"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Project position</Label>
+                    <Input
+                      value={projectPosition}
+                      onChange={(e) => setProjectPosition(e.target.value)}
+                      placeholder="2 Side Open"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Road connectivity</Label>
+                    <Input
+                      value={roadConnectivity}
+                      onChange={(e) => setRoadConnectivity(e.target.value)}
+                      placeholder="100 feet"
                     />
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
 
-          <motion.div {...cardMotion(1)}>
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  Extended project details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label>Developer / Builder</Label>
-                  <Select
-                    value={builderId || "__none__"}
-                    onValueChange={(v) => {
-                      const id = v === "__none__" ? "" : v;
-                      setBuilderId(id);
-                      const b = builders.find((x) => x.id === id);
-                      if (b) setDeveloperName(b.name);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select builder" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="__none__">None</SelectItem>
-                      {builders
-                        .filter((b) => b.status === "active" || b.id === builderId)
-                        .map((b) => (
-                          <SelectItem key={b.id} value={b.id}>
-                            {b.name}
-                            {b.status !== "active" ? " (inactive)" : ""}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Developer name (display)</Label>
-                  <Input
-                    value={developerName}
-                    onChange={(e) => setDeveloperName(e.target.value)}
-                    placeholder="dev vinayak"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Category</Label>
-                  <Input
-                    value={categoryLabel}
-                    onChange={(e) => setCategoryLabel(e.target.value)}
-                    placeholder="Residential - Flats / Apartments"
-                    list="category-suggestions"
-                  />
-                  <datalist id="category-suggestions">
-                    {categories.map((c) => (
-                      <option key={c.id} value={c.name} />
-                    ))}
-                    <option value="Residential - Flats / Apartments" />
-                  </datalist>
-                </div>
-                <div className="space-y-2">
-                  <Label>Construction status</Label>
-                  <Input
-                    value={constructionStatus}
-                    onChange={(e) => setConstructionStatus(e.target.value)}
-                    placeholder="Under Construction"
-                    list="construction-status-suggestions"
-                  />
-                  <datalist id="construction-status-suggestions">
-                    {CONSTRUCTION_STATUS_OPTIONS.map((o) => (
-                      <option key={o} value={o} />
-                    ))}
-                  </datalist>
-                </div>
-                <div className="space-y-2">
-                  <Label>Project size label</Label>
-                  <Input
-                    value={projectSizeLabel}
-                    onChange={(e) => setProjectSizeLabel(e.target.value)}
-                    placeholder="2 Tower - 144 Units"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>No. of floors</Label>
-                  <Input
-                    type="number"
-                    value={floorCount}
-                    onChange={(e) => setFloorCount(e.target.value)}
-                    placeholder="21"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Total plot area</Label>
-                  <Input
-                    value={totalPlotArea}
-                    onChange={(e) => setTotalPlotArea(e.target.value)}
-                    placeholder="5200 Sq Mt"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Open area %</Label>
-                  <Input
-                    type="number"
-                    value={openAreaPercent}
-                    onChange={(e) => setOpenAreaPercent(e.target.value)}
-                    placeholder="65"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Facing</Label>
-                  <Input
-                    value={facing}
-                    onChange={(e) => setFacing(e.target.value)}
-                    placeholder="East"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Project position</Label>
-                  <Input
-                    value={projectPosition}
-                    onChange={(e) => setProjectPosition(e.target.value)}
-                    placeholder="2 Side Open"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Road connectivity</Label>
-                  <Input
-                    value={roadConnectivity}
-                    onChange={(e) => setRoadConnectivity(e.target.value)}
-                    placeholder="100 feet"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Current status</Label>
-                  <Input
-                    value={currentStatus}
-                    onChange={(e) => setCurrentStatus(e.target.value)}
-                    placeholder="Available"
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2">
                   <Label>Parking types</Label>
                   <ChipGroup>
                     {PARKING_OPTIONS.map((opt) => (
@@ -1079,7 +1294,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     ))}
                   </ChipGroup>
                 </div>
-                <div className="space-y-2 sm:col-span-2">
+
+                <div className="space-y-2">
                   <Label>About</Label>
                   <Textarea
                     value={about}
@@ -1103,7 +1319,14 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-5">
-                <RateCardsEditor value={rateCards} onChange={setRateCards} />
+                <RateCardsEditor
+                  key={`${propertyId}-${detail?.updated_at ?? "new"}`}
+                  value={rateCards}
+                  onChange={setRateCards}
+                  rangeLabel={priceRangeLabel}
+                  onRangeChange={setPriceRangeLabel}
+                  lockRangeInitially={lockPriceRange}
+                />
               </CardContent>
             </Card>
           </motion.div>
@@ -1113,20 +1336,43 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         <TabsContent value="plans" className="space-y-4">
           <motion.div
             {...cardMotion(0)}
-            className="flex items-center justify-between"
+            className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
           >
             <p className="text-sm text-slate-500">
               Add configs like &ldquo;3 BHK Type 1&rdquo; with area and price.
             </p>
-            <Button
-              type="button"
-              variant="outline"
-              className="gap-1.5"
-              onClick={() => setFloorPlans((prev) => [...prev, emptyPlan()])}
-            >
-              <Plus className="size-4" />
-              Add floor plan
-            </Button>
+            <div className="flex gap-2">
+              <input
+                ref={plansInputRef}
+                type="file"
+                accept={ACCEPT_IMG}
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  void handleFloorPlansBulkUpload(e.target.files);
+                  e.target.value = "";
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-1.5"
+                loading={uploadingPlans}
+                onClick={() => plansInputRef.current?.click()}
+              >
+                {!uploadingPlans && <ImagePlus className="size-4" />}
+                {uploadingPlans ? "Uploading…" : "Upload images"}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-1.5"
+                onClick={() => setFloorPlans((prev) => [...prev, emptyPlan()])}
+              >
+                <Plus className="size-4" />
+                Add floor plan
+              </Button>
+            </div>
           </motion.div>
 
           {floorPlans.length === 0 ? (
@@ -1193,10 +1439,6 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     </div>
                     {(
                       [
-                        ["rooms", "Rooms"],
-                        ["balcony", "Balcony"],
-                        ["bathroom", "Bathroom"],
-                        ["servant_room", "Servant room"],
                         ["area_sqft", "Area sq.ft."],
                         ["area_sqyd", "Area sq.yd."],
                         ["area_sqmt", "Area sq.mt."],
@@ -1431,17 +1673,40 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-        className="sticky bottom-4 z-10 flex justify-end"
+        className="sticky bottom-4 z-10 flex justify-center sm:justify-end"
       >
-        <div className="glass-card flex items-center gap-3 rounded-2xl p-2 shadow-[0_8px_30px_rgba(16,25,46,0.14)]">
+        <div className="glass-card flex items-center gap-2.5 rounded-2xl p-2 pl-4 shadow-[0_8px_30px_rgba(16,25,46,0.14)]">
+          <span className="hidden text-xs font-medium text-slate-500 sm:inline">
+            Step {activeTabIndex + 1} of {EDIT_TABS.length}
+          </span>
           <Button
+            variant="outline"
             className="gap-2"
             loading={saving}
             onClick={() => void handleSave()}
           >
             {!saving && <Save className="size-4" />}
-            {saving ? "Saving…" : "Save all changes"}
+            {saving ? "Saving…" : "Save"}
           </Button>
+          {isLastTab ? (
+            <Button
+              className="gap-2"
+              loading={saving}
+              onClick={() => void handleSaveAndFinish()}
+            >
+              {!saving && <Check className="size-4" />}
+              Save &amp; finish
+            </Button>
+          ) : (
+            <Button
+              className="gap-2"
+              loading={saving}
+              onClick={() => void handleSaveAndNext()}
+            >
+              Save &amp; next
+              {!saving && <ArrowRight className="size-4" />}
+            </Button>
+          )}
         </div>
       </motion.div>
 

@@ -21,6 +21,7 @@ function isProtectedPath(pathname: string) {
     pathname.startsWith("/dashboard") ||
     pathname.startsWith("/properties") ||
     pathname.startsWith("/users") ||
+    pathname.startsWith("/leads") ||
     pathname.startsWith("/customization") ||
     pathname.startsWith("/profile") ||
     pathname.startsWith("/settings")

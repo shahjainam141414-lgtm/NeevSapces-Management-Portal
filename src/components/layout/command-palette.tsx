@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import {
   Building2,
+  Inbox,
   LayoutDashboard,
   MapPin,
   Plus,
@@ -19,6 +20,7 @@ const ACTIONS = [
     group: "Navigate",
     items: [
       { label: "Command Center", href: "/dashboard", icon: LayoutDashboard },
+      { label: "Lead inbox", href: "/leads", icon: Inbox },
       { label: "Properties", href: "/customization/properties", icon: Building2 },
       { label: "Areas", href: "/customization/areas", icon: MapPin },
       { label: "Builders", href: "/customization/builders", icon: Sparkles },

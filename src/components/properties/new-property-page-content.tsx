@@ -31,7 +31,7 @@ export function NewPropertyPageContent() {
   const [propertyType, setPropertyType] = useState("");
   const [title, setTitle] = useState("");
   const [locality, setLocality] = useState("");
-  const [city, setCity] = useState("Gandhinagar");
+  const [city, setCity] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -74,15 +74,6 @@ export function NewPropertyPageContent() {
 
   const handleAreaChange = (id: string) => {
     setAreaId(id);
-    const area = areas.find((a) => a.id === id);
-    if (!area) return;
-    setLocality((prev) => {
-      const previousArea = areas.find((a) => a.id === areaId);
-      if (!prev || (previousArea && prev === previousArea.name)) {
-        return area.name;
-      }
-      return prev;
-    });
   };
 
   const canContinue = Boolean(areaId && propertyType && title.trim());
@@ -99,7 +90,7 @@ export function NewPropertyPageContent() {
         locality: locality.trim() || selectedArea.name,
         city: city.trim() || "Gandhinagar",
         property_type_label: propertyType,
-        status: "draft",
+        status: "active",
       });
       router.push(`/customization/properties/${created.id}`);
     } catch (err) {
@@ -196,7 +187,7 @@ export function NewPropertyPageContent() {
                     onValueChange={handleAreaChange}
                   >
                     <SelectTrigger id="area" className="w-full cursor-pointer">
-                      <SelectValue placeholder="Select area (e.g. Kudasan)" />
+                      <SelectValue placeholder="Select area" />
                     </SelectTrigger>
                     <SelectContent>
                       {areas.map((area) => (
@@ -269,7 +260,7 @@ export function NewPropertyPageContent() {
                   id="locality"
                   value={locality}
                   onChange={(e) => setLocality(e.target.value)}
-                  placeholder="Locality within area"
+                  placeholder="e.g. Kudasan"
                   disabled={!areaId}
                 />
               </div>
@@ -279,6 +270,7 @@ export function NewPropertyPageContent() {
                   id="city"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
+                  placeholder="e.g. Gandhinagar"
                   disabled={!areaId}
                 />
               </div>

@@ -33,20 +33,35 @@ export function AuthLayout({
           initial={{ opacity: 0, y: -14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4 }}
-          className="mb-8 text-center sm:mb-10"
+          className="relative mb-8 text-center sm:mb-10"
         >
-          <Image
-            src="/logo.png"
-            alt="Neev"
-            width={220}
-            height={56}
-            className="mx-auto h-12 w-auto object-contain drop-shadow-[0_4px_24px_rgba(255,255,255,0.2)] sm:h-14"
-            priority
+          {/* Soft dark wash so the divider stays visible over light parts of the photo */}
+          <div
+            className="pointer-events-none absolute left-1/2 top-[42%] h-24 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-black/35 blur-2xl"
+            aria-hidden
           />
-          <p className="auth-display mt-5 text-base font-medium uppercase tracking-[0.45em] text-white/85 sm:text-lg sm:tracking-[0.5em]">
-            Management Portal
-          </p>
-          <div className="mx-auto mt-3 h-px w-14 bg-gradient-to-r from-transparent via-[var(--accent-light)] to-transparent" />
+          <div className="relative">
+            <Image
+              src="/logo-white.png"
+              alt="Neev Spaces"
+              width={252}
+              height={140}
+              className="mx-auto h-14 w-auto object-contain sm:h-16"
+              priority
+            />
+            {/*
+              Soft fade divider (not a solid bar).
+              Uses 2px + GPU layer — a true 1px hairline often disappears at
+              some zoom/DPR values until DevTools resizes the viewport.
+            */}
+            <div
+              className="mx-auto mt-5 h-0.5 w-16 rounded-full bg-gradient-to-r from-transparent via-white/70 to-transparent [transform:translateZ(0)]"
+              aria-hidden
+            />
+            <p className="auth-display mt-4 text-base font-medium uppercase tracking-[0.45em] text-white/85 sm:text-lg sm:tracking-[0.5em]">
+              Management Portal
+            </p>
+          </div>
         </motion.div>
 
         <motion.div

@@ -24,7 +24,6 @@ import { Button } from "@/components/ui/button";
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  remember: z.boolean().optional(),
 });
 
 type LoginForm = z.infer<typeof loginSchema>;
@@ -117,7 +116,6 @@ function LoginFormContent() {
     defaultValues: {
       email: prefillEmail,
       password: "",
-      remember: false,
     },
   });
 
@@ -247,15 +245,6 @@ function LoginFormContent() {
               </div>
             }
           />
-
-          <label className="flex cursor-pointer items-center gap-2.5">
-            <input
-              type="checkbox"
-              className="h-4 w-4 rounded border-slate-300 accent-[#16233f]"
-              {...register("remember")}
-            />
-            <span className="text-sm text-slate-600">Keep me signed in</span>
-          </label>
 
           {infoMessage && (
             <p className="rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2.5 text-xs text-emerald-800">

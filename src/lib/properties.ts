@@ -1,8 +1,21 @@
+import type { PriceUnit } from "@/lib/pricing";
+import {
+  buildPriceRangeLabel,
+  formatCardPrice,
+  parsePriceLabel,
+  toLac,
+} from "@/lib/pricing";
+
 export type PropertyRateCard = {
   id: string;
   title: string;
+  /** Formatted label for website/list cards, e.g. "1.3 Cr.*" */
   price: string;
   notes: string;
+  /** Structured amount (decimal). Optional for legacy cards. */
+  amount?: number | null;
+  /** Lac. or Cr. */
+  unit?: PriceUnit | null;
 };
 
 export type PropertyStatus = "draft" | "active" | "inactive";
@@ -127,34 +140,98 @@ export const PROPERTY_COLUMNS =
 
 export function normalizeRateCards(value: unknown): PropertyRateCard[] {
   if (!Array.isArray(value)) return [];
-  return value
+  const cards = value
     .map((item, index) => {
-      const row = item as Partial<PropertyRateCard>;
+      const row = item as Partial<PropertyRateCard> & {
+        amount?: unknown;
+        unit?: unknown;
+      };
+      let amount =
+        typeof row.amount === "number" && Number.isFinite(row.amount)
+          ? row.amount
+          : null;
+      let unit: PriceUnit | null =
+        row.unit === "lac" || row.unit === "cr" ? row.unit : null;
+      let price = typeof row.price === "string" ? row.price : "";
+
+      // Backfill structured fields from legacy free-text price
+      if ((amount == null || !unit) && price) {
+        const parsed = parsePriceLabel(price);
+        if (parsed) {
+          amount = parsed.amount;
+          unit = parsed.unit;
+        }
+      }
+      // Keep price string in sync when structured values exist
+      if (amount != null && unit) {
+        price = formatCardPrice(amount, unit);
+      }
+
       return {
         id:
           typeof row.id === "string" && row.id
             ? row.id
             : `card-${index}-${Date.now()}`,
         title: typeof row.title === "string" ? row.title : "",
-        price: typeof row.price === "string" ? row.price : "",
+        price,
         notes: typeof row.notes === "string" ? row.notes : "",
+        amount,
+        unit,
       };
     })
-    .filter((c) => c.title.trim() || c.price.trim() || c.notes.trim());
+    .filter(
+      (c) =>
+        c.title.trim() ||
+        c.price.trim() ||
+        c.notes.trim() ||
+        (c.amount != null && c.amount > 0),
+    );
+
+  // Auto-arrange: price ascending (Lac-equivalent), then title A→Z
+  return [...cards].sort((a, b) => {
+    const lacA =
+      a.amount != null && a.unit ? toLac(a.amount, a.unit) : null;
+    const lacB =
+      b.amount != null && b.unit ? toLac(b.amount, b.unit) : null;
+    if (lacA != null && lacB != null && Math.abs(lacA - lacB) > 0.0001) {
+      return lacA - lacB;
+    }
+    if (lacA != null && lacB == null) return -1;
+    if (lacA == null && lacB != null) return 1;
+    return a.title.localeCompare(b.title, undefined, { sensitivity: "base" });
+  });
+}
+
+/** Cards that contribute to the package price range (exclude per-sqft style). */
+export function packagePriceCards(cards: PropertyRateCard[]): PropertyRateCard[] {
+  return cards.filter((c) => {
+    if (/sq\.?\s*ft|sqft|per\s*sq/i.test(c.title)) return false;
+    return c.amount != null && c.unit != null && c.amount > 0;
+  });
+}
+
+export function autoPriceRangeFromCards(cards: PropertyRateCard[]): string {
+  return buildPriceRangeLabel(packagePriceCards(cards));
 }
 
 /** Derive legacy flat price columns from structured rate cards. */
 export function deriveLegacyPricesFromRateCards(cards: PropertyRateCard[]) {
   const cleaned = cards.filter(
-    (c) => c.title.trim() || c.price.trim() || c.notes.trim(),
+    (c) =>
+      c.title.trim() ||
+      c.price.trim() ||
+      c.notes.trim() ||
+      (c.amount != null && c.amount > 0),
   );
-  const first = cleaned[0];
+  const packageCards = packagePriceCards(cleaned);
+  const range = buildPriceRangeLabel(packageCards);
+  const first = packageCards[0] ?? cleaned[0];
   const sqft =
-    cleaned.find((c) => /sq\.?\s*ft|sqft|per\s*sq/i.test(c.title)) ??
-    cleaned[1];
+    cleaned.find((c) => /sq\.?\s*ft|sqft|per\s*sq/i.test(c.title)) ?? null;
 
   return {
-    package_price_label: first?.price.trim() || null,
+    // Listing hero price = auto range when possible, else first card label
+    package_price_label: range || first?.price.trim() || null,
     package_price_notes: first?.notes.trim() || null,
     price_per_sqft_label: sqft?.price.trim() || null,
   };
@@ -172,11 +249,14 @@ export function seedRateCardsFromLegacy(prop: {
 
   const cards: PropertyRateCard[] = [];
   if (prop.package_price_label || prop.package_price_notes) {
+    const parsed = parsePriceLabel(prop.package_price_label ?? "");
     cards.push({
       id: crypto.randomUUID(),
       title: "Package price",
       price: prop.package_price_label ?? "",
       notes: prop.package_price_notes ?? "",
+      amount: parsed?.amount ?? null,
+      unit: parsed?.unit ?? null,
     });
   }
   if (prop.price_per_sqft_label) {
@@ -185,6 +265,8 @@ export function seedRateCardsFromLegacy(prop: {
       title: "Price per sq.ft.",
       price: prop.price_per_sqft_label,
       notes: "",
+      amount: null,
+      unit: null,
     });
   }
   return cards;
@@ -231,6 +313,30 @@ export const CONSTRUCTION_STATUS_OPTIONS = [
   "Ready Possession",
   "Ongoing",
   "Upcoming",
+] as const;
+
+// Badge shown on listing cards. Curated from 99acres & gandhinagarproperty.com.
+export const LISTING_BADGE_OPTIONS = [
+  "For Sale",
+  "For Rent",
+  "New Launch",
+  "Newly Launched",
+  "Ready to Move",
+  "Under Construction",
+  "Resale",
+  "Featured",
+  "Sold Out",
+  "Coming Soon",
+] as const;
+
+// Live availability state of the project.
+export const CURRENT_STATUS_OPTIONS = [
+  "Available",
+  "Limited Availability",
+  "Few Units Left",
+  "Sold Out",
+  "Coming Soon",
+  "Newly Launched",
 ] as const;
 
 export function statusBadgeVariant(

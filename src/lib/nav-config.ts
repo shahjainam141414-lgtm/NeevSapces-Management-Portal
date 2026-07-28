@@ -2,6 +2,7 @@ import {
   LayoutDashboard,
   SlidersHorizontal,
   Users,
+  Inbox,
   type LucideIcon,
 } from "lucide-react";
 
@@ -18,6 +19,7 @@ export const mainNav: NavItem[] = [
     href: "/customization/areas",
     icon: SlidersHorizontal,
   },
+  { title: "Lead inbox", href: "/leads", icon: Inbox },
   { title: "Users", href: "/users", icon: Users },
 ];
 

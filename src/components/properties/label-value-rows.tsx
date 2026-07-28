@@ -26,6 +26,8 @@ export function LabelValueRows({
   labelPlaceholder = "Label",
   valuePlaceholder = "Value",
 }: LabelValueRowsProps) {
+  const addRow = () =>
+    onChange([...value, { id: crypto.randomUUID(), label: "", value: "" }]);
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -38,17 +40,29 @@ export function LabelValueRows({
           variant="outline"
           size="sm"
           className="gap-1.5 self-start"
-          onClick={() =>
-            onChange([
-              ...value,
-              { id: crypto.randomUUID(), label: "", value: "" },
-            ])
-          }
+          onClick={addRow}
         >
           <Plus className="size-3.5" />
           {addLabel}
         </Button>
       </div>
+
+      <datalist id="spec-label-suggestions">
+        {[
+          "Flooring",
+          "Structure",
+          "Kitchen",
+          "Doors",
+          "Windows",
+          "Walls & Ceiling",
+          "Bathroom",
+          "Electrical",
+          "Wall Finish",
+          "Water Supply",
+        ].map((s) => (
+          <option key={s} value={s} />
+        ))}
+      </datalist>
 
       {value.length === 0 ? (
         <p className="rounded-xl border border-dashed border-slate-200 bg-[#eef1f6]/35 px-3 py-6 text-center text-xs text-slate-500">
@@ -63,6 +77,7 @@ export function LabelValueRows({
             >
               <Input
                 value={row.label}
+                list="spec-label-suggestions"
                 onChange={(e) =>
                   onChange(
                     value.map((r) =>
@@ -81,6 +96,16 @@ export function LabelValueRows({
                     ),
                   )
                 }
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "Enter" &&
+                    row.value.trim() &&
+                    row.id === value[value.length - 1]?.id
+                  ) {
+                    e.preventDefault();
+                    addRow();
+                  }
+                }}
                 placeholder={valuePlaceholder}
               />
               <Button

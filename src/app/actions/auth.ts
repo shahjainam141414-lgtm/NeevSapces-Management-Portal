@@ -134,23 +134,38 @@ export async function setInvitedUserPassword(
       await verifier.auth.signOut().catch(() => undefined);
     }
 
+    // Preserve an existing admin's role/profile on password reset —
+    // never downgrade a Super Admin to Manager during recovery/invite reuse.
+    const { data: existingProfile } = await admin
+      .from("admin_profiles")
+      .select("name, phone, photo_url, role")
+      .or(`id.eq.${userId},email.eq.${email}`)
+      .maybeSingle();
+
     const metaRole = meta.role;
     const role =
-      metaRole === "Manager" || metaRole === "Super Admin"
-        ? metaRole
-        : "Manager";
+      existingProfile?.role === "Manager" ||
+      existingProfile?.role === "Super Admin"
+        ? existingProfile.role
+        : metaRole === "Manager" || metaRole === "Super Admin"
+          ? metaRole
+          : "Manager";
 
     const profilePayload = {
       id: userId,
       name:
+        existingProfile?.name ||
         (meta.name as string) ||
         (meta.full_name as string) ||
         email.split("@")[0] ||
         "Admin",
       email,
-      phone: (meta.phone as string) ?? null,
+      phone: (existingProfile?.phone as string) ?? (meta.phone as string) ?? null,
       photo_url:
-        (meta.photo_url as string) || (meta.avatar_url as string) || null,
+        (existingProfile?.photo_url as string) ||
+        (meta.photo_url as string) ||
+        (meta.avatar_url as string) ||
+        null,
       role,
       status: "active" as const,
     };
@@ -208,5 +223,87 @@ export async function isAllowlistedAdmin(
     return byEmail?.status === "active";
   } catch {
     return false;
+  }
+}
+
+/**
+ * Forgot-password: generate a recovery link and email it via Resend
+ * (same path as welcome invites — not Supabase's default recovery template).
+ *
+ * Always returns a generic success to the client when the email is not in
+ * the allowlist, so we don't leak which emails exist.
+ */
+export async function requestPasswordReset(
+  rawEmail: string,
+): Promise<{ ok: true; sent: boolean } | { ok: false; error: string }> {
+  const email = rawEmail.trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    return { ok: false, error: "Please enter a valid email address." };
+  }
+
+  try {
+    const { getAppUrl } = await import("@/lib/app-url");
+    const {
+      isResendConfigured,
+      sendResetPasswordEmail,
+    } = await import("@/lib/email/send-invite");
+
+    if (!isResendConfigured()) {
+      return {
+        ok: false,
+        error:
+          "Email is not configured. Add RESEND_API_KEY to .env.local (same key used for welcome invites).",
+      };
+    }
+
+    const admin = createServiceClient();
+    const { data: profile } = await admin
+      .from("admin_profiles")
+      .select("id, name, email, status")
+      .eq("email", email)
+      .maybeSingle();
+
+    // Don't reveal whether the account exists
+    if (!profile || profile.status !== "active") {
+      return { ok: true, sent: false };
+    }
+
+    const redirectTo = `${getAppUrl()}/set-password`;
+    const { data: linkData, error: linkError } =
+      await admin.auth.admin.generateLink({
+        type: "recovery",
+        email,
+        options: { redirectTo },
+      });
+
+    const resetUrl = linkData?.properties?.action_link;
+    if (linkError || !resetUrl) {
+      return {
+        ok: false,
+        error:
+          linkError?.message ||
+          "Could not create reset link. In Supabase → Authentication → URL Configuration, add your app URL and /set-password to Redirect URLs.",
+      };
+    }
+
+    const sent = await sendResetPasswordEmail({
+      to: email,
+      name: profile.name,
+      resetUrl,
+    });
+
+    if (!sent.ok) {
+      return { ok: false, error: sent.error };
+    }
+
+    return { ok: true, sent: true };
+  } catch (err) {
+    return {
+      ok: false,
+      error:
+        err instanceof Error
+          ? err.message
+          : "Could not send reset email. Please try again.",
+    };
   }
 }

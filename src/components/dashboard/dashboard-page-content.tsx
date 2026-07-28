@@ -7,7 +7,9 @@ import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   ArrowUpRight,
   Building2,
+  CheckCircle2,
   FileEdit,
+  Inbox,
   Layers3,
   MapPin,
   Plus,
@@ -172,6 +174,38 @@ export function DashboardPageContent({ user }: Props) {
     [properties],
   );
 
+  const lastTouched = recent[0] ?? null;
+  const featuredSlots = 8;
+  const featuredOpen = Math.max(0, featuredSlots - stats.featured);
+
+  const focus = useMemo(() => {
+    if (stats.drafts > 0) {
+      return {
+        label: "Needs review",
+        value: `${stats.drafts} draft${stats.drafts === 1 ? "" : "s"}`,
+        hint: "Ready to polish and publish live",
+        href: "/customization/properties",
+        cta: "Review drafts",
+      };
+    }
+    if (featuredOpen > 0) {
+      return {
+        label: "Homepage",
+        value: `${featuredOpen} slot${featuredOpen === 1 ? "" : "s"} open`,
+        hint: `${stats.featured} of ${featuredSlots} featured picks filled`,
+        href: "/customization/featured",
+        cta: "Curate featured",
+      };
+    }
+    return {
+      label: "All clear",
+      value: "Catalog is live",
+      hint: "No drafts waiting · homepage fully curated",
+      href: "/customization/properties/new",
+      cta: "Add property",
+    };
+  }, [stats.drafts, stats.featured, featuredOpen]);
+
   const firstName = (user?.name ?? "there").split(" ")[0];
   const greeting = greetingForHour(now.getHours());
   const timeLabel = now.toLocaleTimeString([], {
@@ -253,50 +287,109 @@ export function DashboardPageContent({ user }: Props) {
               Welcome back to Neev Spaces OS. Your publishing pipeline, catalogs,
               and team — one refined command center.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-7 flex w-full max-w-md flex-col gap-2.5">
+              <div className="flex flex-wrap gap-2.5 sm:flex-nowrap">
+                <Link
+                  href="/customization/properties/new"
+                  className="btn-brand inline-flex flex-1 items-center justify-center gap-2 px-5 py-2.5"
+                >
+                  <Plus className="h-4 w-4" strokeWidth={1.6} />
+                  New Property
+                </Link>
+                <Link
+                  href="/customization/properties"
+                  className="inline-flex flex-1 items-center justify-center gap-2 border border-white/20 bg-white/5 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-white hover:text-[var(--ink)]"
+                >
+                  Manage listings
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
               <Link
-                href="/customization/properties/new"
-                className="btn-brand inline-flex items-center gap-2 px-5 py-2.5"
+                href="/leads"
+                className="inline-flex w-full items-center justify-center gap-2 border border-white/20 bg-white/5 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-white hover:text-[var(--ink)]"
               >
-                <Plus className="h-4 w-4" strokeWidth={1.6} />
-                New Property
-              </Link>
-              <Link
-                href="/customization/properties"
-                className="inline-flex items-center gap-2 border border-white/20 bg-white/5 px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.12em] text-white transition hover:bg-white hover:text-[var(--ink)]"
-              >
-                Manage listings
-                <ArrowUpRight className="h-3.5 w-3.5" />
+                <Inbox className="h-3.5 w-3.5" strokeWidth={1.6} />
+                Lead inbox
               </Link>
             </div>
           </div>
 
-          <div className="flex flex-col justify-between gap-6 border-t border-white/10 pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
-            <div>
-              <p className="type-caption text-white/40">Local time</p>
-              <p className="font-display type-hero mt-2 text-4xl tabular-nums">
-                {timeLabel}
-              </p>
+          <div className="flex flex-col justify-between gap-5 border-t border-white/10 pt-6 lg:border-l lg:border-t-0 lg:pl-8 lg:pt-0">
+            <div className="flex items-end justify-between gap-4">
+              <div>
+                <p className="type-caption text-white/40">Local time</p>
+                <p className="font-display type-hero mt-2 text-4xl tabular-nums">
+                  {timeLabel}
+                </p>
+              </div>
+              <div className="hidden items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-white/55 sm:inline-flex">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Live
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-md border border-white/10 bg-white/5 p-3">
-                <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">
-                  Pipeline
-                </p>
-                <p className="mt-1 text-lg font-semibold tabular-nums">
-                  {loading ? "—" : stats.total}
-                </p>
-                <p className="text-[11px] text-white/45">Total properties</p>
+
+            <div className="rounded-lg border border-white/12 bg-white/[0.06] p-4 backdrop-blur-sm">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">
+                    Focus now
+                  </p>
+                  <p className="mt-2 font-display text-xl leading-tight text-white">
+                    {loading ? "—" : focus.value}
+                  </p>
+                  <p className="mt-1.5 text-[12px] leading-relaxed text-white/50">
+                    {loading ? "Loading your next action…" : focus.hint}
+                  </p>
+                </div>
+                {stats.drafts === 0 && featuredOpen === 0 && !loading ? (
+                  <CheckCircle2
+                    className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400/90"
+                    strokeWidth={1.6}
+                  />
+                ) : (
+                  <span className="mt-0.5 rounded-md border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/70">
+                    {loading ? "…" : focus.label}
+                  </span>
+                )}
               </div>
-              <div className="rounded-md border border-white/10 bg-white/5 p-3">
-                <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">
-                  Pending
+              <Link
+                href={focus.href}
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-[var(--accent-light)] transition hover:text-white"
+              >
+                {focus.cta}
+                <ArrowUpRight className="h-3.5 w-3.5" />
+              </Link>
+            </div>
+
+            <div className="rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-white/40">
+                Last touch
+              </p>
+              {loading ? (
+                <p className="mt-1.5 text-sm text-white/45">—</p>
+              ) : lastTouched ? (
+                <Link
+                  href={`/customization/properties/${lastTouched.id}`}
+                  className="mt-1.5 flex items-center justify-between gap-3 transition hover:opacity-90"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-white">
+                      {lastTouched.title}
+                    </p>
+                    <p className="mt-0.5 text-[11px] text-white/45">
+                      {lastTouched.updated_at
+                        ? formatRelative(lastTouched.updated_at)
+                        : "—"}
+                      {lastTouched.status ? ` · ${lastTouched.status}` : ""}
+                    </p>
+                  </div>
+                  <ArrowUpRight className="h-3.5 w-3.5 shrink-0 text-white/40" />
+                </Link>
+              ) : (
+                <p className="mt-1.5 text-sm text-white/45">
+                  No properties edited yet
                 </p>
-                <p className="mt-1 text-lg font-semibold tabular-nums">
-                  {loading ? "—" : stats.drafts}
-                </p>
-                <p className="text-[11px] text-white/45">Drafts to publish</p>
-              </div>
+              )}
             </div>
           </div>
         </div>

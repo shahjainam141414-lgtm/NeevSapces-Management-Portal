@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { useRef } from "react";
+import { Bold, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,7 @@ type InlineTextRowsProps = {
   value: TextRow[];
   onChange: (rows: TextRow[]) => void;
   addLabel?: string;
+  allowBold?: boolean;
 };
 
 export function InlineTextRows({
@@ -23,7 +25,35 @@ export function InlineTextRows({
   value,
   onChange,
   addLabel = "Add field",
+  allowBold = false,
 }: InlineTextRowsProps) {
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  const applyBold = (row: TextRow) => {
+    const input = inputRefs.current[row.id];
+    const start = input?.selectionStart ?? row.content.length;
+    const end = input?.selectionEnd ?? start;
+    const selected = row.content.slice(start, end);
+    const insertion = selected ? `**${selected}**` : "**bold text**";
+    const nextContent =
+      row.content.slice(0, start) + insertion + row.content.slice(end);
+    onChange(
+      value.map((item) =>
+        item.id === row.id ? { ...item, content: nextContent } : item,
+      ),
+    );
+    requestAnimationFrame(() => {
+      const nextInput = inputRefs.current[row.id];
+      if (!nextInput) return;
+      nextInput.focus();
+      const selectionStart = start + 2;
+      nextInput.setSelectionRange(
+        selectionStart,
+        selectionStart + (selected || "bold text").length,
+      );
+    });
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -61,6 +91,9 @@ export function InlineTextRows({
                 {index + 1}
               </span>
               <Input
+                ref={(node) => {
+                  inputRefs.current[row.id] = node;
+                }}
                 value={row.content}
                 onChange={(e) =>
                   onChange(
@@ -83,6 +116,19 @@ export function InlineTextRows({
                 placeholder={placeholder}
                 className="flex-1"
               />
+              {allowBold ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 text-slate-600 hover:bg-slate-100"
+                  onClick={() => applyBold(row)}
+                  aria-label="Make selected text bold"
+                  title="Make selected text bold"
+                >
+                  <Bold className="size-4" />
+                </Button>
+              ) : null}
               <Button
                 type="button"
                 variant="ghost"

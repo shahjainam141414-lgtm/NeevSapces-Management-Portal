@@ -140,10 +140,10 @@ export function RateCardsEditor({
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#16233f]/55">
-              Listing price range
+              Website price range
             </p>
             <p className="mt-1 text-xs text-slate-500">
-              Auto from cards below · edit anytime
+              Shown above the configuration cards · calculated automatically
             </p>
           </div>
           {rangeManual ? (
@@ -174,9 +174,13 @@ export function RateCardsEditor({
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-medium text-slate-800">Pricing cards</p>
+          <p className="text-sm font-medium text-slate-800">
+            Range source prices
+          </p>
           <p className="text-xs text-slate-500">
-            Title, price (Lac. / Cr.), and notes — up to 3 per row
+            Add each BHK starting price here to calculate the overall range.
+            A matching Floor Plan is created automatically with its BHK and
+            price prefilled.
           </p>
         </div>
         <Button
@@ -186,7 +190,7 @@ export function RateCardsEditor({
           onClick={() => onChange([...value, emptyCard()])}
         >
           <Plus className="size-4" />
-          Add rate card
+          Add range price
         </Button>
       </div>
 
@@ -195,7 +199,7 @@ export function RateCardsEditor({
           <CardContent className="py-10">
             <EmptyState
               title="No rate cards yet"
-              description="Add a package or config price (Lac. / Cr.) for this project."
+              description="Add BHK prices (Lac. / Cr.) to calculate the website price range."
             />
           </CardContent>
         </Card>
@@ -235,7 +239,7 @@ export function RateCardsEditor({
                       onChange={(e) =>
                         update(index, { title: e.target.value })
                       }
-                      placeholder="Package / 3 BHK"
+                      placeholder="3 BHK"
                       className="h-9"
                     />
                   </div>

@@ -2,12 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus, Star } from "lucide-react";
+import { Check, Plus, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AlertBanner } from "@/components/ui/alert-banner";
-import { ChipGroup, ChipToggle } from "@/components/ui/chip-toggle";
+import { AmenityIcon } from "@/components/customization/amenity-icon";
 import { createAmenity } from "@/lib/amenities-api";
 import type { Amenity } from "@/lib/amenities";
 
@@ -83,18 +83,56 @@ export function AmenityPicker({
           .
         </AlertBanner>
       ) : (
-        <ChipGroup>
-          {sortedAmenities.map((a) => (
-            <ChipToggle
-              key={a.id}
-              selected={selectedIds.includes(a.id)}
-              icon={a.is_default ? Star : undefined}
-              onClick={() => toggle(a.id)}
-            >
-              {a.title}
-            </ChipToggle>
-          ))}
-        </ChipGroup>
+        <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-4">
+          {sortedAmenities.map((a) => {
+            const selected = selectedIds.includes(a.id);
+            return (
+              <button
+                key={a.id}
+                type="button"
+                onClick={() => toggle(a.id)}
+                aria-pressed={selected}
+                className={`relative flex min-h-24 items-center gap-3 rounded-2xl border p-3 text-left transition ${
+                  selected
+                    ? "border-[#16233f] bg-[#16233f] text-white shadow-[0_8px_24px_rgba(22,35,63,0.16)]"
+                    : "border-slate-200 bg-white text-[#16233f] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-sm"
+                }`}
+              >
+                <AmenityIcon
+                  title={a.title}
+                  iconUrl={a.icon_url}
+                  iconKey={a.icon_key}
+                  size="md"
+                  className={selected ? "bg-white" : undefined}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="line-clamp-2 block text-sm font-semibold leading-snug">
+                    {a.title}
+                  </span>
+                  {a.is_default ? (
+                    <span
+                      className={`mt-1 inline-flex items-center gap-1 text-[10px] font-medium ${
+                        selected ? "text-white/65" : "text-amber-600"
+                      }`}
+                    >
+                      <Star className="size-3 fill-current" />
+                      Default
+                    </span>
+                  ) : null}
+                </span>
+                <span
+                  className={`absolute right-2.5 top-2.5 grid size-5 place-items-center rounded-full border ${
+                    selected
+                      ? "border-white/30 bg-white text-[#16233f]"
+                      : "border-slate-200 bg-slate-50 text-transparent"
+                  }`}
+                >
+                  <Check className="size-3.5" strokeWidth={2.5} />
+                </span>
+              </button>
+            );
+          })}
+        </div>
       )}
 
       <div className="rounded-xl border border-slate-200 bg-[#eef1f6]/40 p-3 sm:p-4">

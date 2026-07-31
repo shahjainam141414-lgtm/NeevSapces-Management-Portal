@@ -75,7 +75,8 @@ import {
   upsertFloorPlan,
 } from "@/lib/properties-api";
 import { RateCardsEditor } from "@/components/properties/rate-cards-editor";
-import { InlineTextRows, type TextRow } from "@/components/properties/inline-text-rows";
+import type { TextRow } from "@/components/properties/inline-text-rows";
+import { RichTextEditor } from "@/components/properties/rich-text-editor";
 import {
   LabelValueRows,
   type LabelValueRow,
@@ -90,12 +91,12 @@ const ACCEPT_IMG = "image/jpeg,image/png,image/webp,image/jpg";
 
 const EDIT_TABS = [
   { value: "basics", label: "Basics" },
+  { value: "content", label: "Why / Specs / FAQ" },
   { value: "details", label: "Project details" },
-  { value: "pricing", label: "Rate card" },
-  { value: "plans", label: "Floor plans" },
+  { value: "pricing", label: "Price overview" },
+  { value: "plans", label: "Floor Plan" },
   { value: "media", label: "Photos" },
   { value: "amenities", label: "Amenities" },
-  { value: "content", label: "Why / Specs / FAQ" },
 ] as const;
 
 const cardMotion = (index: number) => ({
@@ -110,6 +111,7 @@ const cardMotion = (index: number) => ({
 
 type EditableFloorPlan = {
   id?: string;
+  rate_card_id?: string;
   name: string;
   bhk_label: string;
   rooms: string;
@@ -157,6 +159,58 @@ function emptyPlan(): EditableFloorPlan {
     image_url: null,
     cloudinary_public_id: null,
   };
+}
+
+function normalizePlanLabel(value: string) {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function legacyTextToHtml(value: string) {
+  return escapeHtml(value).replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+}
+
+function highlightsToEditorRows(
+  highlights: Array<{ id: string; content: string }>,
+): TextRow[] {
+  if (highlights.length === 0) return [];
+  if (
+    highlights.length === 1 &&
+    /<(p|div|ul|ol|li|strong|b|em|i)\b/i.test(highlights[0].content)
+  ) {
+    return [{ id: highlights[0].id, content: highlights[0].content }];
+  }
+  return [
+    {
+      id: highlights[0].id,
+      content: `<ul>${highlights
+        .map((item) => `<li>${legacyTextToHtml(item.content)}</li>`)
+        .join("")}</ul>`,
+    },
+  ];
+}
+
+function attachRateCard(
+  plan: EditableFloorPlan,
+  cards: PropertyRateCard[],
+): EditableFloorPlan {
+  const planLabels = [plan.name, plan.bhk_label]
+    .map(normalizePlanLabel)
+    .filter(Boolean);
+  const card = cards.find(
+    (item) =>
+      item.title.trim() &&
+      planLabels.includes(normalizePlanLabel(item.title)),
+  );
+  return card ? { ...plan, rate_card_id: card.id } : plan;
 }
 
 function toNum(v: string): number | null {
@@ -288,6 +342,11 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         setRateCards(cards);
         setPriceRangeLabel(stored || auto);
         setLockPriceRange(Boolean(stored && auto && stored !== auto));
+        setFloorPlans(
+          prop.floor_plans
+            .map(planToEditable)
+            .map((plan) => attachRateCard(plan, cards)),
+        );
       }
       setAvailability(prop.availability ?? []);
       setPossessionBy(prop.possession_by ?? "");
@@ -312,12 +371,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       setRoadConnectivity(prop.road_connectivity ?? "");
       setCurrentStatus(prop.current_status ?? "Available");
       setAbout(prop.about ?? "");
-      setHighlightRows(
-        prop.highlights.map((h) => ({
-          id: h.id,
-          content: h.content,
-        })),
-      );
+      setHighlightRows(highlightsToEditorRows(prop.highlights));
       setSpecRows(
         prop.specs.map((s) => ({
           id: s.id,
@@ -332,7 +386,6 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           answer: f.answer,
         })),
       );
-      setFloorPlans(prop.floor_plans.map(planToEditable));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load property");
       setDetail(null);
@@ -356,6 +409,51 @@ export function PropertyEditPageContent({ propertyId }: Props) {
     setter(
       list.includes(value) ? list.filter((v) => v !== value) : [...list, value],
     );
+  };
+
+  const handleRateCardsChange = (cards: PropertyRateCard[]) => {
+    setRateCards(cards);
+    setFloorPlans((current) => {
+      const next = [...current];
+
+      for (const card of cards) {
+        const title = card.title.trim();
+        if (!title) continue;
+
+        const normalizedTitle = normalizePlanLabel(title);
+        const matchIndex = next.findIndex(
+          (plan) =>
+            plan.rate_card_id === card.id ||
+            normalizePlanLabel(plan.bhk_label) === normalizedTitle ||
+            normalizePlanLabel(plan.name) === normalizedTitle,
+        );
+
+        if (matchIndex === -1) {
+          next.push({
+            ...emptyPlan(),
+            rate_card_id: card.id,
+            name: title,
+            bhk_label: title,
+            price_label: card.price,
+          });
+          continue;
+        }
+
+        const plan = next[matchIndex];
+        const nameWasAutoFilled =
+          !plan.name.trim() ||
+          normalizePlanLabel(plan.name) === normalizePlanLabel(plan.bhk_label);
+        next[matchIndex] = {
+          ...plan,
+          rate_card_id: card.id,
+          name: nameWasAutoFilled ? title : plan.name,
+          bhk_label: title,
+          price_label: card.price,
+        };
+      }
+
+      return next;
+    });
   };
 
   const onAreaChange = (id: string) => {
@@ -644,7 +742,11 @@ export function PropertyEditPageContent({ propertyId }: Props) {
             }
           : prev,
       );
-      setFloorPlans(savedPlans.map(planToEditable));
+      setFloorPlans(
+        savedPlans
+          .map(planToEditable)
+          .map((plan) => attachRateCard(plan, updated.rate_cards ?? rateCards)),
+      );
       setMessage("Property saved successfully.");
       return true;
     } catch (err) {
@@ -1116,6 +1218,44 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                   </ChipGroup>
                 </div>
 
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="space-y-2">
+                    <Label>Possession by</Label>
+                    <Input
+                      value={possessionBy}
+                      onChange={(e) => setPossessionBy(e.target.value)}
+                      placeholder="Dec, 2027"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Towers</Label>
+                    <Input
+                      type="number"
+                      value={towerCount}
+                      onChange={(e) => setTowerCount(e.target.value)}
+                      placeholder="2"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>No. of floors</Label>
+                    <Input
+                      type="number"
+                      value={floorCount}
+                      onChange={(e) => setFloorCount(e.target.value)}
+                      placeholder="21"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Units</Label>
+                    <Input
+                      type="number"
+                      value={unitCount}
+                      onChange={(e) => setUnitCount(e.target.value)}
+                      placeholder="144"
+                    />
+                  </div>
+                </div>
+
                 <div className="h-px bg-slate-100" />
 
                 <div className="grid gap-4 sm:grid-cols-2">
@@ -1154,14 +1294,6 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                       value={developerName}
                       onChange={(e) => setDeveloperName(e.target.value)}
                       placeholder="e.g. Vinayak Developers"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Possession by</Label>
-                    <Input
-                      value={possessionBy}
-                      onChange={(e) => setPossessionBy(e.target.value)}
-                      placeholder="Dec, 2027"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1206,33 +1338,6 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                       value={reraNo}
                       onChange={(e) => setReraNo(e.target.value)}
                       placeholder="RN137AA10037/270722"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Towers</Label>
-                    <Input
-                      type="number"
-                      value={towerCount}
-                      onChange={(e) => setTowerCount(e.target.value)}
-                      placeholder="2"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Units</Label>
-                    <Input
-                      type="number"
-                      value={unitCount}
-                      onChange={(e) => setUnitCount(e.target.value)}
-                      placeholder="144"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>No. of floors</Label>
-                    <Input
-                      type="number"
-                      value={floorCount}
-                      onChange={(e) => setFloorCount(e.target.value)}
-                      placeholder="21"
                     />
                   </div>
                   <div className="space-y-2">
@@ -1315,14 +1420,14 @@ export function PropertyEditPageContent({ propertyId }: Props) {
             <Card>
               <CardHeader className="border-b border-slate-100 bg-[#eef1f6]/30">
                 <CardTitle className="text-base text-[#16233f]">
-                  Rate card
+                  Overall price range
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-5">
                 <RateCardsEditor
                   key={`${propertyId}-${detail?.updated_at ?? "new"}`}
                   value={rateCards}
-                  onChange={setRateCards}
+                  onChange={handleRateCardsChange}
                   rangeLabel={priceRangeLabel}
                   onRangeChange={setPriceRangeLabel}
                   lockRangeInitially={lockPriceRange}
@@ -1338,9 +1443,15 @@ export function PropertyEditPageContent({ propertyId }: Props) {
             {...cardMotion(0)}
             className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
           >
-            <p className="text-sm text-slate-500">
-              Add configs like &ldquo;3 BHK Type 1&rdquo; with area and price.
-            </p>
+            <div>
+              <p className="font-medium text-[#16233f]">
+                Floor plans
+              </p>
+              <p className="mt-1 text-sm text-slate-500">
+                Price and BHK are prefilled from Price Overview. Add room
+                details, usable area, and the floor-plan image here.
+              </p>
+            </div>
             <div className="flex gap-2">
               <input
                 ref={plansInputRef}
@@ -1361,7 +1472,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                 onClick={() => plansInputRef.current?.click()}
               >
                 {!uploadingPlans && <ImagePlus className="size-4" />}
-                {uploadingPlans ? "Uploading…" : "Upload images"}
+                {uploadingPlans ? "Uploading…" : "Upload floor-plan images"}
               </Button>
               <Button
                 type="button"
@@ -1381,7 +1492,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                 <CardContent className="py-10">
                   <EmptyState
                     title="No floor plans yet"
-                    description="Add your first configuration to show area and price breakdowns."
+                    description="Add a price card first to prefill a floor plan, or create one manually."
                   />
                 </CardContent>
               </Card>
@@ -1392,7 +1503,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                 <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0">
                     <CardTitle className="text-base">
-                      Floor plan {index + 1}
+                      Floor Plan {index + 1}
                     </CardTitle>
                     <Button
                       type="button"
@@ -1439,6 +1550,10 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     </div>
                     {(
                       [
+                        ["rooms", "Rooms"],
+                        ["balcony", "Balcony"],
+                        ["bathroom", "Bathrooms"],
+                        ["servant_room", "Servant rooms"],
                         ["area_sqft", "Area sq.ft."],
                         ["area_sqyd", "Area sq.yd."],
                         ["area_sqmt", "Area sq.mt."],
@@ -1462,7 +1577,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                       </div>
                     ))}
                     <div className="space-y-2 sm:col-span-3">
-                      <Label>Floor plan image</Label>
+                      <Label>Floor plan image (optional)</Label>
                       <div className="max-w-xs">
                         <ImageUploadField
                           previewUrl={plan.image_url}
@@ -1617,17 +1732,29 @@ export function PropertyEditPageContent({ propertyId }: Props) {
             <Card>
               <CardHeader className="border-b border-slate-100 bg-[#eef1f6]/30">
                 <CardTitle className="text-base text-[#16233f]">
-                  Why this project
+                  Why {title.trim() || "Property Name"}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="p-4 sm:p-5">
-                <InlineTextRows
-                  label="Highlights"
-                  hint="Short reasons buyers should choose this project."
-                  placeholder="Club-class amenities with prime location access…"
-                  value={highlightRows}
-                  onChange={setHighlightRows}
-                  addLabel="Add highlight"
+              <CardContent className="space-y-3 p-4 sm:p-5">
+                <div>
+                  <Label className="text-slate-800">
+                    Why {title.trim() || "Property Name"} content
+                  </Label>
+                  <p className="mt-1 text-xs text-slate-500">
+                    Format the content exactly as it should appear on the website.
+                  </p>
+                </div>
+                <RichTextEditor
+                  value={highlightRows[0]?.content ?? ""}
+                  onChange={(content) =>
+                    setHighlightRows((current) => [
+                      {
+                        id: current[0]?.id ?? crypto.randomUUID(),
+                        content,
+                      },
+                    ])
+                  }
+                  placeholder="Add the key reasons to choose this project…"
                 />
               </CardContent>
             </Card>

@@ -1,13 +1,10 @@
-"use client";
-
-import { use } from "react";
 import { PropertyEditPageContent } from "@/components/properties/property-edit-page-content";
 
-export default function CustomizationPropertyEditPage({
+export default async function CustomizationPropertyEditPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = use(params);
+  const { id } = await params;
   return <PropertyEditPageContent propertyId={id} />;
 }

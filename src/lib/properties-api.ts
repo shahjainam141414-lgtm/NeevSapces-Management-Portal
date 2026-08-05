@@ -119,7 +119,7 @@ export async function getPropertyDetail(id: string): Promise<PropertyDetail> {
     supabase
       .from("property_floor_plans")
       .select(
-        "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
+        "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, carpet_area_sqft, carpet_area_sqyd, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
       )
       .eq("property_id", id)
       .order("sort_order", { ascending: true }),
@@ -343,6 +343,8 @@ export async function upsertFloorPlan(
     balcony: input.balcony,
     bathroom: input.bathroom,
     servant_room: input.servant_room,
+    carpet_area_sqft: input.carpet_area_sqft,
+    carpet_area_sqyd: input.carpet_area_sqyd,
     area_sqft: input.area_sqft,
     area_sqyd: input.area_sqyd,
     area_sqmt: input.area_sqmt,
@@ -358,7 +360,7 @@ export async function upsertFloorPlan(
       .update(payload)
       .eq("id", input.id)
       .select(
-        "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
+        "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, carpet_area_sqft, carpet_area_sqyd, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
       )
       .single();
     if (error) throw toFriendlyError(error);
@@ -377,7 +379,7 @@ export async function upsertFloorPlan(
     .from("property_floor_plans")
     .insert({ ...payload, sort_order: (maxRow?.sort_order ?? 0) + 1 })
     .select(
-      "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
+      "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, carpet_area_sqft, carpet_area_sqyd, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
     )
     .single();
 

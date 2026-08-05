@@ -42,6 +42,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { uploadBrochureToStorage } from "@/lib/brochure-upload";
+import { convertFromSqft, convertFromSqyd } from "@/lib/area-convert";
 import { listAmenities } from "@/lib/amenities-api";
 import { listBuilders } from "@/lib/builders-api";
 import { listStaticOptions } from "@/lib/static-options-api";
@@ -118,6 +120,8 @@ type EditableFloorPlan = {
   balcony: string;
   bathroom: string;
   servant_room: string;
+  carpet_area_sqft: string;
+  carpet_area_sqyd: string;
   area_sqft: string;
   area_sqyd: string;
   area_sqmt: string;
@@ -135,6 +139,10 @@ function planToEditable(p: PropertyFloorPlan): EditableFloorPlan {
     balcony: p.balcony != null ? String(p.balcony) : "",
     bathroom: p.bathroom != null ? String(p.bathroom) : "",
     servant_room: p.servant_room != null ? String(p.servant_room) : "",
+    carpet_area_sqft:
+      p.carpet_area_sqft != null ? String(p.carpet_area_sqft) : "",
+    carpet_area_sqyd:
+      p.carpet_area_sqyd != null ? String(p.carpet_area_sqyd) : "",
     area_sqft: p.area_sqft != null ? String(p.area_sqft) : "",
     area_sqyd: p.area_sqyd != null ? String(p.area_sqyd) : "",
     area_sqmt: p.area_sqmt != null ? String(p.area_sqmt) : "",
@@ -152,6 +160,8 @@ function emptyPlan(): EditableFloorPlan {
     balcony: "",
     bathroom: "",
     servant_room: "",
+    carpet_area_sqft: "",
+    carpet_area_sqyd: "",
     area_sqft: "",
     area_sqyd: "",
     area_sqmt: "",
@@ -504,12 +514,19 @@ export function PropertyEditPageContent({ propertyId }: Props) {
     setUploadingBrochure(true);
     setError(null);
     try {
-      const uploaded = await uploadToCloudinary(
-        file,
-        "neev/properties/brochures",
-        "auto",
-      );
-      setBrochureUrl(uploaded.secure_url);
+      // PDFs via Supabase — Cloudinary free plans return 401 on PDF delivery.
+      // Images can stay on Cloudinary for consistency with other media.
+      if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
+        const uploaded = await uploadBrochureToStorage(file);
+        setBrochureUrl(uploaded.secure_url);
+      } else {
+        const uploaded = await uploadToCloudinary(
+          file,
+          "neev/properties/brochures",
+          "image",
+        );
+        setBrochureUrl(uploaded.secure_url);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Brochure upload failed");
     } finally {
@@ -687,6 +704,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           balcony: toNum(plan.balcony),
           bathroom: toNum(plan.bathroom),
           servant_room: toNum(plan.servant_room),
+          carpet_area_sqft: toNum(plan.carpet_area_sqft),
+          carpet_area_sqyd: toNum(plan.carpet_area_sqyd),
           area_sqft: toNum(plan.area_sqft),
           area_sqyd: toNum(plan.area_sqyd),
           area_sqmt: toNum(plan.area_sqmt),
@@ -1113,7 +1132,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                   <div className="flex items-center justify-between">
                     <Label>Brochure</Label>
                     <span className="text-[11px] text-slate-400">
-                      PDF or image
+                      PDF (recommended) or image · max 20MB
                     </span>
                   </div>
                   <input
@@ -1183,7 +1202,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                         {uploadingBrochure ? "Uploading…" : "Upload brochure"}
                       </span>
                       <span className="text-xs text-slate-500">
-                        Choose a PDF or image file
+                        PDF recommended · secure storage for site view &amp;
+                        download
                       </span>
                     </button>
                   )}
@@ -1448,8 +1468,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                 Floor plans
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                Price and BHK are prefilled from Price Overview. Add room
-                details, usable area, and the floor-plan image here.
+                BHK and price sync from Price Overview. Add carpet area, super
+                built-up, and the floor-plan image here.
               </p>
             </div>
             <div className="flex gap-2">
@@ -1550,32 +1570,144 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     </div>
                     {(
                       [
-                        ["rooms", "Rooms"],
-                        ["balcony", "Balcony"],
-                        ["bathroom", "Bathrooms"],
-                        ["servant_room", "Servant rooms"],
-                        ["area_sqft", "Area sq.ft."],
-                        ["area_sqyd", "Area sq.yd."],
-                        ["area_sqmt", "Area sq.mt."],
-                        ["price_label", "Price"],
+                        ["price_label", "Price (from overview)"],
                       ] as const
                     ).map(([key, label]) => (
-                      <div key={key} className="space-y-2">
+                      <div key={key} className="space-y-2 sm:col-span-3">
                         <Label>{label}</Label>
                         <Input
                           value={plan[key]}
-                          onChange={(e) => {
-                            const v = e.target.value;
-                            setFloorPlans((prev) =>
-                              prev.map((p, i) =>
-                                i === index ? { ...p, [key]: v } : p,
-                              ),
-                            );
-                          }}
-                          placeholder={key === "price_label" ? "1.45 Cr.*" : ""}
+                          readOnly
+                          className="bg-slate-50 text-slate-600"
+                          placeholder="Synced from Price Overview"
                         />
+                        <p className="text-[11px] text-slate-400">
+                          Edit this in the Pricing → Price Overview tab. It syncs
+                          here automatically.
+                        </p>
                       </div>
                     ))}
+
+                    {/* Carpet area — sq.ft ↔ sq.yd */}
+                    <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 sm:col-span-3">
+                      <div>
+                        <p className="text-sm font-semibold text-[#16233f]">
+                          Carpet Area
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                          Usable area inside the home (furniture &amp; walking
+                          space). Excludes wall thickness, balconies, and common
+                          areas. Enter sq.ft or sq.yd — the other updates
+                          automatically (1 sq.yd = 9 sq.ft).
+                        </p>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Carpet area (sq.ft)</Label>
+                          <Input
+                            inputMode="decimal"
+                            value={plan.carpet_area_sqft}
+                            onChange={(e) => {
+                              const converted = convertFromSqft(e.target.value);
+                              setFloorPlans((prev) =>
+                                prev.map((p, i) =>
+                                  i === index
+                                    ? {
+                                        ...p,
+                                        carpet_area_sqft: converted.sqft,
+                                        carpet_area_sqyd: converted.sqyd,
+                                      }
+                                    : p,
+                                ),
+                              );
+                            }}
+                            placeholder="e.g. 1050"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Carpet area (sq.yd)</Label>
+                          <Input
+                            inputMode="decimal"
+                            value={plan.carpet_area_sqyd}
+                            onChange={(e) => {
+                              const converted = convertFromSqyd(e.target.value);
+                              setFloorPlans((prev) =>
+                                prev.map((p, i) =>
+                                  i === index
+                                    ? {
+                                        ...p,
+                                        carpet_area_sqft: converted.sqft,
+                                        carpet_area_sqyd: converted.sqyd,
+                                      }
+                                    : p,
+                                ),
+                              );
+                            }}
+                            placeholder="e.g. 116.67"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Super built-up — sq.ft ↔ sq.yd */}
+                    <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 sm:col-span-3">
+                      <div>
+                        <p className="text-sm font-semibold text-[#16233f]">
+                          Super Built-up Area
+                        </p>
+                        <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                          Carpet area plus walls, balconies, and a share of
+                          common areas (lobby, lift, staircase, clubhouse).
+                          Enter sq.ft or sq.yd — the other updates automatically.
+                        </p>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label>Super built-up (sq.ft)</Label>
+                          <Input
+                            inputMode="decimal"
+                            value={plan.area_sqft}
+                            onChange={(e) => {
+                              const converted = convertFromSqft(e.target.value);
+                              setFloorPlans((prev) =>
+                                prev.map((p, i) =>
+                                  i === index
+                                    ? {
+                                        ...p,
+                                        area_sqft: converted.sqft,
+                                        area_sqyd: converted.sqyd,
+                                      }
+                                    : p,
+                                ),
+                              );
+                            }}
+                            placeholder="e.g. 1350"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Super built-up (sq.yd)</Label>
+                          <Input
+                            inputMode="decimal"
+                            value={plan.area_sqyd}
+                            onChange={(e) => {
+                              const converted = convertFromSqyd(e.target.value);
+                              setFloorPlans((prev) =>
+                                prev.map((p, i) =>
+                                  i === index
+                                    ? {
+                                        ...p,
+                                        area_sqft: converted.sqft,
+                                        area_sqyd: converted.sqyd,
+                                      }
+                                    : p,
+                                ),
+                              );
+                            }}
+                            placeholder="e.g. 150"
+                          />
+                        </div>
+                      </div>
+                    </div>
                     <div className="space-y-2 sm:col-span-3">
                       <Label>Floor plan image (optional)</Label>
                       <div className="max-w-xs">

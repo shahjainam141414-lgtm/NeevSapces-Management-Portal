@@ -93,6 +93,8 @@ export type PropertyFloorPlan = {
   balcony: number | null;
   bathroom: number | null;
   servant_room: number | null;
+  carpet_area_sqft: number | null;
+  carpet_area_sqyd: number | null;
   area_sqft: number | null;
   area_sqyd: number | null;
   area_sqmt: number | null;

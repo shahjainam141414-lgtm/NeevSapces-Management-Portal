@@ -24,6 +24,12 @@ export function DashboardShell({ children, user }: DashboardShellProps) {
       duration: 1.05,
       smoothWheel: true,
       touchMultiplier: 1.4,
+      prevent: (node) =>
+        node instanceof HTMLElement &&
+        Boolean(
+          node.closest("[data-lenis-prevent]") ||
+            node.closest("[data-lenis-prevent-wheel]"),
+        ),
     });
 
     let frame = 0;

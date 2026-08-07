@@ -182,6 +182,8 @@ export type CreatePropertyInput = {
   city?: string;
   status?: PropertyStatus;
   property_type_label?: string | null;
+  builder_id?: string | null;
+  developer_name?: string | null;
 };
 
 export async function createProperty(input: CreatePropertyInput): Promise<Property> {
@@ -204,6 +206,8 @@ export async function createProperty(input: CreatePropertyInput): Promise<Proper
     city: input.city?.trim() || "Gandhinagar",
     status: input.status ?? "draft",
     property_type_label: input.property_type_label?.trim() || null,
+    builder_id: input.builder_id || null,
+    developer_name: input.developer_name?.trim() || null,
     sort_order: (maxRow?.sort_order ?? 0) + 1,
   };
 

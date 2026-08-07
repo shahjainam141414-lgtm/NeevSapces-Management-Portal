@@ -17,8 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { BuilderSelectField } from "@/components/properties/builder-select-field";
 import { createProperty } from "@/lib/properties-api";
+import { listBuilders } from "@/lib/builders-api";
 import { listStaticOptions } from "@/lib/static-options-api";
+import type { Builder } from "@/lib/builders";
 import type { EntityItem } from "@/lib/static-options";
 import { buildPropertySlug } from "@/lib/properties";
 
@@ -26,9 +29,12 @@ export function NewPropertyPageContent() {
   const router = useRouter();
   const [areas, setAreas] = useState<EntityItem[]>([]);
   const [propertyTypes, setPropertyTypes] = useState<EntityItem[]>([]);
+  const [builders, setBuilders] = useState<Builder[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [areaId, setAreaId] = useState("");
   const [propertyType, setPropertyType] = useState("");
+  const [builderId, setBuilderId] = useState("");
+  const [developerName, setDeveloperName] = useState("");
   const [title, setTitle] = useState("");
   const [locality, setLocality] = useState("");
   const [city, setCity] = useState("");
@@ -40,11 +46,13 @@ export function NewPropertyPageContent() {
     void Promise.all([
       listStaticOptions("area"),
       listStaticOptions("property_type"),
+      listBuilders(),
     ])
-      .then(([areaRows, typeRows]) => {
+      .then(([areaRows, typeRows, builderRows]) => {
         if (cancelled) return;
         setAreas(areaRows.filter((a) => a.status === "active"));
         setPropertyTypes(typeRows.filter((t) => t.status === "active"));
+        setBuilders(builderRows);
       })
       .catch((err: unknown) => {
         if (cancelled) return;
@@ -90,6 +98,8 @@ export function NewPropertyPageContent() {
         locality: locality.trim() || selectedArea.name,
         city: city.trim() || "Gandhinagar",
         property_type_label: propertyType,
+        builder_id: builderId || null,
+        developer_name: developerName.trim() || null,
         status: "active",
       });
       router.push(`/customization/properties/${created.id}`);
@@ -126,8 +136,8 @@ export function NewPropertyPageContent() {
             Add property
           </h1>
           <p className="mt-2 max-w-md text-sm leading-relaxed text-white/70">
-            Create a draft with location and name, then fill rate cards,
-            amenities, specs, and FAQs on the next screen.
+            Create a draft with location, builder, and name, then fill rate
+            cards, amenities, specs, and FAQs on the next screen.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center gap-2 text-xs font-medium">
@@ -239,6 +249,18 @@ export function NewPropertyPageContent() {
                 )}
               </div>
             </div>
+
+            <BuilderSelectField
+              builders={builders}
+              value={builderId}
+              onBuildersChange={setBuilders}
+              onChange={(id, name) => {
+                setBuilderId(id);
+                setDeveloperName(name);
+              }}
+              disabled={loadingOptions}
+              hint="Optional. Pick an existing brand or add a new one."
+            />
 
             <div className="space-y-2">
               <Label htmlFor="title">

@@ -50,6 +50,7 @@ import { listStaticOptions } from "@/lib/static-options-api";
 import type { Amenity } from "@/lib/amenities";
 import type { Builder } from "@/lib/builders";
 import type { EntityItem } from "@/lib/static-options";
+import { BuilderSelectField } from "@/components/properties/builder-select-field";
 import {
   AVAILABILITY_OPTIONS,
   CONSTRUCTION_STATUS_OPTIONS,
@@ -970,14 +971,6 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     placeholder="382421"
                   />
                 </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Full address</Label>
-                  <Input
-                    value={fullAddress}
-                    onChange={(e) => setFullAddress(e.target.value)}
-                    placeholder="Kudasan, Kudasan, Gandhinagar (382421)"
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label>Status</Label>
                   <Select
@@ -1279,43 +1272,16 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                 <div className="h-px bg-slate-100" />
 
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Developer / Builder</Label>
-                    <Select
-                      value={builderId || "__none__"}
-                      onValueChange={(v) => {
-                        const id = v === "__none__" ? "" : v;
-                        setBuilderId(id);
-                        const b = builders.find((x) => x.id === id);
-                        if (b) setDeveloperName(b.name);
-                      }}
-                    >
-                      <SelectTrigger className="w-full cursor-pointer">
-                        <SelectValue placeholder="Select builder" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">None</SelectItem>
-                        {builders
-                          .filter(
-                            (b) => b.status === "active" || b.id === builderId,
-                          )
-                          .map((b) => (
-                            <SelectItem key={b.id} value={b.id}>
-                              {b.name}
-                              {b.status !== "active" ? " (inactive)" : ""}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Developer name (display)</Label>
-                    <Input
-                      value={developerName}
-                      onChange={(e) => setDeveloperName(e.target.value)}
-                      placeholder="e.g. Vinayak Developers"
-                    />
-                  </div>
+                  <BuilderSelectField
+                    builders={builders}
+                    value={builderId}
+                    onBuildersChange={setBuilders}
+                    onChange={(id, name) => {
+                      setBuilderId(id);
+                      setDeveloperName(name);
+                    }}
+                    hint="Links this listing to a brand. Choose Add brand to create one."
+                  />
                   <div className="space-y-2">
                     <Label>Construction status</Label>
                     <Select

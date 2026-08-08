@@ -29,15 +29,17 @@ export function PageHeader({
             {eyebrow}
           </p>
         )}
-        <h2 className="font-display text-2xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
+        <h2 className="font-display text-xl font-semibold tracking-tight text-slate-900 sm:text-[1.75rem]">
           {title}
         </h2>
         {description && (
-          <p className="mt-1.5 text-sm text-slate-500">{description}</p>
+          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-slate-500">
+            {description}
+          </p>
         )}
       </div>
       {actions && (
-        <div className="flex shrink-0 flex-wrap items-center gap-2.5">
+        <div className="flex w-full shrink-0 flex-wrap items-center gap-2.5 sm:w-auto sm:justify-end">
           {actions}
         </div>
       )}

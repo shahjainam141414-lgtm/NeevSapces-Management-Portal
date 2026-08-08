@@ -40,6 +40,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ScrollRegion } from "@/components/ui/scroll-region";
 import { cn } from "@/lib/utils";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import { uploadBrochureToStorage } from "@/lib/brochure-upload";
@@ -871,41 +872,43 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">
             Step {activeTabIndex + 1} of {EDIT_TABS.length}
           </p>
-          <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {EDIT_TABS.map((tab, i) => {
-              const active = tab.value === activeTab;
-              const done = i < activeTabIndex;
-              return (
-                <button
-                  key={tab.value}
-                  type="button"
-                  onClick={() => setActiveTab(tab.value)}
-                  className={cn(
-                    "flex shrink-0 cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-all duration-200",
-                    active
-                      ? "bg-[#16233f] text-white shadow-[0_6px_18px_rgba(22,35,63,0.28)]"
-                      : done
-                        ? "bg-[#eef1f6] text-[#16233f] hover:bg-[#e4e9f2]"
-                        : "bg-slate-50 text-slate-500 ring-1 ring-slate-200/80 hover:bg-white hover:text-slate-800",
-                  )}
-                >
-                  <span
+          <ScrollRegion fade>
+            <div className="flex w-max gap-1.5 pb-0.5">
+              {EDIT_TABS.map((tab, i) => {
+                const active = tab.value === activeTab;
+                const done = i < activeTabIndex;
+                return (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    onClick={() => setActiveTab(tab.value)}
                     className={cn(
-                      "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
+                      "flex shrink-0 cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-left text-xs font-semibold transition-all duration-200",
                       active
-                        ? "bg-white/20 text-white"
+                        ? "bg-[#16233f] text-white shadow-[0_6px_18px_rgba(22,35,63,0.28)]"
                         : done
-                          ? "bg-[#16233f]/12 text-[#16233f]"
-                          : "bg-slate-200/80 text-slate-500",
+                          ? "bg-[#eef1f6] text-[#16233f] hover:bg-[#e4e9f2]"
+                          : "bg-slate-50 text-slate-500 ring-1 ring-slate-200/80 hover:bg-white hover:text-slate-800",
                     )}
                   >
-                    {i + 1}
-                  </span>
-                  <span className="whitespace-nowrap">{tab.label}</span>
-                </button>
-              );
-            })}
-          </div>
+                    <span
+                      className={cn(
+                        "flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
+                        active
+                          ? "bg-white/20 text-white"
+                          : done
+                            ? "bg-[#16233f]/12 text-[#16233f]"
+                            : "bg-slate-200/80 text-slate-500",
+                      )}
+                    >
+                      {i + 1}
+                    </span>
+                    <span className="whitespace-nowrap">{tab.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </ScrollRegion>
         </div>
       </motion.div>
 

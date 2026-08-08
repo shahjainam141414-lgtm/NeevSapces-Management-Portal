@@ -12,6 +12,7 @@ import { ActionsDropdown } from "@/components/ui/actions-dropdown";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton";
+import { ScrollRegion } from "@/components/ui/scroll-region";
 import {
   Dialog,
   DialogContent,
@@ -214,8 +215,8 @@ export function CustomizationPageContent({
             </div>
           )}
 
-          {/* Mobile cards */}
-          <div className="space-y-2.5 p-3 sm:hidden">
+          {/* Mobile / tablet cards */}
+          <div className="space-y-2.5 p-3 md:hidden">
             {loading ? (
               <div className="space-y-2.5">
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -255,13 +256,13 @@ export function CustomizationPageContent({
           </div>
 
           {/* Desktop table */}
-          <div className="hidden overflow-x-auto sm:block">
+          <ScrollRegion fade className="hidden md:block">
             <table className="w-full min-w-[480px] text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-100 bg-slate-50/50 text-[11px] uppercase tracking-[0.14em] text-slate-500">
-                  <th className="px-6 py-3.5 font-semibold">Name</th>
-                  <th className="px-6 py-3.5 font-semibold">Status</th>
-                  <th className="w-14 px-4 py-3.5">
+                  <th className="px-4 py-3.5 font-semibold lg:px-6">Name</th>
+                  <th className="px-4 py-3.5 font-semibold lg:px-6">Status</th>
+                  <th className="w-14 px-3 py-3.5 lg:px-4">
                     <span className="sr-only">Actions</span>
                   </th>
                 </tr>
@@ -275,7 +276,7 @@ export function CustomizationPageContent({
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-6">
+                    <td colSpan={3} className="px-4 py-6 lg:px-6">
                       <ListEmptyState
                         title={title}
                         entityLabel={entityLabel}
@@ -292,7 +293,7 @@ export function CustomizationPageContent({
                       transition={{ delay: index * 0.03 }}
                       className="border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/70"
                     >
-                      <td className="px-6 py-4 font-medium text-slate-900">
+                      <td className="px-4 py-4 font-medium text-slate-900 lg:px-6">
                         <div className="flex items-center gap-3">
                           {enableImage ? (
                             <AreaThumb
@@ -303,10 +304,10 @@ export function CustomizationPageContent({
                           <span>{item.name}</span>
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-4 lg:px-6">
                         <StatusBadge status={item.status} />
                       </td>
-                      <td className="px-4 py-4 text-right">
+                      <td className="px-3 py-4 text-right lg:px-4">
                         {entityActions(item)}
                       </td>
                     </motion.tr>
@@ -314,7 +315,7 @@ export function CustomizationPageContent({
                 )}
               </tbody>
             </table>
-          </div>
+          </ScrollRegion>
         </CardContent>
       </Card>
 

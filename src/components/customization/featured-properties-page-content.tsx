@@ -272,9 +272,9 @@ export function FeaturedPropertiesPageContent() {
         </CardContent>
       </Card>
 
-      <div className="sticky bottom-4 z-10 flex justify-end">
-        <div className="glass-card flex items-center gap-3 rounded-2xl p-2 shadow-[0_8px_30px_rgba(16,25,46,0.14)]">
-          <p className="hidden px-2 text-xs text-slate-500 sm:block">
+      <div className="sticky bottom-3 z-10 flex justify-stretch sm:bottom-4 sm:justify-end">
+        <div className="glass-card flex w-full items-center justify-between gap-3 rounded-2xl p-2 shadow-[0_8px_30px_rgba(16,25,46,0.14)] sm:w-auto">
+          <p className="px-2 text-xs text-slate-500">
             {selectedIds.length}/{MAX_FEATURED} selected
           </p>
           <Button

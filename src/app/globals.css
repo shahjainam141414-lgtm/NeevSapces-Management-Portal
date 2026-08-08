@@ -1,4 +1,4 @@
-﻿@import "tailwindcss";
+@import "tailwindcss";
 
 :root {
   --background: #f5f6f8;
@@ -266,6 +266,45 @@ label[for] {
 
 .scrollbar-none::-webkit-scrollbar {
   display: none;
+}
+
+.scrollbar-thin {
+  scrollbar-width: thin;
+  scrollbar-color: #cdd3db transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #cdd3db;
+  border-radius: 999px;
+}
+
+.table-scroll-fade {
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 12px,
+    #000 calc(100% - 12px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 12px,
+    #000 calc(100% - 12px),
+    transparent 100%
+  );
+}
+
+@media (min-width: 1024px) {
+  .table-scroll-fade {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
 }
 
 .skeleton {

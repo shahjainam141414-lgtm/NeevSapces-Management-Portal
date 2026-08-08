@@ -47,8 +47,17 @@ export function DashboardShell({ children, user }: DashboardShellProps) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!mobileOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
+
   return (
-    <div className="dashboard-bg flex min-h-screen">
+    <div className="dashboard-bg flex min-h-dvh min-w-0">
       <Sidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((value) => !value)}
@@ -58,8 +67,8 @@ export function DashboardShell({ children, user }: DashboardShellProps) {
 
       <div className="flex min-w-0 flex-1 flex-col">
         <Header onMenuClick={() => setMobileOpen(true)} user={user} />
-        <main className="flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
-          <div className="mx-auto w-full max-w-[1440px]">{children}</div>
+        <main className="min-w-0 flex-1 overflow-x-clip p-3 sm:p-5 lg:p-8">
+          <div className="mx-auto w-full min-w-0 max-w-[1440px]">{children}</div>
         </main>
       </div>
 

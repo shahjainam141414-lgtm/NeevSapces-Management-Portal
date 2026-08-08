@@ -273,7 +273,7 @@ export function DashboardPageContent({ user }: Props) {
         className="relative overflow-hidden rounded-lg border border-white/10 bg-[var(--ink-deep)] text-white shadow-[var(--shadow-lift)]"
       >
         <SkylineDecor />
-        <div className="relative grid gap-8 p-6 sm:p-8 lg:grid-cols-[1.4fr_1fr] lg:p-10">
+        <div className="relative grid gap-6 p-4 sm:gap-8 sm:p-8 lg:grid-cols-[1.4fr_1fr] lg:p-10">
           <div>
             <p className="type-caption text-[var(--accent-light)]">
               Today&apos;s overview · {dateLabel}

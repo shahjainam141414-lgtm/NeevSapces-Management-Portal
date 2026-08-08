@@ -34,6 +34,9 @@ function usePageMeta(pathname: string) {
   if (pathname.startsWith("/users")) {
     return { eyebrow: "People", title: "Team" };
   }
+  if (pathname.startsWith("/leads")) {
+    return { eyebrow: "Pipeline", title: "Lead Inbox" };
+  }
   if (pathname.startsWith("/properties")) {
     return { eyebrow: "Catalog", title: "Properties" };
   }
@@ -78,12 +81,12 @@ export function Header({ onMenuClick, user }: HeaderProps) {
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/50 to-transparent"
         aria-hidden
       />
-      <div className="relative flex h-[4.25rem] items-center justify-between gap-4 px-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+      <div className="relative flex h-14 items-center justify-between gap-3 px-3 sm:h-[4.25rem] sm:gap-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2.5 sm:gap-4">
           <button
             type="button"
             onClick={onMenuClick}
-            className="inline-flex cursor-pointer rounded-lg p-2 text-[var(--muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--ink)] lg:hidden"
+            className="inline-flex shrink-0 cursor-pointer rounded-lg p-2 text-[var(--muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--ink)] lg:hidden"
             aria-label="Open menu"
           >
             <Menu className="h-5 w-5" />
@@ -97,14 +100,22 @@ export function Header({ onMenuClick, user }: HeaderProps) {
                   {eyebrow}
                 </p>
               </div>
-              <h1 className="font-display mt-0.5 truncate text-lg tracking-tight text-[var(--ink)] sm:text-xl">
+              <h1 className="font-display mt-0.5 truncate text-base tracking-tight text-[var(--ink)] sm:text-xl">
                 {title}
               </h1>
             </div>
           ) : null}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <button
+            type="button"
+            onClick={openCommand}
+            className="inline-flex cursor-pointer rounded-lg p-2 text-[var(--muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--ink)] md:hidden"
+            aria-label="Search"
+          >
+            <Search className="h-5 w-5" strokeWidth={1.6} />
+          </button>
           <button
             type="button"
             onClick={openCommand}

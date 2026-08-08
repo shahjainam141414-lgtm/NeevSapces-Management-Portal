@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { PanelLeftClose, PanelLeftOpen, X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { mainNav } from "@/lib/nav-config";
@@ -36,7 +36,7 @@ export function Sidebar({
         className={cn(
           "flex border-b border-[var(--border)]/80 px-3 py-4",
           collapsed
-            ? "flex-col items-center gap-3"
+            ? "items-center justify-between px-4 py-5 lg:flex-col lg:items-center lg:gap-3 lg:justify-start"
             : "items-center justify-between px-4 py-5",
         )}
       >
@@ -45,36 +45,57 @@ export function Sidebar({
           onClick={onMobileClose}
           className={cn(
             "flex flex-col transition-opacity hover:opacity-80",
-            collapsed ? "items-center" : "items-start",
+            collapsed ? "items-start lg:items-center" : "items-start",
           )}
         >
           <Image
-            src={collapsed ? "/logo-mark.png" : "/logo.png"}
+            src="/logo.png"
             alt="Neev Spaces"
-            width={collapsed ? 96 : 200}
-            height={collapsed ? 96 : 111}
+            width={200}
+            height={111}
             className={cn(
-              "w-auto object-contain",
-              collapsed ? "h-9" : "h-11",
+              "h-10 w-auto object-contain sm:h-11",
+              collapsed && "lg:hidden",
+            )}
+            priority
+          />
+          <Image
+            src="/logo-mark.png"
+            alt="Neev Spaces"
+            width={96}
+            height={96}
+            className={cn(
+              "hidden h-9 w-auto object-contain",
+              collapsed && "lg:block",
             )}
             priority
           />
         </Link>
-        <button
-          type="button"
-          onClick={onToggle}
-          className="hidden cursor-pointer rounded-md p-1.5 text-[var(--muted)] transition duration-300 hover:bg-[var(--accent-soft)] hover:text-[var(--ink)] active:scale-95 lg:inline-flex"
-          aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="h-4 w-4" />
-          ) : (
-            <PanelLeftClose className="h-4 w-4" />
-          )}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onToggle}
+            className="hidden cursor-pointer rounded-md p-1.5 text-[var(--muted)] transition duration-300 hover:bg-[var(--accent-soft)] hover:text-[var(--ink)] active:scale-95 lg:inline-flex"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {collapsed ? (
+              <PanelLeftOpen className="h-4 w-4" />
+            ) : (
+              <PanelLeftClose className="h-4 w-4" />
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={onMobileClose}
+            className="inline-flex cursor-pointer rounded-md p-1.5 text-[var(--muted)] transition hover:bg-[var(--accent-soft)] hover:text-[var(--ink)] lg:hidden"
+            aria-label="Close menu"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
         {mainNav.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -88,7 +109,7 @@ export function Sidebar({
                 active
                   ? "text-white"
                   : "text-[var(--muted)] hover:text-[var(--ink)]",
-                collapsed && "justify-center px-2",
+                collapsed && "lg:justify-center lg:px-2",
               )}
               title={collapsed ? item.title : undefined}
             >
@@ -111,9 +132,9 @@ export function Sidebar({
                 )}
                 strokeWidth={1.6}
               />
-              {!collapsed && (
-                <span className="relative z-10">{item.title}</span>
-              )}
+              <span className={cn("relative z-10", collapsed && "lg:hidden")}>
+                {item.title}
+              </span>
             </Link>
           );
         })}
@@ -122,10 +143,11 @@ export function Sidebar({
       <div
         className={cn(
           "border-t border-[var(--border)]/80 px-4 py-3.5 text-[10px] font-medium tracking-wide text-[var(--muted-foreground)]",
-          collapsed && "px-2 text-center",
+          collapsed && "lg:px-2 lg:text-center",
         )}
       >
-        {collapsed ? "©" : "© Neev Spaces · OS"}
+        <span className={cn(collapsed && "lg:hidden")}>© Neev Spaces · OS</span>
+        <span className={cn("hidden", collapsed && "lg:inline")}>©</span>
       </div>
     </div>
   );
@@ -147,7 +169,7 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 border-r border-[var(--border)] bg-white/95 shadow-[2px_0_32px_rgba(20,32,51,0.04)] backdrop-blur-xl transition-[width,transform] duration-300 ease-out lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 w-[min(18.5rem,88vw)] border-r border-[var(--border)] bg-white/95 shadow-[2px_0_32px_rgba(20,32,51,0.04)] backdrop-blur-xl transition-[width,transform] duration-300 ease-out lg:static lg:w-auto lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           collapsed ? "lg:w-[76px]" : "lg:w-[248px]",
         )}

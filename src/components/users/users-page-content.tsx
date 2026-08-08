@@ -13,6 +13,7 @@ import { PageHeader } from "@/components/ui/page-header";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton";
 import { AlertBanner } from "@/components/ui/alert-banner";
+import { ScrollRegion } from "@/components/ui/scroll-region";
 import {
   Dialog,
   DialogContent,
@@ -168,7 +169,7 @@ export function UsersPageContent() {
 
             {loading ? (
               <>
-                <div className="space-y-2.5 p-3 sm:hidden">
+                <div className="space-y-2.5 p-3 md:hidden">
                   {Array.from({ length: 4 }).map((_, i) => (
                     <div
                       key={i}
@@ -182,7 +183,7 @@ export function UsersPageContent() {
                     </div>
                   ))}
                 </div>
-                <div className="hidden sm:block">
+                <div className="hidden md:block">
                   <TableSkeleton rows={5} columns={6} />
                 </div>
               </>
@@ -202,7 +203,7 @@ export function UsersPageContent() {
               />
             ) : (
               <>
-                <div className="space-y-2.5 p-3 sm:hidden">
+                <div className="space-y-2.5 p-3 md:hidden">
                   {filteredUsers.map((user) => {
                     const isSelf = currentUser?.id === user.id;
                     return (
@@ -235,6 +236,11 @@ export function UsersPageContent() {
                               <p className="truncate text-xs text-slate-500">
                                 {user.email}
                               </p>
+                              {user.phone ? (
+                                <p className="mt-0.5 truncate text-xs text-slate-400">
+                                  {user.phone}
+                                </p>
+                              ) : null}
                             </div>
                           </div>
                           {renderActions(user)}
@@ -256,16 +262,26 @@ export function UsersPageContent() {
                   })}
                 </div>
 
-                <div className="hidden overflow-x-auto sm:block">
+                <ScrollRegion fade className="hidden md:block">
                   <table className="w-full min-w-[720px] text-left text-sm">
                     <thead>
                       <tr className="border-b border-slate-100 bg-slate-50/95 text-xs uppercase tracking-wider text-slate-500">
-                        <th className="px-6 py-3.5 font-semibold">User</th>
-                        <th className="px-6 py-3.5 font-semibold">Email</th>
-                        <th className="px-6 py-3.5 font-semibold">Role</th>
-                        <th className="px-6 py-3.5 font-semibold">Phone</th>
-                        <th className="px-6 py-3.5 font-semibold">Status</th>
-                        <th className="w-12 px-4 py-3.5">
+                        <th className="px-4 py-3.5 font-semibold lg:px-6">
+                          User
+                        </th>
+                        <th className="px-4 py-3.5 font-semibold lg:px-6">
+                          Email
+                        </th>
+                        <th className="px-4 py-3.5 font-semibold lg:px-6">
+                          Role
+                        </th>
+                        <th className="px-4 py-3.5 font-semibold lg:px-6">
+                          Phone
+                        </th>
+                        <th className="px-4 py-3.5 font-semibold lg:px-6">
+                          Status
+                        </th>
+                        <th className="w-12 px-3 py-3.5 lg:px-4">
                           <span className="sr-only">Actions</span>
                         </th>
                       </tr>
@@ -278,7 +294,7 @@ export function UsersPageContent() {
                             key={user.id}
                             className="border-b border-slate-50 transition-colors last:border-0 hover:bg-slate-50/80"
                           >
-                            <td className="px-6 py-4">
+                            <td className="px-4 py-4 lg:px-6">
                               <div className="flex items-center gap-3">
                                 <Avatar className="h-9 w-9">
                                   {user.photo_url ? (
@@ -303,16 +319,16 @@ export function UsersPageContent() {
                                 </div>
                               </div>
                             </td>
-                            <td className="px-6 py-4 text-slate-600">
+                            <td className="px-4 py-4 text-slate-600 lg:px-6">
                               {user.email}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-4 py-4 lg:px-6">
                               <Badge variant="secondary">{user.role}</Badge>
                             </td>
-                            <td className="px-6 py-4 text-slate-600">
+                            <td className="px-4 py-4 text-slate-600 lg:px-6">
                               {user.phone ?? "—"}
                             </td>
-                            <td className="px-6 py-4">
+                            <td className="px-4 py-4 lg:px-6">
                               <Badge
                                 variant={
                                   user.status === "active"
@@ -323,7 +339,7 @@ export function UsersPageContent() {
                                 {user.status}
                               </Badge>
                             </td>
-                            <td className="px-4 py-4 text-right">
+                            <td className="px-3 py-4 text-right lg:px-4">
                               {renderActions(user)}
                             </td>
                           </tr>
@@ -331,7 +347,7 @@ export function UsersPageContent() {
                       })}
                     </tbody>
                   </table>
-                </div>
+                </ScrollRegion>
               </>
             )}
           </CardContent>

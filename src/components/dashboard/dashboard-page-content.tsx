@@ -426,8 +426,8 @@ export function DashboardPageContent({ user }: Props) {
 
       {/* Recent activity */}
       <section className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
-        <div className="lux-card overflow-hidden">
-          <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+        <div className="lux-card flex flex-col overflow-hidden">
+          <div className="flex shrink-0 items-center justify-between border-b border-[var(--border)] px-5 py-4">
             <div>
               <p className="type-caption text-[var(--accent)]">Publishing</p>
               <h2 className="font-display type-title mt-1 text-lg text-[var(--ink)]">
@@ -444,14 +444,17 @@ export function DashboardPageContent({ user }: Props) {
           <div
             className={cn(
               "divide-y divide-[var(--border)]",
-              !loading &&
-                recent.length > 5 &&
-                "max-h-[calc(5*5.25rem)] overflow-y-auto overscroll-contain",
+              !loading && recent.length > 5 && "overflow-y-auto overscroll-contain",
             )}
+            style={
+              !loading && recent.length > 5
+                ? { maxHeight: "26.25rem" } // 5 rows × 5.25rem
+                : undefined
+            }
           >
             {loading ? (
               Array.from({ length: 5 }).map((_, i) => (
-                <div key={i} className="flex gap-3 p-4">
+                <div key={i} className="flex h-[5.25rem] items-center gap-3 px-4 sm:px-5">
                   <div className="skeleton h-14 w-14 shrink-0 rounded-md" />
                   <div className="flex-1 space-y-2">
                     <div className="skeleton h-4 w-2/3 rounded" />
@@ -475,59 +478,53 @@ export function DashboardPageContent({ user }: Props) {
                 </Link>
               </div>
             ) : (
-              recent.map((p, i) => (
-                <motion.div
+              recent.map((p) => (
+                <Link
                   key={p.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.04 * Math.min(i, 4) }}
+                  href={`/customization/properties/${p.id}`}
+                  className="flex h-[5.25rem] shrink-0 items-center gap-3 px-4 transition hover:bg-[var(--surface)] sm:px-5"
                 >
-                  <Link
-                    href={`/customization/properties/${p.id}`}
-                    className="flex h-[5.25rem] items-center gap-3 px-4 transition hover:bg-[var(--surface)] sm:px-5"
-                  >
-                    <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-[var(--stone,#ededef)]">
-                      {p.cover_image_url ? (
-                        <Image
-                          src={p.cover_image_url}
-                          alt=""
-                          fill
-                          className="object-cover"
-                          sizes="56px"
-                        />
-                      ) : (
-                        <div className="flex h-full items-center justify-center text-[10px] text-[var(--muted)]">
-                          No img
-                        </div>
+                  <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-[var(--stone,#ededef)]">
+                    {p.cover_image_url ? (
+                      <Image
+                        src={p.cover_image_url}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="56px"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center text-[10px] text-[var(--muted)]">
+                        No img
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-[var(--ink)]">
+                      {p.title}
+                    </p>
+                    <p className="truncate text-xs text-[var(--muted)]">
+                      {[p.area_name, p.city].filter(Boolean).join(" · ")}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <span
+                      className={cn(
+                        "inline-block rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
+                        p.status === "active" &&
+                          "bg-emerald-50 text-emerald-700",
+                        p.status === "draft" && "bg-amber-50 text-amber-700",
+                        p.status === "inactive" &&
+                          "bg-slate-100 text-slate-600",
                       )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-[var(--ink)]">
-                        {p.title}
-                      </p>
-                      <p className="truncate text-xs text-[var(--muted)]">
-                        {[p.area_name, p.city].filter(Boolean).join(" · ")}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <span
-                        className={cn(
-                          "inline-block rounded px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider",
-                          p.status === "active" &&
-                            "bg-emerald-50 text-emerald-700",
-                          p.status === "draft" && "bg-amber-50 text-amber-700",
-                          p.status === "inactive" &&
-                            "bg-slate-100 text-slate-600",
-                        )}
-                      >
-                        {p.status}
-                      </span>
-                      <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
-                        {p.updated_at ? formatRelative(p.updated_at) : "—"}
-                      </p>
-                    </div>
-                  </Link>
-                </motion.div>
+                    >
+                      {p.status}
+                    </span>
+                    <p className="mt-1 text-[10px] text-[var(--muted-foreground)]">
+                      {p.updated_at ? formatRelative(p.updated_at) : "—"}
+                    </p>
+                  </div>
+                </Link>
               ))
             )}
           </div>

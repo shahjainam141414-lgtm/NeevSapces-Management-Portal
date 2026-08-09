@@ -170,7 +170,7 @@ export function DashboardPageContent({ user }: Props) {
           const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0;
           return tb - ta;
         })
-        .slice(0, 6),
+        .slice(0, 12),
     [properties],
   );
 
@@ -441,9 +441,16 @@ export function DashboardPageContent({ user }: Props) {
               View all
             </Link>
           </div>
-          <div className="divide-y divide-[var(--border)]">
+          <div
+            className={cn(
+              "divide-y divide-[var(--border)]",
+              !loading &&
+                recent.length > 5 &&
+                "max-h-[calc(5*5.25rem)] overflow-y-auto overscroll-contain",
+            )}
+          >
             {loading ? (
-              Array.from({ length: 4 }).map((_, i) => (
+              Array.from({ length: 5 }).map((_, i) => (
                 <div key={i} className="flex gap-3 p-4">
                   <div className="skeleton h-14 w-14 shrink-0 rounded-md" />
                   <div className="flex-1 space-y-2">
@@ -473,11 +480,11 @@ export function DashboardPageContent({ user }: Props) {
                   key={p.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.04 * i }}
+                  transition={{ delay: 0.04 * Math.min(i, 4) }}
                 >
                   <Link
                     href={`/customization/properties/${p.id}`}
-                    className="flex items-center gap-3 px-4 py-3.5 transition hover:bg-[var(--surface)] sm:px-5"
+                    className="flex h-[5.25rem] items-center gap-3 px-4 transition hover:bg-[var(--surface)] sm:px-5"
                   >
                     <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md bg-[var(--stone,#ededef)]">
                       {p.cover_image_url ? (

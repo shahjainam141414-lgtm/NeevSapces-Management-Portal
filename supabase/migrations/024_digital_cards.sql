@@ -18,7 +18,7 @@ create table if not exists public.digital_cards (
   whatsapp text not null default '',
   email text not null,
   photo_url text,
-  accent text not null default 'steel'
+  accent text not null default 'steel' 
     check (accent in ('steel', 'bronze')),
   cover_url text not null default
     'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80',

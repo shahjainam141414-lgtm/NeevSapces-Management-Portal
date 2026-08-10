@@ -62,7 +62,7 @@ export function ActionsDropdown({
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52 p-1.5">
+      <DropdownMenuContent align="end" className="w-[min(13rem,calc(100vw-2rem))] p-1.5">
         {onEdit && (
           <DropdownMenuItem
             onClick={onEdit}

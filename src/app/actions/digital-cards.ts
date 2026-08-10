@@ -8,17 +8,17 @@ import {
   DEFAULT_CARD_ROLE,
   DEFAULT_CARD_TAGLINE,
   formatPhoneFields,
+  mapsQueryFromAddress,
   slugifyName,
   splitDisplayName,
   type DigitalCard,
-  type DigitalCardAccent,
   type DigitalCardStatus,
 } from "@/lib/digital-cards";
 import { canEditUser, isUserRole } from "@/lib/roles";
 import type { UserRole } from "@/lib/nav-config";
 
 const CARD_SELECT =
-  "id, admin_profile_id, slug, display_name, first_name, last_name, role_title, tagline, phone_display, phone_tel, whatsapp, email, photo_url, accent, cover_url, status, created_at, updated_at";
+  "id, admin_profile_id, slug, display_name, first_name, last_name, role_title, tagline, phone_display, phone_tel, whatsapp, email, photo_url, accent, cover_url, office_address, maps_query, rera, status, created_at, updated_at";
 
 async function uniqueSlug(
   admin: ReturnType<typeof createServiceClient>,
@@ -75,6 +75,9 @@ export async function ensureDigitalCardForProfile(input: {
       photo_url: input.photoUrl ?? null,
       accent: "steel",
       cover_url: DEFAULT_CARD_COVER,
+      office_address: CARD_COMPANY.address,
+      maps_query: CARD_COMPANY.mapsQuery,
+      rera: CARD_COMPANY.rera,
       status: "active",
     })
     .select(CARD_SELECT)
@@ -174,13 +177,12 @@ export type UpdateDigitalCardInput = {
   roleTitle: string;
   tagline: string;
   phone?: string;
-  whatsapp?: string;
   email: string;
-  accent: DigitalCardAccent;
   photoUrl?: string | null;
   coverUrl?: string;
   status: DigitalCardStatus;
-  slug?: string;
+  officeAddress: string;
+  rera: string;
 };
 
 export async function updateDigitalCard(
@@ -190,12 +192,11 @@ export async function updateDigitalCard(
   const roleTitle = input.roleTitle.trim() || DEFAULT_CARD_ROLE;
   const tagline = input.tagline.trim() || DEFAULT_CARD_TAGLINE;
   const email = input.email.trim().toLowerCase();
+  const officeAddress = input.officeAddress.trim() || CARD_COMPANY.address;
+  const rera = input.rera.trim() || CARD_COMPANY.rera;
 
   if (displayName.length < 2) return { ok: false, error: "Name is required." };
   if (!email.includes("@")) return { ok: false, error: "Valid email is required." };
-  if (input.accent !== "steel" && input.accent !== "bronze") {
-    return { ok: false, error: "Invalid accent." };
-  }
   if (input.status !== "active" && input.status !== "inactive") {
     return { ok: false, error: "Invalid status." };
   }
@@ -245,27 +246,13 @@ export async function updateDigitalCard(
 
     const { firstName, lastName } = splitDisplayName(displayName);
     const fromPhone = formatPhoneFields(input.phone);
-    const waDigits = (input.whatsapp ?? "").replace(/\D/g, "");
-    const whatsapp = waDigits || fromPhone.whatsapp;
-    const phoneTel = fromPhone.phoneTel || (whatsapp ? `+${whatsapp}` : "");
-    const phoneDisplay =
-      fromPhone.phoneDisplay ||
-      (whatsapp.length >= 12
-        ? `+${whatsapp.slice(0, 2)} ${whatsapp.slice(2, 7)} ${whatsapp.slice(7)}`
-        : phoneTel);
-
-    let nextSlug = card.slug;
-    if (input.slug?.trim()) {
-      const desired = slugifyName(input.slug);
-      if (desired && desired !== card.slug) {
-        nextSlug = await uniqueSlug(admin, desired, card.id);
-      }
-    }
+    const whatsapp = fromPhone.whatsapp || card.whatsapp;
+    const phoneTel = fromPhone.phoneTel || card.phone_tel;
+    const phoneDisplay = fromPhone.phoneDisplay || card.phone_display;
 
     const { data, error } = await admin
       .from("digital_cards")
       .update({
-        slug: nextSlug,
         display_name: displayName,
         first_name: firstName,
         last_name: lastName,
@@ -276,8 +263,10 @@ export async function updateDigitalCard(
         whatsapp,
         email,
         photo_url: input.photoUrl ?? null,
-        accent: input.accent,
         cover_url: input.coverUrl?.trim() || card.cover_url || DEFAULT_CARD_COVER,
+        office_address: officeAddress,
+        maps_query: mapsQueryFromAddress(officeAddress),
+        rera,
         status: input.status,
       })
       .eq("id", card.id)

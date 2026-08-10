@@ -17,6 +17,9 @@ export type DigitalCard = {
   photo_url: string | null;
   accent: DigitalCardAccent;
   cover_url: string;
+  office_address: string;
+  maps_query: string;
+  rera: string;
   status: DigitalCardStatus;
   created_at?: string;
   updated_at?: string;
@@ -25,7 +28,7 @@ export type DigitalCard = {
 /** Shared company + office details — same on every card */
 export const CARD_COMPANY = {
   name: "Neev Spaces",
-  tagline: "Naye Safar Ki Pehli Neev",
+  tagline: "Create your legacy with strong neev",
   website: "https://neevspaces.net",
   instagram: "https://www.instagram.com/neevspaces/",
   address: "A 707, Ganesh Glory 11, Jagatpura Road, Gota, Ahmedabad 382470",
@@ -36,8 +39,7 @@ export const CARD_COMPANY = {
 export const DEFAULT_CARD_COVER =
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80";
 
-export const DEFAULT_CARD_TAGLINE =
-  "Private guidance for homes that feel like the right beginning.";
+export const DEFAULT_CARD_TAGLINE = "Create your legacy with strong neev";
 
 export const DEFAULT_CARD_ROLE = "Property Advisor";
 
@@ -95,6 +97,10 @@ export function formatPhoneFields(phone: string | null | undefined) {
       : phoneTel;
 
   return { phoneDisplay, phoneTel, whatsapp };
+}
+
+export function mapsQueryFromAddress(address: string) {
+  return address.replace(/,/g, " ").replace(/\s+/g, " ").trim();
 }
 
 export function initialsFromName(name: string) {

@@ -74,13 +74,13 @@ export function ShareDigitalCardDialog({ user, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Share2 className="h-4 w-4 text-[var(--brand)]" />
+      <DialogContent className="w-[calc(100vw-1.5rem)] sm:max-w-md sm:w-full">
+        <DialogHeader className="text-left">
+          <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
+            <Share2 className="h-4 w-4 shrink-0 text-[var(--brand)]" />
             Share digital card
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             Share {user?.name ?? "this advisor"}&apos;s public visiting card.
           </DialogDescription>
         </DialogHeader>
@@ -93,13 +93,15 @@ export function ShareDigitalCardDialog({ user, open, onOpenChange }: Props) {
             {url && (
               <>
                 <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
-                  <p className="break-all text-sm font-medium text-slate-800">{url}</p>
+                  <p className="break-all text-[13px] font-medium leading-snug text-slate-800 sm:text-sm">
+                    {url}
+                  </p>
                 </div>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button
                     type="button"
                     variant="outline"
-                    className="flex-1"
+                    className="w-full flex-1"
                     onClick={() => void copyLink()}
                   >
                     {copied ? (
@@ -109,7 +111,7 @@ export function ShareDigitalCardDialog({ user, open, onOpenChange }: Props) {
                     )}
                     {copied ? "Copied" : "Copy link"}
                   </Button>
-                  <Button type="button" className="flex-1" asChild>
+                  <Button type="button" className="w-full flex-1" asChild>
                     <a href={waHref} target="_blank" rel="noopener noreferrer">
                       <MessageCircle className="mr-2 h-4 w-4" />
                       WhatsApp

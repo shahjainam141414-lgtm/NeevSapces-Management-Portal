@@ -31,21 +31,23 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4 sm:p-6">
-      <DialogPrimitive.Content
-        ref={ref}
-        className={cn(
-          "animate-dialog-in relative my-auto grid w-full max-w-lg gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_30px_70px_rgba(16,25,46,0.22)]",
-          className,
-        )}
-        {...props}
-      >
-        {children}
-        <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#16233f]/15">
-          <X className="h-4 w-4" />
-          <span className="sr-only">Close</span>
-        </DialogPrimitive.Close>
-      </DialogPrimitive.Content>
+    <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain">
+      <div className="flex min-h-full items-center justify-center p-4 sm:p-6">
+        <DialogPrimitive.Content
+          ref={ref}
+          className={cn(
+            "animate-dialog-in relative grid w-full max-w-lg gap-4 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-[0_30px_70px_rgba(16,25,46,0.22)]",
+            className,
+          )}
+          {...props}
+        >
+          {children}
+          <DialogPrimitive.Close className="absolute right-4 top-4 rounded-lg p-1.5 text-slate-400 transition-all duration-200 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#16233f]/15">
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </DialogPrimitive.Close>
+        </DialogPrimitive.Content>
+      </div>
     </div>
   </DialogPortal>
 ));

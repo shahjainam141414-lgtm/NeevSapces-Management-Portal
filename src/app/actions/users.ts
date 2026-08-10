@@ -15,6 +15,10 @@ import {
   sendInviteEmail,
 } from "@/lib/email/send-invite";
 import { getCurrentAdminProfile } from "@/app/actions/auth";
+import {
+  ensureDigitalCardForProfile,
+  syncDigitalCardFromProfile,
+} from "@/app/actions/digital-cards";
 
 export type InviteUserInput = {
   name: string;
@@ -248,6 +252,14 @@ async function inviteViaResend(
     role,
   });
 
+  await ensureDigitalCardForProfile({
+    adminProfileId: profile.id,
+    name: profile.name,
+    email: profile.email,
+    phone: profile.phone,
+    photoUrl: profile.photo_url,
+  });
+
   return {
     ok: true,
     profile,
@@ -307,6 +319,13 @@ export async function inviteAdminUser(
         photo_url: photoUrl,
         role,
       });
+      await ensureDigitalCardForProfile({
+        adminProfileId: profile.id,
+        name: profile.name,
+        email: profile.email,
+        phone: profile.phone,
+        photoUrl: profile.photo_url,
+      });
       return {
         ok: true,
         profile,
@@ -349,6 +368,13 @@ export async function inviteAdminUser(
             photo_url: photoUrl,
             role,
           });
+          await ensureDigitalCardForProfile({
+            adminProfileId: profile.id,
+            name: profile.name,
+            email: profile.email,
+            phone: profile.phone,
+            photoUrl: profile.photo_url,
+          });
           return {
             ok: true,
             profile,
@@ -375,6 +401,14 @@ export async function inviteAdminUser(
       phone,
       photo_url: photoUrl,
       role,
+    });
+
+    await ensureDigitalCardForProfile({
+      adminProfileId: profile.id,
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone,
+      photoUrl: profile.photo_url,
     });
 
     return {
@@ -454,7 +488,17 @@ export async function updateAdminUser(
       .single();
 
     if (error) return { ok: false, error: error.message };
-    return { ok: true, profile: profile as AdminProfile };
+
+    const updated = profile as AdminProfile;
+    await syncDigitalCardFromProfile({
+      adminProfileId: updated.id,
+      name: updated.name,
+      email: updated.email,
+      phone: updated.phone,
+      photoUrl: updated.photo_url,
+    });
+
+    return { ok: true, profile: updated };
   } catch (err) {
     return {
       ok: false,

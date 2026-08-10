@@ -3,8 +3,10 @@
 import {
   CircleCheck,
   CircleSlash,
+  CreditCard,
   MoreHorizontal,
   Pencil,
+  Share2,
   Star,
   StarOff,
   Trash2,
@@ -21,6 +23,8 @@ import { Button } from "@/components/ui/button";
 type ActionsDropdownProps = {
   onEdit?: () => void;
   onDelete?: () => void;
+  onEditDigitalCard?: () => void;
+  onShareDigitalCard?: () => void;
   /** Show “Set as Active” when provided */
   onSetActive?: () => void;
   /** Show “Set as Inactive” when provided */
@@ -34,6 +38,8 @@ type ActionsDropdownProps = {
 export function ActionsDropdown({
   onEdit,
   onDelete,
+  onEditDigitalCard,
+  onShareDigitalCard,
   onSetActive,
   onSetInactive,
   onSetDefault,
@@ -41,7 +47,8 @@ export function ActionsDropdown({
 }: ActionsDropdownProps) {
   const hasStatus = Boolean(onSetActive || onSetInactive);
   const hasDefault = Boolean(onSetDefault || onUnsetDefault);
-  const hasMiddle = hasStatus || hasDefault;
+  const hasCard = Boolean(onEditDigitalCard || onShareDigitalCard);
+  const hasMiddle = hasStatus || hasDefault || hasCard;
 
   return (
     <DropdownMenu>
@@ -55,7 +62,7 @@ export function ActionsDropdown({
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48 p-1.5">
+      <DropdownMenuContent align="end" className="w-52 p-1.5">
         {onEdit && (
           <DropdownMenuItem
             onClick={onEdit}
@@ -65,9 +72,32 @@ export function ActionsDropdown({
             Edit
           </DropdownMenuItem>
         )}
-        {hasStatus && (
+        {hasCard && (
           <>
             {onEdit && <DropdownMenuSeparator />}
+            {onEditDigitalCard && (
+              <DropdownMenuItem
+                onClick={onEditDigitalCard}
+                className="cursor-pointer rounded-md"
+              >
+                <CreditCard className="mr-2 h-3.5 w-3.5" />
+                Edit digital card
+              </DropdownMenuItem>
+            )}
+            {onShareDigitalCard && (
+              <DropdownMenuItem
+                onClick={onShareDigitalCard}
+                className="cursor-pointer rounded-md"
+              >
+                <Share2 className="mr-2 h-3.5 w-3.5" />
+                Share card
+              </DropdownMenuItem>
+            )}
+          </>
+        )}
+        {hasStatus && (
+          <>
+            {(onEdit || hasCard) && <DropdownMenuSeparator />}
             {onSetActive && (
               <DropdownMenuItem
                 onClick={onSetActive}
@@ -90,7 +120,7 @@ export function ActionsDropdown({
         )}
         {hasDefault && (
           <>
-            {(onEdit || hasStatus) && <DropdownMenuSeparator />}
+            {(onEdit || hasStatus || hasCard) && <DropdownMenuSeparator />}
             {onSetDefault && (
               <DropdownMenuItem
                 onClick={onSetDefault}

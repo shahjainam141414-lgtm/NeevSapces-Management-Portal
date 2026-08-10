@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { Search, Users as UsersIcon } from "lucide-react";
 import { UserFormDialog } from "@/components/users/user-form-dialog";
+import { DigitalCardFormDialog } from "@/components/users/digital-card-form-dialog";
+import { ShareDigitalCardDialog } from "@/components/users/share-digital-card-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,6 +41,8 @@ export function UsersPageContent() {
   const [search, setSearch] = useState("");
   const [deleteUser, setDeleteUser] = useState<AdminProfile | null>(null);
   const [editUser, setEditUser] = useState<AdminProfile | null>(null);
+  const [cardUser, setCardUser] = useState<AdminProfile | null>(null);
+  const [shareUser, setShareUser] = useState<AdminProfile | null>(null);
   const [deleting, setDeleting] = useState(false);
 
   const loadUsers = useCallback(async () => {
@@ -99,15 +103,11 @@ export function UsersPageContent() {
     const showEdit = canEditUser(actorRole, user.role, isSelf);
     const showDelete = canDeleteUser(actorRole, user.role, isSelf);
 
-    if (!showEdit && !showDelete) {
-      return (
-        <span className="text-xs text-slate-400">{isSelf ? "You" : "—"}</span>
-      );
-    }
-
     return (
       <ActionsDropdown
         onEdit={showEdit ? () => setEditUser(user) : undefined}
+        onEditDigitalCard={showEdit ? () => setCardUser(user) : undefined}
+        onShareDigitalCard={() => setShareUser(user)}
         onDelete={showDelete ? () => setDeleteUser(user) : undefined}
       />
     );
@@ -372,6 +372,22 @@ export function UsersPageContent() {
           }}
         />
       )}
+
+      <DigitalCardFormDialog
+        user={cardUser}
+        open={!!cardUser}
+        onOpenChange={(next) => {
+          if (!next) setCardUser(null);
+        }}
+      />
+
+      <ShareDigitalCardDialog
+        user={shareUser}
+        open={!!shareUser}
+        onOpenChange={(next) => {
+          if (!next) setShareUser(null);
+        }}
+      />
 
       <Dialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
         <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">

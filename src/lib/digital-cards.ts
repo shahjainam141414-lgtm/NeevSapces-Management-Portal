@@ -53,7 +53,7 @@ export function getCardPublicBaseUrl() {
 }
 
 export function getCardPublicUrl(slug: string) {
-  return `${getCardPublicBaseUrl()}/vcard/${slug}`;
+  return `${getCardPublicBaseUrl()}/card/${slug}`;
 }
 
 export function digitsOnly(value: string) {

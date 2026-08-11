@@ -28,9 +28,11 @@ export type DigitalCard = {
 /** Shared company + office details — same on every card */
 export const CARD_COMPANY = {
   name: "Neev Spaces",
-  tagline: "Create your legacy with strong neev",
+  tagline: "Create Your Legacy With Strong Neev",
   website: "https://neevspaces.net",
   instagram: "https://www.instagram.com/neevspaces/",
+  phoneDisplay: "+91 76002 71405",
+  phoneTel: "+917600271405",
   address: "A 707, Ganesh Glory 11, Jagatpura Road, Gota, Ahmedabad 382470",
   mapsQuery: "A 707 Ganesh Glory 11 Jagatpura Road Gota Ahmedabad 382470",
   rera: "AG/GJ/AHMEDABAD/AHMEDABAD CITY/AA06547/180631R1",
@@ -39,7 +41,7 @@ export const CARD_COMPANY = {
 export const DEFAULT_CARD_COVER =
   "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1600&q=80";
 
-export const DEFAULT_CARD_TAGLINE = "Create your legacy with strong neev";
+export const DEFAULT_CARD_TAGLINE = "Create Your Legacy With Strong Neev";
 
 export const DEFAULT_CARD_ROLE = "Property Advisor";
 
@@ -77,7 +79,11 @@ export function splitDisplayName(name: string) {
 export function formatPhoneFields(phone: string | null | undefined) {
   const raw = digitsOnly(phone ?? "");
   if (!raw) {
-    return { phoneDisplay: "", phoneTel: "", whatsapp: "" };
+    return {
+      phoneDisplay: CARD_COMPANY.phoneDisplay,
+      phoneTel: CARD_COMPANY.phoneTel,
+      whatsapp: digitsOnly(CARD_COMPANY.phoneTel),
+    };
   }
 
   const whatsapp =

@@ -24,7 +24,6 @@ import {
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { AlertBanner } from "@/components/ui/alert-banner";
-import { getInitials } from "@/lib/utils";
 import { uploadToCloudinary } from "@/lib/cloudinary";
 import {
   getDigitalCardByProfileId,
@@ -195,7 +194,7 @@ export function DigitalCardFormDialog({ user, open, onOpenChange }: Props) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1.25rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg sm:w-full">
+      <DialogContent className="flex max-h-[min(92dvh,880px)] w-[calc(100vw-1.25rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg sm:w-full">
         <DialogHeader className="shrink-0 border-b border-slate-100 px-4 py-4 pr-12 text-left sm:px-6">
           <DialogTitle className="flex items-center gap-2 text-base sm:text-lg">
             <CreditCard className="h-4 w-4 shrink-0 text-[var(--brand)]" />
@@ -204,7 +203,7 @@ export function DigitalCardFormDialog({ user, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div
-          className="max-h-[calc(90dvh-11.5rem)] overflow-y-auto overscroll-contain px-4 py-4 sm:max-h-[calc(90dvh-8.75rem)] sm:px-6 sm:py-5 [-webkit-overflow-scrolling:touch]"
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 [-webkit-overflow-scrolling:touch]"
           onWheel={(e) => e.stopPropagation()}
         >
           {loading ? (
@@ -236,8 +235,13 @@ export function DigitalCardFormDialog({ user, open, onOpenChange }: Props) {
                       {displayPhoto ? (
                         <AvatarImage src={displayPhoto} alt="" />
                       ) : null}
-                      <AvatarFallback>
-                        {getInitials(displayName || user?.name || "NS")}
+                      <AvatarFallback className="bg-[#101a2c] p-2">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/logo-white.png"
+                          alt="Neev Spaces"
+                          className="h-auto w-full object-contain"
+                        />
                       </AvatarFallback>
                     </Avatar>
                     <span className="absolute -bottom-0.5 -right-0.5 grid size-7 place-items-center rounded-full border border-white bg-slate-900 text-white shadow-sm">

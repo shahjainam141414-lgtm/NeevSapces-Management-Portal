@@ -42,8 +42,11 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollRegion } from "@/components/ui/scroll-region";
 import { cn } from "@/lib/utils";
-import { uploadToCloudinary } from "@/lib/cloudinary";
-import { uploadBrochureToStorage } from "@/lib/brochure-upload";
+import { uploadToCloudinary, uploadManyToCloudinary } from "@/lib/cloudinary";
+import {
+  BROCHURE_MAX_BYTES,
+  uploadBrochureToStorage,
+} from "@/lib/brochure-upload";
 import { convertFromSqft, convertFromSqyd } from "@/lib/area-convert";
 import { listAmenities } from "@/lib/amenities-api";
 import { listBuilders } from "@/lib/builders-api";
@@ -263,6 +266,10 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [coverPublicId, setCoverPublicId] = useState<string | null>(null);
+  const [heroBannerUrl, setHeroBannerUrl] = useState<string | null>(null);
+  const [heroBannerPublicId, setHeroBannerPublicId] = useState<string | null>(
+    null,
+  );
   const [brochureUrl, setBrochureUrl] = useState("");
 
   const [rateCards, setRateCards] = useState<PropertyRateCard[]>([]);
@@ -299,12 +306,14 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<string[]>([]);
   const [floorPlans, setFloorPlans] = useState<EditableFloorPlan[]>([]);
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingHeroBanner, setUploadingHeroBanner] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingBrochure, setUploadingBrochure] = useState(false);
   const [uploadingPlans, setUploadingPlans] = useState(false);
 
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+  const heroBannerInputRef = useRef<HTMLInputElement>(null);
   const brochureInputRef = useRef<HTMLInputElement>(null);
   const plansInputRef = useRef<HTMLInputElement>(null);
 
@@ -346,6 +355,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       setFullAddress(prop.full_address ?? "");
       setCoverUrl(prop.cover_image_url);
       setCoverPublicId(prop.cover_cloudinary_public_id);
+      setHeroBannerUrl(prop.hero_banner_url);
+      setHeroBannerPublicId(prop.hero_banner_cloudinary_public_id);
       setBrochureUrl(prop.brochure_url ?? "");
       {
         const cards = seedRateCardsFromLegacy(prop);
@@ -477,6 +488,24 @@ export function PropertyEditPageContent({ propertyId }: Props) {
     }
   };
 
+  const handleHeroBannerUpload = async (file: File | null | undefined) => {
+    if (!file) return;
+    setUploadingHeroBanner(true);
+    setError(null);
+    try {
+      const uploaded = await uploadToCloudinary(file, "neev/properties/banners", "image", {
+        maxEdge: 1920,
+        quality: 0.78,
+      });
+      setHeroBannerUrl(uploaded.secure_url);
+      setHeroBannerPublicId(uploaded.public_id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Banner upload failed");
+    } finally {
+      setUploadingHeroBanner(false);
+    }
+  };
+
   // Cover accepts multiple: first file becomes the cover, the rest are pushed
   // straight into the gallery so the admin can drop everything in one go.
   const handleCoverMultiUpload = async (files: FileList | null) => {
@@ -489,18 +518,23 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       const uploaded = await uploadToCloudinary(first, "neev/properties");
       setCoverUrl(uploaded.secure_url);
       setCoverPublicId(uploaded.public_id);
-      for (const file of rest) {
-        const up = await uploadToCloudinary(file, "neev/properties/gallery");
-        const media = await addPropertyMedia({
-          property_id: propertyId,
-          image_url: up.secure_url,
-          cloudinary_public_id: up.public_id,
-        });
-        setDetail((prev) =>
-          prev ? { ...prev, media: [...prev.media, media] } : prev,
-        );
-      }
       if (rest.length > 0) {
+        const galleryUploads = await uploadManyToCloudinary(
+          rest,
+          "neev/properties/gallery",
+        );
+        const mediaRows = [];
+        for (const up of galleryUploads) {
+          const media = await addPropertyMedia({
+            property_id: propertyId,
+            image_url: up.secure_url,
+            cloudinary_public_id: up.public_id,
+          });
+          mediaRows.push(media);
+        }
+        setDetail((prev) =>
+          prev ? { ...prev, media: [...prev.media, ...mediaRows] } : prev,
+        );
         setMessage(
           `Cover set · ${rest.length} more photo${rest.length === 1 ? "" : "s"} added to the gallery.`,
         );
@@ -516,19 +550,14 @@ export function PropertyEditPageContent({ propertyId }: Props) {
     setUploadingBrochure(true);
     setError(null);
     try {
-      // PDFs via Supabase — Cloudinary free plans return 401 on PDF delivery.
-      // Images can stay on Cloudinary for consistency with other media.
-      if (file.type === "application/pdf" || /\.pdf$/i.test(file.name)) {
-        const uploaded = await uploadBrochureToStorage(file);
-        setBrochureUrl(uploaded.secure_url);
-      } else {
-        const uploaded = await uploadToCloudinary(
-          file,
-          "neev/properties/brochures",
-          "image",
+      if (file.size > BROCHURE_MAX_BYTES) {
+        throw new Error(
+          `Brochure must be under ${Math.round(BROCHURE_MAX_BYTES / (1024 * 1024))}MB.`,
         );
-        setBrochureUrl(uploaded.secure_url);
       }
+      // Direct to Supabase Storage — skips Next.js body limits and is faster for PDFs.
+      const uploaded = await uploadBrochureToStorage(file);
+      setBrochureUrl(uploaded.secure_url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Brochure upload failed");
     } finally {
@@ -543,21 +572,17 @@ export function PropertyEditPageContent({ propertyId }: Props) {
     setError(null);
     try {
       const startIndex = floorPlans.length;
-      const newPlans: EditableFloorPlan[] = [];
-      let i = 0;
-      for (const file of Array.from(files)) {
-        const uploaded = await uploadToCloudinary(
-          file,
-          "neev/properties/floor-plans",
-        );
-        newPlans.push({
-          ...emptyPlan(),
-          name: `Floor plan ${startIndex + i + 1}`,
-          image_url: uploaded.secure_url,
-          cloudinary_public_id: uploaded.public_id,
-        });
-        i += 1;
-      }
+      const list = Array.from(files);
+      const uploaded = await uploadManyToCloudinary(
+        list,
+        "neev/properties/floor-plans",
+      );
+      const newPlans: EditableFloorPlan[] = uploaded.map((up, i) => ({
+        ...emptyPlan(),
+        name: `Floor plan ${startIndex + i + 1}`,
+        image_url: up.secure_url,
+        cloudinary_public_id: up.public_id,
+      }));
       setFloorPlans((prev) => [...prev, ...newPlans]);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Floor plan upload failed");
@@ -571,17 +596,23 @@ export function PropertyEditPageContent({ propertyId }: Props) {
     setUploadingGallery(true);
     setError(null);
     try {
-      for (const file of Array.from(files)) {
-        const uploaded = await uploadToCloudinary(file, "neev/properties/gallery");
+      const list = Array.from(files);
+      const uploaded = await uploadManyToCloudinary(
+        list,
+        "neev/properties/gallery",
+      );
+      const mediaRows = [];
+      for (const up of uploaded) {
         const media = await addPropertyMedia({
           property_id: propertyId,
-          image_url: uploaded.secure_url,
-          cloudinary_public_id: uploaded.public_id,
+          image_url: up.secure_url,
+          cloudinary_public_id: up.public_id,
         });
-        setDetail((prev) =>
-          prev ? { ...prev, media: [...prev.media, media] } : prev,
-        );
+        mediaRows.push(media);
       }
+      setDetail((prev) =>
+        prev ? { ...prev, media: [...prev.media, ...mediaRows] } : prev,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gallery upload failed");
     } finally {
@@ -641,6 +672,11 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         full_address: fullAddress.trim() || null,
         cover_image_url: coverUrl,
         cover_cloudinary_public_id: coverPublicId,
+        hero_banner_url: heroBannerUrl,
+        hero_banner_cloudinary_public_id: heroBannerPublicId,
+        ...(heroBannerUrl
+          ? {}
+          : { is_hero_banner: false }),
         brochure_url: brochureUrl.trim() || null,
         rate_cards: rateCards,
         package_price_label: priceRangeLabel.trim() || null,
@@ -1028,15 +1064,18 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           <motion.div {...cardMotion(1)}>
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Cover image &amp; brochure</CardTitle>
+                <CardTitle className="text-base">
+                  Cover, homepage banner &amp; brochure
+                </CardTitle>
               </CardHeader>
-              <CardContent className="grid gap-5 lg:grid-cols-2">
+              <CardContent className="space-y-5">
+              <div className="grid gap-5 lg:grid-cols-2">
                 {/* Cover image (supports selecting many at once) */}
                 <div className="space-y-2.5">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between gap-2">
                     <Label>Cover image</Label>
                     <span className="text-[11px] text-slate-400">
-                      Shown as the listing hero
+                      Listing cards &amp; detail
                     </span>
                   </div>
                   <input
@@ -1128,7 +1167,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                   <div className="flex items-center justify-between">
                     <Label>Brochure</Label>
                     <span className="text-[11px] text-slate-400">
-                      PDF (recommended) or image · max 20MB
+                      PDF (recommended) or image · max{" "}
+                      {Math.round(BROCHURE_MAX_BYTES / (1024 * 1024))}MB
                     </span>
                   </div>
                   <input
@@ -1200,6 +1240,101 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                       <span className="text-xs text-slate-500">
                         PDF recommended · secure storage for site view &amp;
                         download
+                      </span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+                {/* Homepage hero banner — one image only */}
+                <div className="space-y-2.5">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <Label>Homepage banner</Label>
+                    <span className="text-[11px] text-slate-400">
+                      Best size: 1920×800 · keep title &amp; buildings in the
+                      centre
+                    </span>
+                  </div>
+                  <input
+                    ref={heroBannerInputRef}
+                    type="file"
+                    accept={ACCEPT_IMG}
+                    className="hidden"
+                    onChange={(e) => {
+                      void handleHeroBannerUpload(e.target.files?.[0]);
+                      e.target.value = "";
+                    }}
+                  />
+                  {heroBannerUrl ? (
+                    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(16,25,46,0.03)]">
+                      <div className="relative aspect-[8/3] w-full bg-slate-50">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={heroBannerUrl}
+                          alt="Homepage banner"
+                          className="size-full object-cover"
+                        />
+                        {uploadingHeroBanner && (
+                          <div className="absolute inset-0 flex items-center justify-center bg-white/70">
+                            <Loader2 className="size-5 animate-spin text-[#16233f]" />
+                          </div>
+                        )}
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 p-2.5">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setPreviewImage(heroBannerUrl)}
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                          Preview
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          disabled={uploadingHeroBanner}
+                          onClick={() => heroBannerInputRef.current?.click()}
+                        >
+                          <ImagePlus className="h-3.5 w-3.5" />
+                          Change
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600"
+                          onClick={() => {
+                            setHeroBannerUrl(null);
+                            setHeroBannerPublicId(null);
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={uploadingHeroBanner}
+                      onClick={() => heroBannerInputRef.current?.click()}
+                      className="group flex aspect-[8/3] w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50/80 text-center transition-all duration-200 hover:border-[#16233f]/35 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {uploadingHeroBanner ? (
+                        <Loader2 className="size-6 animate-spin text-slate-400" />
+                      ) : (
+                        <ImagePlus className="size-6 text-slate-400 transition group-hover:text-[#16233f]" />
+                      )}
+                      <span className="text-sm font-medium text-slate-800">
+                        {uploadingHeroBanner
+                          ? "Uploading…"
+                          : "Upload homepage banner"}
+                      </span>
+                      <span className="max-w-sm px-4 text-xs text-slate-500">
+                        One image · auto-optimized before upload · then select
+                        under Customization → Main Banner
                       </span>
                     </button>
                   )}

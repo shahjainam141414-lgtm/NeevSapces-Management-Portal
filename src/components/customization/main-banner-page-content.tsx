@@ -1,439 +1,366 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Eye,
-  ImagePlus,
-  Pencil,
-  RefreshCw,
-  Trash2,
-  Upload,
-  X,
-} from "lucide-react";
+import { motion } from "framer-motion";
+import { Check, Info, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { EmptyState } from "@/components/ui/empty-state";
+import { PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { ImageUploadField } from "@/components/ui/image-upload-field";
-import { clearMainBanner, getMainBanner, upsertMainBanner } from "@/lib/banners-api";
-import {
-  isCloudinaryConfigured,
-  uploadToCloudinary,
-} from "@/lib/cloudinary";
-import type { SiteBanner } from "@/lib/banners";
-import { useRemountKey } from "@/hooks/use-remount-key";
+  listProperties,
+  setHeroBannerProperties,
+} from "@/lib/properties-api";
+import type { Property } from "@/lib/properties";
 
-const ACCEPT = "image/jpeg,image/png,image/webp,image/jpg";
-const MAX_MB = 5;
+const PAGE_SIZE = 10;
 
 export function MainBannerPageContent() {
-  const [banner, setBanner] = useState<SiteBanner | null>(null);
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [initialIds, setInitialIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
-  const [editorOpen, setEditorOpen] = useState(false);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [removing, setRemoving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
-      const row = await getMainBanner();
-      setBanner(row);
-      setError(null);
+      const rows = await listProperties();
+      const withBanner = rows.filter((p) => Boolean(p.hero_banner_url?.trim()));
+      setProperties(withBanner);
+      const selected = withBanner
+        .filter((p) => p.is_hero_banner)
+        .map((p) => p.id);
+      setSelectedIds(selected);
+      setInitialIds(selected);
+      setPage(1);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to load banner. Run the site_banners SQL migration first.",
+        err instanceof Error ? err.message : "Failed to load properties",
       );
+      setProperties([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
   }, [load]);
 
-  const handleSaved = (saved: SiteBanner) => {
-    setBanner(saved);
-    setEditorOpen(false);
-  };
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return properties;
+    return properties.filter(
+      (p) =>
+        p.title.toLowerCase().includes(q) ||
+        (p.area_name ?? "").toLowerCase().includes(q) ||
+        (p.locality ?? "").toLowerCase().includes(q) ||
+        p.city.toLowerCase().includes(q),
+    );
+  }, [properties, search]);
 
-  const handleRemove = async () => {
-    if (!banner) return;
-    setRemoving(true);
-    try {
-      await clearMainBanner();
-      setBanner(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to remove banner");
-    } finally {
-      setRemoving(false);
-    }
-  };
-
-  return (
-    <>
-      <Card className="overflow-hidden">
-        <CardHeader className="flex flex-col gap-4 border-b border-slate-100/80 bg-gradient-to-b from-slate-50/80 to-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6 sm:py-5">
-          <div>
-            <CardTitle className="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">
-              Main Banner
-            </CardTitle>
-            <p className="mt-1 text-sm text-slate-500">
-              Website homepage hero image shown at the top of the site.
-            </p>
-          </div>
-          <Button
-            className="h-10 w-full sm:w-auto"
-            onClick={() => setEditorOpen(true)}
-          >
-            {banner ? (
-              <>
-                <Pencil className="h-4 w-4" />
-                Change Banner
-              </>
-            ) : (
-              <>
-                <ImagePlus className="h-4 w-4" />
-                Add Banner
-              </>
-            )}
-          </Button>
-        </CardHeader>
-
-        <CardContent className="space-y-4 p-4 sm:p-6">
-          {!isCloudinaryConfigured() && (
-            <AlertBanner variant="warning">
-              Cloudinary env vars are missing. You can still pick and preview images
-              locally; upload will work after you add{" "}
-              <code className="rounded bg-amber-100 px-1 text-xs">
-                NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
-              </code>{" "}
-              and{" "}
-              <code className="rounded bg-amber-100 px-1 text-xs">
-                NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
-              </code>
-              .
-            </AlertBanner>
-          )}
-
-          {error && (
-            <AlertBanner variant="error">
-              {error}
-              <button
-                type="button"
-                className="ml-2 cursor-pointer font-semibold underline"
-                onClick={() => void load()}
-              >
-                Retry
-              </button>
-            </AlertBanner>
-          )}
-
-          {loading ? (
-            <Skeleton className="aspect-[21/9] w-full rounded-2xl sm:aspect-[3/1]" />
-          ) : banner ? (
-            <div className="space-y-3">
-              <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
-                <div className="relative aspect-[21/9] w-full sm:aspect-[3/1]">
-                  <Image
-                    src={banner.image_url}
-                    alt="Main website banner"
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 768px) 100vw, 960px"
-                    priority
-                  />
-                </div>
-                <div className="absolute inset-x-0 bottom-0 flex flex-wrap items-center justify-end gap-2 bg-gradient-to-t from-black/55 to-transparent p-3 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    className="bg-white/95"
-                    onClick={() => setLightboxOpen(true)}
-                  >
-                    <Eye className="h-3.5 w-3.5" />
-                    Preview
-                  </Button>
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => setEditorOpen(true)}
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                    Change
-                  </Button>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-slate-500 sm:text-sm">
-                  Recommended size: 1920×640 or wider. JPG / PNG / WebP up to {MAX_MB}MB.
-                </p>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="text-red-600 hover:bg-red-50 hover:text-red-700"
-                  onClick={() => void handleRemove()}
-                  disabled={removing}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                  {removing ? "Removing..." : "Remove"}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setEditorOpen(true)}
-              className="w-full cursor-pointer text-left"
-            >
-              <EmptyState
-                icon={ImagePlus}
-                title="No main banner yet"
-                description="Upload a wide website banner image for the homepage hero."
-                className="py-14 transition-colors duration-200 hover:border-[#16233f]/35 hover:bg-slate-50 sm:py-20"
-                action={
-                  <span className="inline-flex h-10 items-center rounded-lg bg-[#16233f] px-4 text-sm font-medium text-white">
-                    Add Banner
-                  </span>
-                }
-              />
-            </button>
-          )}
-        </CardContent>
-      </Card>
-
-      <BannerEditorDialog
-        open={editorOpen}
-        onOpenChange={setEditorOpen}
-        currentUrl={banner?.image_url}
-        onSaved={handleSaved}
-      />
-
-      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-[calc(100vw-1.5rem)] overflow-hidden p-0 sm:max-w-4xl">
-          <div className="relative aspect-[21/9] w-full bg-slate-950">
-            {banner && (
-              <Image
-                src={banner.image_url}
-                alt="Banner preview"
-                fill
-                className="object-contain"
-                sizes="100vw"
-              />
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = filtered.slice(
+    (safePage - 1) * PAGE_SIZE,
+    safePage * PAGE_SIZE,
   );
-}
-
-type BannerEditorDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  currentUrl?: string;
-  onSaved: (banner: SiteBanner) => void;
-};
-
-function BannerEditorDialog({
-  open,
-  onOpenChange,
-  currentUrl,
-  onSaved,
-}: BannerEditorDialogProps) {
-  const formKey = useRemountKey(open);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      {open ? (
-        <BannerEditorFields
-          key={formKey}
-          currentUrl={currentUrl}
-          onOpenChange={onOpenChange}
-          onSaved={onSaved}
-        />
-      ) : null}
-    </Dialog>
-  );
-}
-
-function BannerEditorFields({
-  currentUrl,
-  onOpenChange,
-  onSaved,
-}: Omit<BannerEditorDialogProps, "open">) {
-  const [file, setFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [fullPreview, setFullPreview] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [formError, setFormError] = useState<string | null>(null);
 
   useEffect(() => {
-    return () => {
-      if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
-    };
-  }, [previewUrl]);
+    setPage(1);
+  }, [search]);
 
-  const pickFile = (next: File | null) => {
-    if (!next) return;
-    if (!ACCEPT.split(",").includes(next.type)) {
-      setFormError("Please choose a JPG, PNG, or WebP image.");
-      return;
-    }
-    if (next.size > MAX_MB * 1024 * 1024) {
-      setFormError(`Image must be under ${MAX_MB}MB.`);
-      return;
-    }
-    setFormError(null);
-    if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
-    setFile(next);
-    setPreviewUrl(URL.createObjectURL(next));
-  };
+  const dirty =
+    selectedIds.length !== initialIds.length ||
+    selectedIds.some((id) => !initialIds.includes(id));
 
-  const removeFile = () => {
-    setFile(null);
-    if (previewUrl?.startsWith("blob:")) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(null);
-  };
-
-  const handleClose = () => {
-    onOpenChange(false);
+  const toggle = (id: string) => {
+    setMessage(null);
+    setError(null);
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) {
+        if (prev.length <= 1) {
+          setError("Keep at least one property banner selected for the homepage.");
+          return prev;
+        }
+        return prev.filter((x) => x !== id);
+      }
+      return [...prev, id];
+    });
   };
 
   const handleSave = async () => {
-    if (!file) {
-      setFormError("Choose an image first.");
+    if (selectedIds.length < 1) {
+      setError("Select at least one property banner for the homepage.");
       return;
     }
     setSaving(true);
-    setFormError(null);
+    setError(null);
+    setMessage(null);
     try {
-      const uploaded = await uploadToCloudinary(file, "neev/banners");
-      const saved = await upsertMainBanner({
-        image_url: uploaded.secure_url,
-        cloudinary_public_id: uploaded.public_id,
-      });
-      onSaved(saved);
+      await setHeroBannerProperties(selectedIds);
+      setInitialIds([...selectedIds]);
+      setProperties((prev) =>
+        prev.map((p) => ({
+          ...p,
+          is_hero_banner: selectedIds.includes(p.id),
+        })),
+      );
+      setMessage(
+        `${selectedIds.length} banner${selectedIds.length === 1 ? "" : "s"} set for the homepage carousel.`,
+      );
     } catch (err) {
-      setFormError(
-        err instanceof Error ? err.message : "Upload failed. Try again.",
+      setError(
+        err instanceof Error ? err.message : "Could not update homepage banners.",
       );
     } finally {
       setSaving(false);
     }
   };
 
-  const shown = previewUrl;
-
   return (
-    <>
-      <DialogContent className="max-w-[calc(100vw-2rem)] gap-0 overflow-hidden p-0 sm:max-w-lg">
-        <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-5 py-5 sm:px-6">
-          <DialogHeader>
-            <DialogTitle className="text-lg font-semibold tracking-tight">
-              {currentUrl ? "Change Banner" : "Add Banner"}
-            </DialogTitle>
-            <DialogDescription>
-              Upload a wide image for the website homepage banner.
-            </DialogDescription>
-          </DialogHeader>
-        </div>
-
-        <div className="space-y-4 px-5 py-5 sm:px-6">
-          <ImageUploadField
-            previewUrl={shown}
-            placeholder={<Upload className="h-6 w-6 text-slate-400" />}
-            fileName={file ? `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB` : null}
-            accept={ACCEPT}
-            disabled={saving}
-            aspect="wide"
-            emptyLabel="Click to upload image"
-            hint={`JPG, PNG, WebP · max ${MAX_MB}MB · 1920×640 recommended`}
-            onPick={pickFile}
-            onRemove={removeFile}
-            onPreview={() => setFullPreview(true)}
-          />
-
-          {formError && <AlertBanner variant="error">{formError}</AlertBanner>}
-
-          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={saving}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={() => void handleSave()}
-              disabled={!file}
-              loading={saving}
-            >
-              {saving ? (
-                "Uploading..."
-              ) : (
-                <>
-                  <Upload className="h-4 w-4" />
-                  Save Banner
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-
-      <AnimatePresence>
-        {fullPreview && shown && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[80] flex items-center justify-center bg-black/80 p-4"
-            onClick={() => setFullPreview(false)}
+    <div className="space-y-4 min-[380px]:space-y-6">
+      <PageHeader
+        eyebrow="Homepage"
+        title="Main Banner"
+        description="Choose which property banners appear in the homepage hero. Multiple banners rotate every 5 seconds."
+        actions={
+          <Button
+            className="w-full gap-2 min-[380px]:w-auto"
+            loading={saving}
+            disabled={!dirty || loading || selectedIds.length < 1}
+            onClick={() => void handleSave()}
           >
-            <button
-              type="button"
-              className="absolute right-4 top-4 cursor-pointer rounded-full bg-white/10 p-2 text-white hover:bg-white/20"
-              onClick={() => setFullPreview(false)}
-              aria-label="Close preview"
-            >
-              <X className="h-5 w-5" />
-            </button>
-            <motion.div
-              initial={{ scale: 0.96, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.96, opacity: 0 }}
-              className="relative w-full max-w-5xl overflow-hidden rounded-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={shown}
-                alt="Full banner preview"
-                className="max-h-[80vh] w-full object-contain"
+            {!saving && <Check className="size-4" />}
+            {saving ? "Saving…" : "Save banners"}
+          </Button>
+        }
+      />
+
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+      {message ? <AlertBanner variant="success">{message}</AlertBanner> : null}
+
+      <Card className="overflow-hidden border-slate-200/80 shadow-[0_4px_24px_rgba(16,25,46,0.05)]">
+        <CardHeader className="flex flex-col gap-3 border-b border-slate-100 bg-[#eef1f6]/40 min-[380px]:gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="flex flex-wrap items-center gap-2 text-base text-[#16233f]">
+              Property banners
+              <span className="group relative inline-flex">
+                <button
+                  type="button"
+                  className="inline-flex size-6 items-center justify-center rounded-full bg-[#16233f]/8 text-[#16233f] transition hover:bg-[#16233f]/15"
+                  aria-label="Banner selection info"
+                >
+                  <Info className="size-3.5" strokeWidth={2.2} />
+                </button>
+                <span
+                  role="tooltip"
+                  className="pointer-events-none absolute left-0 top-full z-20 mt-2 w-[min(18rem,78vw)] rounded-xl border border-slate-200 bg-white p-3 text-left text-[12px] leading-relaxed text-slate-600 opacity-0 shadow-[0_12px_32px_rgba(16,25,46,0.14)] transition group-hover:opacity-100 group-focus-within:opacity-100 sm:left-1/2 sm:-translate-x-1/2"
+                >
+                  Only properties with a homepage banner image (uploaded in
+                  Property edit) appear here. Select at least one. On the
+                  website, one slide shows if a single banner is selected;
+                  multiple slides rotate every 5 seconds. Click opens that
+                  property. Upload{" "}
+                  <strong className="font-semibold text-slate-800">
+                    1920×800
+                  </strong>{" "}
+                  (or 1920×720). Keep names, towers, and logos in the centre —
+                  edges crop on mobile.
+                </span>
+              </span>
+            </CardTitle>
+            <p className="mt-1 text-xs text-slate-500">
+              {selectedIds.length} selected · {filtered.length} with banners
+              {dirty ? " · unsaved changes" : ""}
+            </p>
+          </div>
+          <div className="relative w-full sm:max-w-xs">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by name or area…"
+              className="pl-9"
+            />
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="space-y-3 p-4 min-[380px]:p-5">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Skeleton key={i} className="h-16 w-full rounded-xl" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="p-6 min-[380px]:p-8">
+              <EmptyState
+                title={
+                  properties.length === 0
+                    ? "No property banners yet"
+                    : "No matches"
+                }
+                description={
+                  properties.length === 0
+                    ? "Open a property → upload a Homepage banner (1920×800), then return here to select it for the hero."
+                    : "Try a different search."
+                }
               />
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
+            </div>
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {pageItems.map((property, index) => {
+                const checked = selectedIds.includes(property.id);
+                const bannerSrc =
+                  property.hero_banner_url || property.cover_image_url;
+
+                return (
+                  <motion.li
+                    key={property.id}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(index, 10) * 0.02 }}
+                  >
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => toggle(property.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggle(property.id);
+                        }
+                      }}
+                      className={cn(
+                        "flex cursor-pointer items-start gap-2.5 px-3 py-3 transition-colors min-[380px]:items-center min-[380px]:gap-3 min-[380px]:px-4 min-[380px]:py-3.5 sm:gap-4 sm:px-5",
+                        checked ? "bg-[#eef1f6]/70" : "hover:bg-slate-50/80",
+                      )}
+                    >
+                      <span
+                        className="mt-0.5 min-[380px]:mt-0"
+                        onClick={(e) => e.stopPropagation()}
+                        onKeyDown={(e) => e.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={checked}
+                          onChange={() => toggle(property.id)}
+                          aria-label={`Show ${property.title} on homepage`}
+                        />
+                      </span>
+
+                      <div className="relative h-12 w-[4.5rem] shrink-0 overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200/80 min-[380px]:h-14 min-[380px]:w-24">
+                        {bannerSrc ? (
+                          <Image
+                            src={bannerSrc}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="96px"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[10px] font-medium text-slate-400">
+                            N/A
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5 min-[380px]:gap-2">
+                          <p className="max-w-full truncate text-[13px] font-semibold text-slate-900 min-[380px]:text-sm">
+                            {property.title}
+                          </p>
+                          {property.is_hero_banner ? (
+                            <Badge
+                              variant="premium"
+                              className="text-[10px]"
+                            >
+                              On homepage
+                            </Badge>
+                          ) : null}
+                          <StatusBadge
+                            status={property.status}
+                            className="text-[10px]"
+                          />
+                        </div>
+                        <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500 min-[380px]:truncate min-[380px]:text-xs">
+                          {[property.area_name, property.locality, property.city]
+                            .filter(Boolean)
+                            .join(" · ") || "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.li>
+                );
+              })}
+            </ul>
+          )}
+        </CardContent>
+
+        {!loading && filtered.length > 0 ? (
+          <div className="flex flex-col gap-3 border-t border-slate-100 px-3 py-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between min-[380px]:px-5">
+            <p className="text-xs text-slate-500">
+              Showing {(safePage - 1) * PAGE_SIZE + 1}–
+              {Math.min(safePage * PAGE_SIZE, filtered.length)} of{" "}
+              {filtered.length}
+            </p>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={safePage <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="min-w-[4.5rem] text-center text-xs font-medium text-slate-600">
+                {safePage} / {totalPages}
+              </span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={safePage >= totalPages}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Card>
+
+      <div className="sticky bottom-3 z-10 flex justify-stretch sm:bottom-4 sm:justify-end">
+        <div className="glass-card flex w-full items-center justify-between gap-3 rounded-2xl p-2 shadow-[0_8px_30px_rgba(16,25,46,0.14)] sm:w-auto">
+          <p className="px-2 text-xs text-slate-500">
+            {selectedIds.length} selected · min 1
+          </p>
+          <Button
+            className="gap-2"
+            loading={saving}
+            disabled={!dirty || loading || selectedIds.length < 1}
+            onClick={() => void handleSave()}
+          >
+            {!saving && <Check className="size-4" />}
+            {saving ? "Saving…" : "Save banners"}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

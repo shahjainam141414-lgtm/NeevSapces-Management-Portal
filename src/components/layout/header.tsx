@@ -41,7 +41,7 @@ function usePageMeta(pathname: string) {
     return { eyebrow: "Catalog", title: "Properties" };
   }
   if (pathname.startsWith("/settings")) {
-    return { eyebrow: "System", title: "Settings" };
+    return { eyebrow: "Website", title: "Settings (Details)" };
   }
   if (pathname.startsWith("/profile")) {
     return { eyebrow: "Account", title: "My Profile" };
@@ -81,8 +81,8 @@ export function Header({ onMenuClick, user }: HeaderProps) {
         className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[var(--accent)]/50 to-transparent"
         aria-hidden
       />
-      <div className="relative flex h-14 items-center justify-between gap-3 px-3 sm:h-[4.25rem] sm:gap-4 sm:px-6">
-        <div className="flex min-w-0 items-center gap-2.5 sm:gap-4">
+      <div className="relative flex h-14 items-center justify-between gap-2 px-2.5 min-[380px]:gap-3 min-[380px]:px-3 sm:h-[4.25rem] sm:gap-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-2 min-[380px]:gap-2.5 sm:gap-4">
           <button
             type="button"
             onClick={onMenuClick}
@@ -100,7 +100,7 @@ export function Header({ onMenuClick, user }: HeaderProps) {
                   {eyebrow}
                 </p>
               </div>
-              <h1 className="font-display mt-0.5 truncate text-base tracking-tight text-[var(--ink)] sm:text-xl">
+              <h1 className="font-display mt-0.5 truncate text-[15px] tracking-tight text-[var(--ink)] min-[380px]:text-base sm:text-xl">
                 {title}
               </h1>
             </div>

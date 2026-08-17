@@ -12,7 +12,7 @@ export function CustomizationShell({ children }: { children: React.ReactNode }) 
   const pathname = usePathname();
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="space-y-3 min-[380px]:space-y-4 sm:space-y-6">
       <motion.div
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0 }}
@@ -24,8 +24,8 @@ export function CustomizationShell({ children }: { children: React.ReactNode }) 
         />
       </motion.div>
 
-      <ScrollRegion fade className="glass-card rounded-2xl p-1.5">
-        <div className="flex w-max min-w-full items-center gap-1">
+      <ScrollRegion fade className="glass-card -mx-1 rounded-2xl p-1 min-[380px]:mx-0 min-[380px]:p-1.5">
+        <div className="flex w-max min-w-full items-center gap-0.5 min-[380px]:gap-1">
           {customizationTabs.map((tab) => {
             const isActive =
               pathname === tab.href || pathname.startsWith(`${tab.href}/`);
@@ -34,7 +34,7 @@ export function CustomizationShell({ children }: { children: React.ReactNode }) 
                 key={tab.id}
                 href={tab.href}
                 className={cn(
-                  "relative shrink-0 cursor-pointer rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-200 sm:px-4 sm:py-2.5",
+                  "relative shrink-0 cursor-pointer rounded-xl px-2.5 py-2 text-[12px] font-medium transition-colors duration-200 min-[380px]:px-3 min-[380px]:text-sm sm:px-4 sm:py-2.5",
                   isActive
                     ? "text-white"
                     : "text-slate-600 hover:bg-white/70 hover:text-slate-900",

@@ -16,6 +16,7 @@ import { BuilderFormDialog } from "@/components/customization/builder-form-dialo
 import { createBuilder } from "@/lib/builders-api";
 import type { Builder, BuilderStatus } from "@/lib/builders";
 import { cn } from "@/lib/utils";
+import { useNestedWheelScroll } from "@/hooks/useNestedWheelScroll";
 
 type BuilderSelectFieldProps = {
   builders: Builder[];
@@ -153,31 +154,7 @@ export function BuilderSelectField({
     return () => window.clearTimeout(t);
   }, [open]);
 
-  // Lenis owns document wheel events — keep nested list scroll working.
-  useEffect(() => {
-    if (!open) return;
-    const list = listRef.current;
-    if (!list) return;
-
-    const onWheel = (event: WheelEvent) => {
-      event.stopPropagation();
-
-      const { scrollTop, scrollHeight, clientHeight } = list;
-      const atTop = scrollTop <= 0;
-      const atBottom = scrollTop + clientHeight >= scrollHeight - 1;
-
-      if ((event.deltaY < 0 && atTop) || (event.deltaY > 0 && atBottom)) {
-        event.preventDefault();
-        return;
-      }
-
-      list.scrollTop += event.deltaY;
-      event.preventDefault();
-    };
-
-    list.addEventListener("wheel", onWheel, { passive: false });
-    return () => list.removeEventListener("wheel", onWheel);
-  }, [open, filtered.length]);
+  useNestedWheelScroll(listRef, open);
 
   const closePanel = () => {
     setOpen(false);
@@ -262,7 +239,7 @@ export function BuilderSelectField({
               <div
                 ref={listRef}
                 data-lenis-prevent
-                className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5"
+                className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain p-1.5"
                 style={{
                   maxHeight: Math.max(120, pos.maxHeight - 108),
                   WebkitOverflowScrolling: "touch",

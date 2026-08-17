@@ -203,7 +203,8 @@ export function DigitalCardFormDialog({ user, open, onOpenChange }: Props) {
         </DialogHeader>
 
         <div
-          className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 [-webkit-overflow-scrolling:touch]"
+          data-lenis-prevent
+          className="scrollbar-thin min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6 sm:py-5 [-webkit-overflow-scrolling:touch]"
           onWheel={(e) => e.stopPropagation()}
         >
           {loading ? (

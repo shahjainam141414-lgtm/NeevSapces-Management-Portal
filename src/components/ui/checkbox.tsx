@@ -22,11 +22,15 @@ const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <span
           className={cn(
-            "pointer-events-none flex h-5 w-5 items-center justify-center rounded-md border border-slate-300 bg-white text-white shadow-sm transition-all duration-150 peer-checked:border-[#16233f] peer-checked:bg-[#16233f] peer-focus-visible:ring-4 peer-focus-visible:ring-[#16233f]/15 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-hover:border-slate-400 peer-checked:group-hover:border-[#1f3157]",
+            "pointer-events-none flex h-5 w-5 items-center justify-center rounded-md border border-slate-300 bg-white text-white shadow-sm transition-all duration-150 peer-checked:border-[#16233f] peer-checked:bg-[#16233f] peer-focus-visible:ring-4 peer-focus-visible:ring-[#16233f]/15 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 group-hover:border-slate-400 peer-checked:group-hover:border-[#1f3157] peer-checked:[&_svg]:scale-100 peer-checked:[&_svg]:opacity-100",
             className,
           )}
         >
-          <Check className="h-3.5 w-3.5 scale-0 opacity-0 transition-all duration-150 peer-checked:scale-100 peer-checked:opacity-100" />
+          <Check
+            className="h-3.5 w-3.5 scale-0 opacity-0 transition-all duration-150"
+            strokeWidth={3}
+            aria-hidden
+          />
         </span>
       </label>
     );

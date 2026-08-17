@@ -442,9 +442,12 @@ export function DashboardPageContent({ user }: Props) {
             </Link>
           </div>
           <div
+            data-lenis-prevent
             className={cn(
               "divide-y divide-[var(--border)]",
-              !loading && recent.length > 5 && "overflow-y-auto overscroll-contain",
+              !loading &&
+                recent.length > 5 &&
+                "scrollbar-thin overflow-y-auto overscroll-contain",
             )}
             style={
               !loading && recent.length > 5

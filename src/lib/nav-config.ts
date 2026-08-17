@@ -3,6 +3,7 @@ import {
   SlidersHorizontal,
   Users,
   Inbox,
+  Settings,
   type LucideIcon,
 } from "lucide-react";
 
@@ -21,6 +22,7 @@ export const mainNav: NavItem[] = [
   },
   { title: "Lead inbox", href: "/leads", icon: Inbox },
   { title: "Users", href: "/users", icon: Users },
+  { title: "Settings (Details)", href: "/settings", icon: Settings },
 ];
 
 export const customizationTabs = [

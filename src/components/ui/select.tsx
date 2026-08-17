@@ -4,6 +4,7 @@ import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNestedWheelScroll } from "@/hooks/useNestedWheelScroll";
 
 const Select = SelectPrimitive.Root;
 const SelectValue = SelectPrimitive.Value;
@@ -66,10 +67,15 @@ SelectScrollDownButton.displayName =
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => (
+>(({ className, children, position = "popper", ...props }, ref) => {
+  const viewportRef = React.useRef<HTMLDivElement>(null);
+  useNestedWheelScroll(viewportRef);
+
+  return (
   <SelectPrimitive.Portal>
     <SelectPrimitive.Content
       ref={ref}
+      data-lenis-prevent
       className={cn(
         "relative z-50 max-h-[min(20rem,var(--radix-select-content-available-height))] min-w-[8rem] overflow-hidden rounded-xl border border-slate-200 bg-white/98 text-slate-900 shadow-[0_20px_50px_rgba(16,25,46,0.14)] backdrop-blur-sm origin-top data-[state=open]:animate-popover-in data-[state=closed]:animate-popover-out",
         position === "popper" &&
@@ -81,8 +87,10 @@ const SelectContent = React.forwardRef<
     >
       <SelectScrollUpButton />
       <SelectPrimitive.Viewport
+        ref={viewportRef}
+        data-lenis-prevent
         className={cn(
-          "max-h-[min(18rem,calc(var(--radix-select-content-available-height)-2.5rem))] overflow-y-auto overscroll-contain p-1.5 [scrollbar-gutter:stable]",
+          "scrollbar-thin max-h-[min(18rem,calc(var(--radix-select-content-available-height)-2.5rem))] overflow-y-auto overscroll-contain p-1.5 [scrollbar-gutter:stable]",
           position === "popper" &&
             "w-full min-w-[var(--radix-select-trigger-width)]",
         )}
@@ -92,7 +100,8 @@ const SelectContent = React.forwardRef<
       <SelectScrollDownButton />
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
-));
+  );
+});
 SelectContent.displayName = SelectPrimitive.Content.displayName;
 
 const SelectItem = React.forwardRef<

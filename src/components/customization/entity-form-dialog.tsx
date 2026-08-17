@@ -203,7 +203,7 @@ function EntityFormFields({
 
   return (
     <>
-      <DialogContent className="max-w-[calc(100vw-2rem)] gap-0 overflow-y-auto overscroll-contain p-0 sm:max-w-md [-webkit-overflow-scrolling:touch]">
+      <DialogContent className="scrollbar-thin max-w-[calc(100vw-2rem)] gap-0 overflow-y-auto overscroll-contain p-0 sm:max-w-md [-webkit-overflow-scrolling:touch]" data-lenis-prevent>
         <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-5 py-5 sm:px-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold tracking-tight text-slate-900">

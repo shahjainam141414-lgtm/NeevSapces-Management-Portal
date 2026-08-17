@@ -16,8 +16,9 @@ const DropdownMenuContent = React.forwardRef<
     <DropdownMenuPrimitive.Content
       ref={ref}
       sideOffset={sideOffset}
+      data-lenis-prevent
       className={cn(
-        "z-50 min-w-[12rem] overflow-hidden rounded-xl border border-slate-200/80 bg-white/98 p-1.5 text-slate-900 shadow-[0_20px_50px_rgba(16,25,46,0.14)] backdrop-blur-sm origin-top data-[state=open]:animate-popover-in data-[state=closed]:animate-popover-out",
+        "z-50 max-h-[min(24rem,70vh)] min-w-[12rem] overflow-y-auto overscroll-contain rounded-xl border border-slate-200/80 bg-white/98 p-1.5 text-slate-900 shadow-[0_20px_50px_rgba(16,25,46,0.14)] backdrop-blur-sm origin-top scrollbar-thin data-[state=open]:animate-popover-in data-[state=closed]:animate-popover-out",
         className,
       )}
       {...props}

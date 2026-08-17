@@ -1,194 +1,232 @@
 "use client";
 
-import Link from "next/link";
-import { motion } from "framer-motion";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCallback, useEffect, useState } from "react";
+import { Check, Mail, MapPin, Phone } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { AlertBanner } from "@/components/ui/alert-banner";
 import { PageHeader } from "@/components/ui/page-header";
-import { currentUser } from "@/lib/current-user";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  getSiteDetails,
+  saveSiteDetails,
+} from "@/lib/site-details-api";
+import { DEFAULT_SITE_DETAILS } from "@/lib/site-details";
 
 export function SettingsPageContent() {
+  const [phone, setPhone] = useState(DEFAULT_SITE_DETAILS.phone_display);
+  const [email, setEmail] = useState(DEFAULT_SITE_DETAILS.email);
+  const [address, setAddress] = useState(DEFAULT_SITE_DETAILS.address);
+  const [savedPhone, setSavedPhone] = useState(DEFAULT_SITE_DETAILS.phone_display);
+  const [savedEmail, setSavedEmail] = useState(DEFAULT_SITE_DETAILS.email);
+  const [savedAddress, setSavedAddress] = useState(DEFAULT_SITE_DETAILS.address);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const row = await getSiteDetails();
+      setPhone(row.phone_display);
+      setEmail(row.email);
+      setAddress(row.address);
+      setSavedPhone(row.phone_display);
+      setSavedEmail(row.email);
+      setSavedAddress(row.address);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not load site details.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const dirty =
+    phone.trim() !== savedPhone ||
+    email.trim() !== savedEmail ||
+    address.trim() !== savedAddress;
+
+  const handleSave = async () => {
+    if (!phone.trim() || !email.trim() || !address.trim()) {
+      setError("Phone, email, and address are all required.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const row = await saveSiteDetails({
+        phone_display: phone,
+        email,
+        address,
+      });
+      setPhone(row.phone_display);
+      setEmail(row.email);
+      setAddress(row.address);
+      setSavedPhone(row.phone_display);
+      setSavedEmail(row.email);
+      setSavedAddress(row.address);
+      setMessage("Contact details updated. They now show on the website.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Could not save site details.",
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 min-[380px]:space-y-6">
       <PageHeader
-        eyebrow="Configuration"
-        title="Settings"
-        description="Configure website settings, SEO, and integrations."
+        eyebrow="Website"
+        title="Settings (Details)"
+        description="Phone, email, and office address shown on the public site. The phone number is used for Call and WhatsApp everywhere."
+        actions={
+          <Button
+            className="w-full gap-2 min-[380px]:w-auto"
+            loading={saving}
+            disabled={!dirty || loading}
+            onClick={() => void handleSave()}
+          >
+            {!saving && <Check className="size-4" />}
+            {saving ? "Saving…" : "Save details"}
+          </Button>
+        }
       />
 
-      <Tabs defaultValue="general" className="w-full">
-        <TabsList className="flex h-auto w-full flex-wrap gap-1">
-          <TabsTrigger value="general" className="flex-1 sm:flex-none">
-            General
-          </TabsTrigger>
-          <TabsTrigger value="seo" className="flex-1 sm:flex-none">
-            SEO
-          </TabsTrigger>
-          <TabsTrigger value="integrations" className="flex-1 sm:flex-none">
-            Integrations
-          </TabsTrigger>
-        </TabsList>
+      {error ? <AlertBanner variant="error">{error}</AlertBanner> : null}
+      {message ? <AlertBanner variant="success">{message}</AlertBanner> : null}
 
-        <TabsContent value="general">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Website Settings</CardTitle>
-                  <CardDescription>
-                    Logo, contact information, and social media links.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="company">Company Name</Label>
-                    <Input id="company" defaultValue="Neev Spaces" />
-                  </div>
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input id="phone" defaultValue="+91 79 1234 5678" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="email">Email</Label>
-                      <Input id="email" defaultValue="info@neevspaces.com" />
-                    </div>
-                  </div>
-                  <div className="flex justify-end border-t border-slate-100 pt-5">
-                    <Button>Save Changes</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Quick Profile</CardTitle>
-                  <CardDescription>
-                    View or update your full profile details.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="profile-name">Name</Label>
-                    <Input id="profile-name" defaultValue={currentUser.name} readOnly />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="profile-email">Email</Label>
-                    <Input id="profile-email" defaultValue={currentUser.email} readOnly />
-                  </div>
-                  <div className="flex justify-end border-t border-slate-100 pt-5">
-                    <Button variant="outline" asChild>
-                      <Link href="/profile">Go to My Profile</Link>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="seo">
-          <motion.div
-            initial={{ opacity: 0, y: 14 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            className="lg:max-w-2xl"
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>SEO Defaults</CardTitle>
-                <CardDescription>
-                  Default meta tags and Open Graph settings for the website.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-5">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,18rem)] lg:gap-6">
+        <Card className="overflow-hidden border-slate-200/80 shadow-[0_4px_24px_rgba(16,25,46,0.05)]">
+          <CardHeader className="border-b border-slate-100 bg-[#eef1f6]/40">
+            <CardTitle className="text-base text-[#16233f]">
+              Contact details
+            </CardTitle>
+            <p className="mt-1 text-xs text-slate-500">
+              These three fields update the header, footer, and contact page.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-5 p-4 min-[380px]:p-5">
+            {loading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-10 w-full rounded-xl" />
+                <Skeleton className="h-10 w-full rounded-xl" />
+                <Skeleton className="h-24 w-full rounded-xl" />
+              </div>
+            ) : (
+              <>
                 <div className="space-y-2">
-                  <Label htmlFor="meta-title">Default Meta Title</Label>
+                  <Label htmlFor="site-phone">Phone / WhatsApp</Label>
                   <Input
-                    id="meta-title"
-                    defaultValue="Neev Spaces | Premium Real Estate"
+                    id="site-phone"
+                    value={phone}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
+                      setMessage(null);
+                    }}
+                    placeholder={DEFAULT_SITE_DETAILS.phone_display}
+                    inputMode="tel"
+                    autoComplete="tel"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="meta-desc">Default Meta Description</Label>
-                  <Textarea
-                    id="meta-desc"
-                    defaultValue="Discover luxury properties and premium projects across Ahmedabad."
+                  <Label htmlFor="site-email">Email</Label>
+                  <Input
+                    id="site-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setMessage(null);
+                    }}
+                    placeholder={DEFAULT_SITE_DETAILS.email}
+                    autoComplete="email"
                   />
                 </div>
-                <div className="flex justify-end border-t border-slate-100 pt-5">
-                  <Button>Save SEO Settings</Button>
+                <div className="space-y-2">
+                  <Label htmlFor="site-address">Address</Label>
+                  <Textarea
+                    id="site-address"
+                    value={address}
+                    onChange={(e) => {
+                      setAddress(e.target.value);
+                      setMessage(null);
+                    }}
+                    placeholder={DEFAULT_SITE_DETAILS.address}
+                    rows={3}
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </TabsContent>
+              </>
+            )}
+          </CardContent>
+        </Card>
 
-        <TabsContent value="integrations">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Cloudinary</CardTitle>
-                  <CardDescription>Image storage configuration.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="cloud-name">Cloud Name</Label>
-                    <Input id="cloud-name" placeholder="your-cloud-name" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="api-key">API Key</Label>
-                    <Input id="api-key" type="password" placeholder="••••••••" />
-                  </div>
-                  <div className="flex justify-end border-t border-slate-100 pt-5">
-                    <Button>Save Integration</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.06, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Card>
-                <CardHeader>
-                  <CardTitle>Analytics</CardTitle>
-                  <CardDescription>Google Analytics and tracking scripts.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  <div className="space-y-2">
-                    <Label htmlFor="ga-id">Google Analytics ID</Label>
-                    <Input id="ga-id" placeholder="G-XXXXXXXXXX" />
-                  </div>
-                  <div className="flex justify-end border-t border-slate-100 pt-5">
-                    <Button>Save Analytics</Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-        </TabsContent>
-      </Tabs>
+        <Card className="h-fit border-slate-200/80 shadow-[0_4px_24px_rgba(16,25,46,0.05)]">
+          <CardHeader className="border-b border-slate-100 bg-[#eef1f6]/40">
+            <CardTitle className="text-base text-[#16233f]">
+              Currently live
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4 p-4 min-[380px]:p-5">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-[#16233f]/8 text-[#16233f]">
+                <Phone className="size-3.5" strokeWidth={2} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                  Phone / WhatsApp
+                </p>
+                <p className="mt-0.5 break-words text-sm font-medium text-slate-800">
+                  {savedPhone}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-[#16233f]/8 text-[#16233f]">
+                <Mail className="size-3.5" strokeWidth={2} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                  Email
+                </p>
+                <p className="mt-0.5 break-words text-sm font-medium text-slate-800">
+                  {savedEmail}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-lg bg-[#16233f]/8 text-[#16233f]">
+                <MapPin className="size-3.5" strokeWidth={2} />
+              </span>
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+                  Address
+                </p>
+                <p className="mt-0.5 whitespace-pre-wrap break-words text-sm font-medium text-slate-800">
+                  {savedAddress}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

@@ -10,7 +10,7 @@ type ScrollRegionProps = React.HTMLAttributes<HTMLDivElement> & {
 
 /**
  * Contained scroll area that works inside the dashboard shell.
- * Marks itself for Lenis so nested scroll (tables, tab strips) stays usable.
+ * Horizontal-only regions must NOT block Lenis vertical page scroll.
  */
 export function ScrollRegion({
   axis = "x",
@@ -26,9 +26,11 @@ export function ScrollRegion({
         ? "overflow-y-auto overflow-x-hidden"
         : "overflow-auto";
 
+  const blockLenisVertical = axis === "y" || axis === "both";
+
   return (
     <div
-      data-lenis-prevent
+      {...(blockLenisVertical ? { "data-lenis-prevent": true } : {})}
       className={cn(
         "relative min-w-0",
         fade && axis !== "y" && "table-scroll-fade",
@@ -37,11 +39,14 @@ export function ScrollRegion({
       {...props}
     >
       <div
+        {...(blockLenisVertical
+          ? { "data-lenis-prevent": true, "data-lenis-prevent-wheel": true }
+          : {})}
         className={cn(
           overflow,
-          "overscroll-x-contain touch-pan-x [-webkit-overflow-scrolling:touch]",
+          "scrollbar-thin overscroll-contain [-webkit-overflow-scrolling:touch]",
+          axis === "x" && "touch-pan-x overscroll-x-contain",
           axis !== "x" && "touch-pan-y",
-          "scrollbar-thin",
         )}
       >
         {children}

@@ -6,6 +6,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { Header } from "@/components/layout/header";
 import { CommandPalette } from "@/components/layout/command-palette";
 import type { AdminProfile } from "@/lib/admin-profiles";
+import { shouldPreventLenis } from "@/lib/nested-scroll";
 
 type DashboardShellProps = {
   children: React.ReactNode;
@@ -25,11 +26,7 @@ export function DashboardShell({ children, user }: DashboardShellProps) {
       smoothWheel: true,
       touchMultiplier: 1.4,
       prevent: (node) =>
-        node instanceof HTMLElement &&
-        Boolean(
-          node.closest("[data-lenis-prevent]") ||
-            node.closest("[data-lenis-prevent-wheel]"),
-        ),
+        node instanceof HTMLElement && shouldPreventLenis(node),
     });
 
     let frame = 0;
@@ -57,7 +54,7 @@ export function DashboardShell({ children, user }: DashboardShellProps) {
   }, [mobileOpen]);
 
   return (
-    <div className="dashboard-bg flex min-h-dvh min-w-0">
+    <div className="dashboard-bg min-h-dvh min-w-0">
       <Sidebar
         collapsed={collapsed}
         onToggle={() => setCollapsed((value) => !value)}
@@ -65,9 +62,15 @@ export function DashboardShell({ children, user }: DashboardShellProps) {
         onMobileClose={() => setMobileOpen(false)}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div
+        className={
+          collapsed
+            ? "flex min-h-dvh min-w-0 flex-col lg:pl-[76px]"
+            : "flex min-h-dvh min-w-0 flex-col lg:pl-[248px]"
+        }
+      >
         <Header onMenuClick={() => setMobileOpen(true)} user={user} />
-        <main className="min-w-0 flex-1 overflow-x-clip p-3 sm:p-5 lg:p-8">
+        <main className="min-w-0 flex-1 overflow-x-clip px-3 py-3 sm:px-5 sm:py-5 lg:px-8 lg:py-8">
           <div className="mx-auto w-full min-w-0 max-w-[1440px]">{children}</div>
         </main>
       </div>

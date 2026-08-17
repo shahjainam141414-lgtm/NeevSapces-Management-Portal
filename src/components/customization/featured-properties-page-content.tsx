@@ -203,12 +203,13 @@ export function FeaturedPropertiesPageContent() {
                         }
                       }}
                       className={cn(
-                        "flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors sm:gap-4 sm:px-5",
+                        "flex cursor-pointer items-start gap-2.5 px-3 py-3 transition-colors min-[380px]:items-center min-[380px]:gap-3 min-[380px]:px-4 min-[380px]:py-3.5 sm:gap-4 sm:px-5",
                         checked ? "bg-[#eef1f6]/70" : "hover:bg-slate-50/80",
                         atLimit && "cursor-not-allowed opacity-55",
                       )}
                     >
                       <span
+                        className="mt-0.5 min-[380px]:mt-0"
                         onClick={(e) => e.stopPropagation()}
                         onKeyDown={(e) => e.stopPropagation()}
                       >
@@ -222,7 +223,7 @@ export function FeaturedPropertiesPageContent() {
                         />
                       </span>
 
-                      <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200/80">
+                      <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-slate-100 ring-1 ring-slate-200/80 min-[380px]:h-12 min-[380px]:w-12">
                         {property.cover_image_url ? (
                           <Image
                             src={property.cover_image_url}
@@ -239,8 +240,8 @@ export function FeaturedPropertiesPageContent() {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="truncate text-sm font-semibold text-slate-900">
+                        <div className="flex flex-wrap items-center gap-1.5 min-[380px]:gap-2">
+                          <p className="max-w-full truncate text-[13px] font-semibold text-slate-900 min-[380px]:text-sm">
                             {property.title}
                           </p>
                           {property.is_featured && (
@@ -254,7 +255,7 @@ export function FeaturedPropertiesPageContent() {
                             className="text-[10px]"
                           />
                         </div>
-                        <p className="mt-0.5 truncate text-xs text-slate-500">
+                        <p className="mt-0.5 line-clamp-2 text-[11px] text-slate-500 min-[380px]:truncate min-[380px]:text-xs">
                           {[property.area_name, property.locality, property.city]
                             .filter(Boolean)
                             .join(" · ") || "—"}

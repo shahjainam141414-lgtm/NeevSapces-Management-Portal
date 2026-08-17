@@ -95,7 +95,10 @@ export function Sidebar({
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto overscroll-contain p-3">
+      <nav
+        data-lenis-prevent
+        className="scrollbar-thin flex-1 space-y-1 overflow-y-auto overscroll-contain p-3"
+      >
         {mainNav.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.href);
@@ -169,7 +172,7 @@ export function Sidebar({
 
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-[min(18.5rem,88vw)] border-r border-[var(--border)] bg-white/95 shadow-[2px_0_32px_rgba(20,32,51,0.04)] backdrop-blur-xl transition-[width,transform] duration-300 ease-out lg:static lg:w-auto lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-[min(18.5rem,88vw)] flex-col border-r border-[var(--border)] bg-white/95 shadow-[2px_0_32px_rgba(20,32,51,0.04)] backdrop-blur-xl transition-[width,transform] duration-300 ease-out lg:translate-x-0",
           mobileOpen ? "translate-x-0" : "-translate-x-full",
           collapsed ? "lg:w-[76px]" : "lg:w-[248px]",
         )}

@@ -26,6 +26,7 @@ export type Property = {
   slug: string;
   status: PropertyStatus;
   is_featured: boolean;
+  is_hero_banner: boolean;
   listing_badge: string;
 
   area_id: string | null;
@@ -37,6 +38,8 @@ export type Property = {
 
   cover_image_url: string | null;
   cover_cloudinary_public_id: string | null;
+  hero_banner_url: string | null;
+  hero_banner_cloudinary_public_id: string | null;
   brochure_url: string | null;
 
   package_price_label: string | null;
@@ -138,7 +141,7 @@ export type PropertyDetail = Property & {
 };
 
 export const PROPERTY_COLUMNS =
-  "id, title, slug, status, is_featured, listing_badge, area_id, area_name, locality, city, pincode, full_address, cover_image_url, cover_cloudinary_public_id, brochure_url, package_price_label, package_price_notes, price_per_sqft_label, rate_cards, availability, possession_by, property_type_label, tower_count, unit_count, rera_no, rera_url, builder_id, developer_name, category_label, construction_status, project_size_label, floor_count, total_plot_area, open_area_percent, parking_types, facing, project_position, road_connectivity, current_status, about, sort_order, created_at, updated_at";
+  "id, title, slug, status, is_featured, is_hero_banner, listing_badge, area_id, area_name, locality, city, pincode, full_address, cover_image_url, cover_cloudinary_public_id, hero_banner_url, hero_banner_cloudinary_public_id, brochure_url, package_price_label, package_price_notes, price_per_sqft_label, rate_cards, availability, possession_by, property_type_label, tower_count, unit_count, rera_no, rera_url, builder_id, developer_name, category_label, construction_status, project_size_label, floor_count, total_plot_area, open_area_percent, parking_types, facing, project_position, road_connectivity, current_status, about, sort_order, created_at, updated_at";
 
 export function normalizeRateCards(value: unknown): PropertyRateCard[] {
   if (!Array.isArray(value)) return [];

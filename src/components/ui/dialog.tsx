@@ -31,7 +31,10 @@ const DialogContent = React.forwardRef<
 >(({ className, children, ...props }, ref) => (
   <DialogPortal>
     <DialogOverlay />
-    <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+    <div
+      data-lenis-prevent
+      className="scrollbar-thin fixed inset-0 z-50 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]"
+    >
       <div className="flex min-h-full items-start justify-center p-4 py-6 sm:items-center sm:p-6 sm:py-10">
         <DialogPrimitive.Content
           ref={ref}

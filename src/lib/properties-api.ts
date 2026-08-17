@@ -27,11 +27,13 @@ function toFriendlyError(error: { message?: string; code?: string; hint?: string
   }
   if (
     msg.toLowerCase().includes("rate_cards") ||
+    msg.toLowerCase().includes("hero_banner") ||
+    msg.toLowerCase().includes("is_hero_banner") ||
     (msg.toLowerCase().includes("column") &&
       msg.toLowerCase().includes("does not exist"))
   ) {
     return new Error(
-      "Property schema outdated. Run supabase/migrations/015_property_rate_cards_and_spec_labels.sql in the Supabase SQL Editor, then retry.",
+      "Property schema outdated. Run supabase/migrations/015_property_rate_cards_and_spec_labels.sql and 028_property_hero_banners.sql in the Supabase SQL Editor, then retry.",
     );
   }
   if (
@@ -53,6 +55,7 @@ function normalizeProperty(row: Property): Property {
     parking_types: Array.isArray(row.parking_types) ? row.parking_types : [],
     rate_cards: normalizeRateCards(row.rate_cards),
     is_featured: Boolean(row.is_featured),
+    is_hero_banner: Boolean(row.is_hero_banner),
   };
 }
 
@@ -87,6 +90,32 @@ export async function setFeaturedProperties(
   const { error: setError } = await supabase
     .from("properties")
     .update({ is_featured: true })
+    .in("id", unique);
+
+  if (setError) throw toFriendlyError(setError);
+}
+
+/** Homepage hero carousel selection. Requires at least one property ID. */
+export async function setHeroBannerProperties(
+  propertyIds: string[],
+): Promise<void> {
+  const supabase = createClient();
+  const unique = [...new Set(propertyIds)];
+
+  if (unique.length === 0) {
+    throw new Error("Select at least one property banner for the homepage.");
+  }
+
+  const { error: clearError } = await supabase
+    .from("properties")
+    .update({ is_hero_banner: false })
+    .eq("is_hero_banner", true);
+
+  if (clearError) throw toFriendlyError(clearError);
+
+  const { error: setError } = await supabase
+    .from("properties")
+    .update({ is_hero_banner: true })
     .in("id", unique);
 
   if (setError) throw toFriendlyError(setError);

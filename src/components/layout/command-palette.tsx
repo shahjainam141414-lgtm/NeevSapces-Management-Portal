@@ -30,7 +30,7 @@ const ACTIONS = [
         icon: SlidersHorizontal,
       },
       { label: "Team", href: "/users", icon: Users },
-      { label: "Settings", href: "/settings", icon: Settings },
+      { label: "Settings (Details)", href: "/settings", icon: Settings },
     ],
   },
   {
@@ -97,7 +97,10 @@ export function CommandPalette() {
             autoFocus
           />
         </div>
-        <Command.List className="max-h-80 overflow-y-auto p-2">
+        <Command.List
+          data-lenis-prevent
+          className="scrollbar-thin max-h-80 overflow-y-auto overscroll-contain p-2"
+        >
           <Command.Empty className="px-3 py-8 text-center text-sm text-[var(--muted)]">
             No matches found.
           </Command.Empty>

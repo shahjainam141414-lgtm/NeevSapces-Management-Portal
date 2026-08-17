@@ -7,7 +7,7 @@ import {
 export const runtime = "nodejs";
 
 const BUCKET = "property-brochures";
-const MAX_BYTES = 20 * 1024 * 1024; // 20MB
+const MAX_BYTES = 50 * 1024 * 1024; // 50MB — prefer direct browser upload; this is fallback only
 
 async function ensureBrochureBucket() {
   const supabase = createServiceClient();
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
     if (file.size > MAX_BYTES) {
       return NextResponse.json(
-        { error: "File must be under 20MB" },
+        { error: `File must be under ${Math.round(MAX_BYTES / (1024 * 1024))}MB` },
         { status: 400 },
       );
     }

@@ -608,7 +608,10 @@ export function AmenitiesPageContent() {
                     : `Remove default from ${selectedCount} selected amenit${selectedCount === 1 ? "y" : "ies"}?`}
                 </p>
                 {selectedTitles.length > 0 && (
-                  <ul className="max-h-40 list-disc space-y-1 overflow-y-auto rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-slate-700">
+                  <ul
+                    data-lenis-prevent
+                    className="scrollbar-thin max-h-40 list-disc space-y-1 overflow-y-auto overscroll-contain rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-slate-700"
+                  >
                     {selectedTitles.map((title) => (
                       <li key={title}>{title}</li>
                     ))}

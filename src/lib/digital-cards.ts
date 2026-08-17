@@ -1,3 +1,5 @@
+import { DEFAULT_SITE_DETAILS } from "@/lib/site-details";
+
 export type DigitalCardAccent = "steel" | "bronze";
 export type DigitalCardStatus = "active" | "inactive";
 
@@ -31,8 +33,8 @@ export const CARD_COMPANY = {
   tagline: "Create Your Legacy With Strong Neev",
   website: "https://neevspaces.net",
   instagram: "https://www.instagram.com/neevspaces/",
-  phoneDisplay: "+91 76002 71405",
-  phoneTel: "+917600271405",
+  phoneDisplay: DEFAULT_SITE_DETAILS.phone_display,
+  phoneTel: DEFAULT_SITE_DETAILS.phone_tel,
   address: "A 707, Ganesh Glory 11, Jagatpura Road, Gota, Ahmedabad 382470",
   mapsQuery: "A 707 Ganesh Glory 11 Jagatpura Road Gota Ahmedabad 382470",
   rera: "AG/GJ/AHMEDABAD/AHMEDABAD CITY/AA06547/180631R1",

@@ -66,6 +66,7 @@ import {
   seedRateCardsFromLegacy,
   type PropertyDetail,
   type PropertyFloorPlan,
+  type PropertyMedia,
   type PropertyRateCard,
   type PropertyStatus,
 } from "@/lib/properties";
@@ -523,7 +524,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           rest,
           "neev/properties/gallery",
         );
-        const mediaRows = [];
+        const mediaRows: PropertyMedia[] = [];
         for (const up of galleryUploads) {
           const media = await addPropertyMedia({
             property_id: propertyId,
@@ -601,7 +602,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         list,
         "neev/properties/gallery",
       );
-      const mediaRows = [];
+      const mediaRows: PropertyMedia[] = [];
       for (const up of uploaded) {
         const media = await addPropertyMedia({
           property_id: propertyId,

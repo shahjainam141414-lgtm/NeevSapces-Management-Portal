@@ -25,7 +25,7 @@ async function uniqueSlug(
   base: string,
   excludeId?: string,
 ) {
-  let candidate = base || "advisor";
+  const candidate = base || "advisor";
   for (let i = 0; i < 40; i += 1) {
     const trySlug = i === 0 ? candidate : `${candidate}-${i + 1}`;
     const { data } = await admin

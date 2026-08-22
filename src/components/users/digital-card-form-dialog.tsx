@@ -111,7 +111,6 @@ export function DigitalCardFormDialog({ user, open, onOpenChange }: Props) {
   });
 
   const status = useWatch({ control, name: "status" });
-  const displayName = useWatch({ control, name: "displayName" });
 
   useEffect(() => {
     if (!open || !user) return;

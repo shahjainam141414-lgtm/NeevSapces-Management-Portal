@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Inbox, ImageIcon, Plus, Search } from "lucide-react";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,6 +32,10 @@ import type {
   OptionStatus,
   StaticOptionType,
 } from "@/lib/static-options";
+import {
+  notifyAdminListChanged,
+  replaceById,
+} from "@/lib/admin-list-sync";
 
 type CustomizationPageContentProps = {
   title: string;
@@ -54,9 +57,11 @@ export function CustomizationPageContent({
   const [editItem, setEditItem] = useState<EntityItem | null>(null);
   const [deleteItem, setDeleteItem] = useState<EntityItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const editItemRef = useRef(editItem);
+  editItemRef.current = editItem;
 
-  const loadItems = useCallback(async () => {
-    setLoading(true);
+  const loadItems = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const rows = await listStaticOptions(optionType);
       setItems(rows);
@@ -65,9 +70,9 @@ export function CustomizationPageContent({
       const message =
         err instanceof Error ? err.message : "Failed to load data from Supabase";
       setError(message);
-      setItems([]);
+      if (!silent) setItems([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [optionType]);
 
@@ -91,24 +96,42 @@ export function CustomizationPageContent({
     setItems((prev) =>
       [...prev, created].sort((a, b) => a.name.localeCompare(b.name)),
     );
+    notifyAdminListChanged();
   };
 
   const handleEdit = async (data: EntityFormSubmitData) => {
-    if (!editItem) return;
+    const current = editItemRef.current;
+    if (!current) return;
     const updated = await updateStaticOption({
-      id: editItem.id,
+      id: current.id,
       value: data.value,
       status: data.status,
       image_url: data.image_url,
       cloudinary_public_id: data.cloudinary_public_id,
       clearImage: data.clearImage,
     });
+    const next: EntityItem = {
+      ...current,
+      ...updated,
+      id: current.id,
+      name: data.value,
+      status: data.status,
+      image_url: data.clearImage
+        ? null
+        : (data.image_url ?? updated.image_url ?? current.image_url),
+      cloudinary_public_id: data.clearImage
+        ? null
+        : (data.cloudinary_public_id ??
+          updated.cloudinary_public_id ??
+          current.cloudinary_public_id),
+    };
     setItems((prev) =>
-      prev
-        .map((i) => (i.id === updated.id ? updated : i))
-        .sort((a, b) => a.name.localeCompare(b.name)),
+      replaceById(prev, current.id, next).sort((a, b) =>
+        a.name.localeCompare(b.name),
+      ),
     );
     setEditItem(null);
+    notifyAdminListChanged();
   };
 
   const handleDelete = async () => {
@@ -118,6 +141,7 @@ export function CustomizationPageContent({
       await deleteStaticOption(deleteItem.id);
       setItems((prev) => prev.filter((i) => i.id !== deleteItem.id));
       setDeleteItem(null);
+      notifyAdminListChanged();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to delete. Try again.",
@@ -137,10 +161,15 @@ export function CustomizationPageContent({
         status,
       });
       setItems((prev) =>
-        prev
-          .map((i) => (i.id === updated.id ? updated : i))
-          .sort((a, b) => a.name.localeCompare(b.name)),
+        replaceById(prev, item.id, {
+          ...item,
+          ...updated,
+          id: item.id,
+          status,
+          name: updated.name || item.name,
+        }).sort((a, b) => a.name.localeCompare(b.name)),
       );
+      notifyAdminListChanged();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not update status.",
@@ -383,12 +412,12 @@ function AreaThumb({
   return (
     <div className="relative h-10 w-14 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
       {imageUrl ? (
-        <Image
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          key={imageUrl}
           src={imageUrl}
           alt={name}
-          fill
-          className="object-cover"
-          sizes="56px"
+          className="h-full w-full object-cover"
         />
       ) : (
         <div className="flex h-full w-full items-center justify-center text-slate-300">

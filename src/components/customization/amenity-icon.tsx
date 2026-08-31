@@ -176,11 +176,13 @@ export function AmenityIcon({
     >
       {hasCustom ? (
         <Image
+          key={iconUrl}
           src={iconUrl!}
           alt=""
           fill
           className="object-contain p-2"
           sizes="64px"
+          unoptimized
         />
       ) : (
         createElement(resolveDefaultIcon(title), {

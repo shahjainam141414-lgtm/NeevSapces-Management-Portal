@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   Building2,
@@ -30,11 +30,16 @@ import {
 import { cn } from "@/lib/utils";
 import { deleteProperty, listProperties, updateProperty } from "@/lib/properties-api";
 import type { Property, PropertyStatus } from "@/lib/properties";
+import {
+  notifyAdminListChanged,
+  useReloadWhenVisible,
+} from "@/lib/admin-list-sync";
 
 type StatusFilter = "all" | PropertyStatus;
 
 export function PropertiesPageContent() {
   const router = useRouter();
+  const pathname = usePathname();
   const [items, setItems] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -43,8 +48,8 @@ export function PropertiesPageContent() {
   const [deleteItem, setDeleteItem] = useState<Property | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const loadItems = useCallback(async () => {
-    setLoading(true);
+  const loadItems = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const rows = await listProperties();
       setItems(rows);
@@ -55,16 +60,21 @@ export function PropertiesPageContent() {
           ? err.message
           : "Failed to load properties. Run 013_properties.sql in Supabase.",
       );
-      setItems([]);
+      if (!silent) setItems([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadItems();
+  }, [loadItems, pathname]);
+
+  const reloadSilent = useCallback(() => {
+    void loadItems(true);
   }, [loadItems]);
+  useReloadWhenVisible(reloadSilent);
 
   const counts = useMemo(() => {
     return {
@@ -97,6 +107,7 @@ export function PropertiesPageContent() {
       await deleteProperty(deleteItem.id);
       setItems((prev) => prev.filter((p) => p.id !== deleteItem.id));
       setDeleteItem(null);
+      notifyAdminListChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Delete failed");
     } finally {
@@ -112,6 +123,7 @@ export function PropertiesPageContent() {
       setItems((prev) =>
         prev.map((p) => (p.id === updated.id ? { ...p, ...updated } : p)),
       );
+      notifyAdminListChanged();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not update status.",

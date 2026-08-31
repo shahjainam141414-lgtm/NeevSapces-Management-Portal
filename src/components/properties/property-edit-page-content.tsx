@@ -82,6 +82,7 @@ import {
   updateProperty,
   upsertFloorPlan,
 } from "@/lib/properties-api";
+import { notifyAdminListChanged } from "@/lib/admin-list-sync";
 import { RateCardsEditor } from "@/components/properties/rate-cards-editor";
 import type { TextRow } from "@/components/properties/inline-text-rows";
 import { RichTextEditor } from "@/components/properties/rich-text-editor";
@@ -806,6 +807,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           .map((plan) => attachRateCard(plan, updated.rate_cards ?? rateCards)),
       );
       setMessage("Property saved successfully.");
+      notifyAdminListChanged();
       return true;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
@@ -831,7 +833,9 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
   const handleSaveAndFinish = async () => {
     const ok = await handleSave();
-    if (ok) router.push("/customization/properties");
+    if (!ok) return;
+    router.push("/customization/properties");
+    router.refresh();
   };
 
   const addressPreview = useMemo(() => {

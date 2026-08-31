@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { resolveBuilderLogo } from "@/lib/builder-logos";
 import { getBuilderInitials } from "@/lib/builders";
 import { cn } from "@/lib/utils";
@@ -15,6 +15,10 @@ export function BuilderLogo({ name, logoUrl, className }: BuilderLogoProps) {
   const [failed, setFailed] = useState(false);
   const resolved = resolveBuilderLogo(name, logoUrl);
   const showImage = Boolean(resolved) && !failed;
+
+  useEffect(() => {
+    setFailed(false);
+  }, [resolved, name]);
 
   return (
     <div

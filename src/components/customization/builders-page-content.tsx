@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Inbox, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,10 @@ import {
   updateBuilder,
 } from "@/lib/builders-api";
 import type { Builder, BuilderStatus } from "@/lib/builders";
+import {
+  notifyAdminListChanged,
+  replaceById,
+} from "@/lib/admin-list-sync";
 
 export function BuildersPageContent() {
   const [items, setItems] = useState<Builder[]>([]);
@@ -37,9 +41,11 @@ export function BuildersPageContent() {
   const [editItem, setEditItem] = useState<Builder | null>(null);
   const [deleteItem, setDeleteItem] = useState<Builder | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const editItemRef = useRef(editItem);
+  editItemRef.current = editItem;
 
-  const loadItems = useCallback(async () => {
-    setLoading(true);
+  const loadItems = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const rows = await listBuilders();
       setItems(rows);
@@ -50,9 +56,9 @@ export function BuildersPageContent() {
           ? err.message
           : "Failed to load builders. Run 006_builders.sql in Supabase.",
       );
-      setItems([]);
+      if (!silent) setItems([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -83,6 +89,7 @@ export function BuildersPageContent() {
       cloudinary_public_id: data.cloudinary_public_id,
     });
     setItems((prev) => [...prev, created]);
+    notifyAdminListChanged();
   };
 
   const handleEdit = async (data: {
@@ -92,19 +99,36 @@ export function BuildersPageContent() {
     cloudinary_public_id?: string | null;
     clearLogo?: boolean;
   }) => {
-    if (!editItem) return;
+    const current = editItemRef.current;
+    if (!current) return;
     const updated = await updateBuilder({
-      id: editItem.id,
+      id: current.id,
       name: data.name,
-      tier: editItem.tier,
+      tier: current.tier,
       status: data.status,
-      website: editItem.website,
+      website: current.website,
       logo_url: data.logo_url,
       cloudinary_public_id: data.cloudinary_public_id,
       clearLogo: data.clearLogo,
     });
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    const next: Builder = {
+      ...current,
+      ...updated,
+      id: current.id,
+      name: data.name,
+      status: data.status,
+      logo_url: data.clearLogo
+        ? null
+        : (data.logo_url ?? updated.logo_url ?? current.logo_url),
+      cloudinary_public_id: data.clearLogo
+        ? null
+        : (data.cloudinary_public_id ??
+          updated.cloudinary_public_id ??
+          current.cloudinary_public_id),
+    };
+    setItems((prev) => replaceById(prev, current.id, next));
     setEditItem(null);
+    notifyAdminListChanged();
   };
 
   const handleDelete = async () => {
@@ -114,6 +138,7 @@ export function BuildersPageContent() {
       await deleteBuilder(deleteItem.id);
       setItems((prev) => prev.filter((i) => i.id !== deleteItem.id));
       setDeleteItem(null);
+      notifyAdminListChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete.");
     } finally {
@@ -132,7 +157,10 @@ export function BuildersPageContent() {
         status,
         website: item.website,
       });
-      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      setItems((prev) =>
+        replaceById(prev, item.id, { ...item, ...updated, id: item.id, status }),
+      );
+      notifyAdminListChanged();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not update status.",
@@ -231,7 +259,11 @@ export function BuildersPageContent() {
                     {builderActions(item)}
                   </div>
 
-                  <BuilderLogo name={item.name} logoUrl={item.logo_url} />
+                  <BuilderLogo
+                    key={`${item.id}-${item.logo_url ?? ""}-${item.name}`}
+                    name={item.name}
+                    logoUrl={item.logo_url}
+                  />
 
                   <h4 className="amenity-name mt-3.5 line-clamp-2 min-h-[2.4rem] w-full px-1 text-[13px] leading-snug sm:text-sm">
                     {item.name}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Check,
@@ -37,6 +37,10 @@ import {
   updateAmenity,
 } from "@/lib/amenities-api";
 import type { Amenity, AmenityStatus } from "@/lib/amenities";
+import {
+  notifyAdminListChanged,
+  replaceById,
+} from "@/lib/admin-list-sync";
 import { cn } from "@/lib/utils";
 
 type SelectMode = "set" | "unset" | null;
@@ -50,14 +54,16 @@ export function AmenitiesPageContent() {
   const [editItem, setEditItem] = useState<Amenity | null>(null);
   const [deleteItem, setDeleteItem] = useState<Amenity | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const editItemRef = useRef(editItem);
+  editItemRef.current = editItem;
 
   const [selectMode, setSelectMode] = useState<SelectMode>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [bulkSaving, setBulkSaving] = useState(false);
 
-  const loadItems = useCallback(async () => {
-    setLoading(true);
+  const loadItems = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const rows = await listAmenities();
       setItems(rows);
@@ -68,9 +74,9 @@ export function AmenitiesPageContent() {
           ? err.message
           : "Failed to load amenities. Run 005_amenities.sql and 012_amenities_is_default.sql in Supabase.",
       );
-      setItems([]);
+      if (!silent) setItems([]);
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 
@@ -151,6 +157,7 @@ export function AmenitiesPageContent() {
       const byId = new Map(updated.map((row) => [row.id, row]));
       setItems((prev) => prev.map((item) => byId.get(item.id) ?? item));
       exitSelectMode();
+      notifyAdminListChanged();
     } catch (err) {
       setError(
         err instanceof Error
@@ -178,6 +185,7 @@ export function AmenitiesPageContent() {
       cloudinary_public_id: data.cloudinary_public_id,
     });
     setItems((prev) => [...prev, created]);
+    notifyAdminListChanged();
   };
 
   const handleEdit = async (data: {
@@ -188,9 +196,10 @@ export function AmenitiesPageContent() {
     cloudinary_public_id?: string | null;
     clearIcon?: boolean;
   }) => {
-    if (!editItem) return;
+    const current = editItemRef.current;
+    if (!current) return;
     const updated = await updateAmenity({
-      id: editItem.id,
+      id: current.id,
       title: data.title,
       status: data.status,
       is_default: data.is_default,
@@ -198,8 +207,25 @@ export function AmenitiesPageContent() {
       cloudinary_public_id: data.cloudinary_public_id,
       clearIcon: data.clearIcon,
     });
-    setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+    const next: Amenity = {
+      ...current,
+      ...updated,
+      id: current.id,
+      title: data.title,
+      status: data.status,
+      is_default: data.is_default,
+      icon_url: data.clearIcon
+        ? null
+        : (data.icon_url ?? updated.icon_url ?? current.icon_url),
+      cloudinary_public_id: data.clearIcon
+        ? null
+        : (data.cloudinary_public_id ??
+          updated.cloudinary_public_id ??
+          current.cloudinary_public_id),
+    };
+    setItems((prev) => replaceById(prev, current.id, next));
     setEditItem(null);
+    notifyAdminListChanged();
   };
 
   const handleDelete = async () => {
@@ -214,6 +240,7 @@ export function AmenitiesPageContent() {
         return next;
       });
       setDeleteItem(null);
+      notifyAdminListChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to delete.");
     } finally {
@@ -231,7 +258,10 @@ export function AmenitiesPageContent() {
         status,
         is_default: item.is_default,
       });
-      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      setItems((prev) =>
+        replaceById(prev, item.id, { ...item, ...updated, id: item.id, status }),
+      );
+      notifyAdminListChanged();
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not update status.",
@@ -249,7 +279,15 @@ export function AmenitiesPageContent() {
         status: item.status,
         is_default: isDefault,
       });
-      setItems((prev) => prev.map((i) => (i.id === updated.id ? updated : i)));
+      setItems((prev) =>
+        replaceById(prev, item.id, {
+          ...item,
+          ...updated,
+          id: item.id,
+          is_default: isDefault,
+        }),
+      );
+      notifyAdminListChanged();
     } catch (err) {
       setError(
         err instanceof Error
@@ -509,6 +547,7 @@ export function AmenitiesPageContent() {
                       )}
 
                       <AmenityIcon
+                        key={`${item.id}-${item.icon_url ?? ""}-${item.title}`}
                         title={item.title}
                         iconUrl={item.icon_url}
                         iconKey={item.icon_key}

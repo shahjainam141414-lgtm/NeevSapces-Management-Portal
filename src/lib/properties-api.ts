@@ -4,6 +4,7 @@ import {
   buildPropertySlug,
   deriveLegacyPricesFromRateCards,
   normalizeRateCards,
+  resolveBuilderIds,
   type Property,
   type PropertyDetail,
   type PropertyFaq,
@@ -27,13 +28,14 @@ function toFriendlyError(error: { message?: string; code?: string; hint?: string
   }
   if (
     msg.toLowerCase().includes("rate_cards") ||
+    msg.toLowerCase().includes("builder_ids") ||
     msg.toLowerCase().includes("hero_banner") ||
     msg.toLowerCase().includes("is_hero_banner") ||
     (msg.toLowerCase().includes("column") &&
       msg.toLowerCase().includes("does not exist"))
   ) {
     return new Error(
-      "Property schema outdated. Run supabase/migrations/015_property_rate_cards_and_spec_labels.sql and 028_property_hero_banners.sql in the Supabase SQL Editor, then retry.",
+      "Property schema outdated. Run supabase/migrations/015_property_rate_cards_and_spec_labels.sql, 028_property_hero_banners.sql, and 032_property_builder_ids.sql in the Supabase SQL Editor, then retry.",
     );
   }
   if (
@@ -49,8 +51,11 @@ function toFriendlyError(error: { message?: string; code?: string; hint?: string
 }
 
 function normalizeProperty(row: Property): Property {
+  const builder_ids = resolveBuilderIds(row);
   return {
     ...row,
+    builder_ids,
+    builder_id: builder_ids[0] ?? null,
     availability: Array.isArray(row.availability) ? row.availability : [],
     parking_types: Array.isArray(row.parking_types) ? row.parking_types : [],
     rate_cards: normalizeRateCards(row.rate_cards),
@@ -212,6 +217,7 @@ export type CreatePropertyInput = {
   status?: PropertyStatus;
   property_type_label?: string | null;
   builder_id?: string | null;
+  builder_ids?: string[];
   developer_name?: string | null;
 };
 
@@ -235,7 +241,12 @@ export async function createProperty(input: CreatePropertyInput): Promise<Proper
     city: input.city?.trim() || "Gandhinagar",
     status: input.status ?? "draft",
     property_type_label: input.property_type_label?.trim() || null,
-    builder_id: input.builder_id || null,
+    builder_id: input.builder_id || input.builder_ids?.[0] || null,
+    builder_ids: input.builder_ids?.length
+      ? input.builder_ids
+      : input.builder_id
+        ? [input.builder_id]
+        : [],
     developer_name: input.developer_name?.trim() || null,
     sort_order: (maxRow?.sort_order ?? 0) + 1,
   };

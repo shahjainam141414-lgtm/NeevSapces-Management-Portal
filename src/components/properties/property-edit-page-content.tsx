@@ -84,6 +84,7 @@ import {
 } from "@/lib/properties-api";
 import { notifyAdminListChanged } from "@/lib/admin-list-sync";
 import { RateCardsEditor } from "@/components/properties/rate-cards-editor";
+import { FloorPlanConfigField } from "@/components/properties/floor-plan-config-field";
 import type { TextRow } from "@/components/properties/inline-text-rows";
 import { RichTextEditor } from "@/components/properties/rich-text-editor";
 import {
@@ -162,7 +163,7 @@ function planToEditable(p: PropertyFloorPlan): EditableFloorPlan {
 function emptyPlan(): EditableFloorPlan {
   return {
     name: "",
-    bhk_label: "3 BHK",
+    bhk_label: "",
     rooms: "",
     balcony: "",
     bathroom: "",
@@ -286,7 +287,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [reraNo, setReraNo] = useState("");
   const [reraUrl, setReraUrl] = useState("");
 
-  const [builderId, setBuilderId] = useState("");
+  const [builderIds, setBuilderIds] = useState<string[]>([]);
   const [developerName, setDeveloperName] = useState("");
   const [categoryLabel, setCategoryLabel] = useState("");
   const [constructionStatus, setConstructionStatus] = useState("");
@@ -380,7 +381,13 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       setUnitCount(prop.unit_count != null ? String(prop.unit_count) : "");
       setReraNo(prop.rera_no ?? "");
       setReraUrl(prop.rera_url ?? "");
-      setBuilderId(prop.builder_id ?? "");
+      setBuilderIds(
+        prop.builder_ids?.length
+          ? prop.builder_ids
+          : prop.builder_id
+            ? [prop.builder_id]
+            : [],
+      );
       setDeveloperName(prop.developer_name ?? "");
       setCategoryLabel(prop.category_label ?? "");
       setConstructionStatus(prop.construction_status ?? "");
@@ -689,7 +696,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         unit_count: toNum(unitCount),
         rera_no: reraNo.trim() || null,
         rera_url: reraUrl.trim() || null,
-        builder_id: builderId || null,
+        builder_id: builderIds[0] || null,
+        builder_ids: builderIds,
         developer_name: developerName.trim() || null,
         category_label: categoryLabel.trim() || null,
         construction_status: constructionStatus.trim() || null,
@@ -734,12 +742,13 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
       for (let i = 0; i < floorPlans.length; i++) {
         const plan = floorPlans[i];
-        if (!plan.name.trim()) continue;
+        if (!plan.name.trim() && !plan.bhk_label.trim()) continue;
+        const label = plan.name.trim() || plan.bhk_label.trim();
         const saved = await upsertFloorPlan({
           id: plan.id,
           property_id: propertyId,
-          name: plan.name,
-          bhk_label: plan.bhk_label || null,
+          name: label,
+          bhk_label: plan.bhk_label.trim() || label,
           rooms: toNum(plan.rooms),
           balcony: toNum(plan.balcony),
           bathroom: toNum(plan.bathroom),
@@ -1416,14 +1425,15 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
                 <div className="grid gap-4 sm:grid-cols-2">
                   <BuilderSelectField
+                    className="sm:col-span-2"
                     builders={builders}
-                    value={builderId}
+                    value={builderIds}
                     onBuildersChange={setBuilders}
-                    onChange={(id, name) => {
-                      setBuilderId(id);
+                    onChange={(ids, name) => {
+                      setBuilderIds(ids);
                       setDeveloperName(name);
                     }}
-                    hint="Links this listing to a brand. Choose Add brand to create one."
+                    hint="Link one or more brands. Tap a chip to remove it, or Add brand to create one."
                   />
                   <div className="space-y-2">
                     <Label>Construction status</Label>
@@ -1577,8 +1587,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                 Floor plans
               </p>
               <p className="mt-1 text-sm text-slate-500">
-                BHK and price sync from Price Overview. Add carpet area, super
-                built-up, and the floor-plan image here.
+                Configuration and price sync from Price Overview. Add carpet
+                area, super built-up, and the floor-plan image here.
               </p>
             </div>
             <div className="flex gap-2">
@@ -1647,36 +1657,19 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     </Button>
                   </CardHeader>
                   <CardContent className="grid gap-4 sm:grid-cols-3">
-                    <div className="space-y-2 sm:col-span-2">
-                      <Label>Name</Label>
-                      <Input
-                        value={plan.name}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setFloorPlans((prev) =>
-                            prev.map((p, i) =>
-                              i === index ? { ...p, name: v } : p,
-                            ),
-                          );
-                        }}
-                        placeholder="3 BHK Type 1"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>BHK label</Label>
-                      <Input
-                        value={plan.bhk_label}
-                        onChange={(e) => {
-                          const v = e.target.value;
-                          setFloorPlans((prev) =>
-                            prev.map((p, i) =>
-                              i === index ? { ...p, bhk_label: v } : p,
-                            ),
-                          );
-                        }}
-                        placeholder="3 BHK"
-                      />
-                    </div>
+                    <FloorPlanConfigField
+                      name={plan.name}
+                      bhkLabel={plan.bhk_label}
+                      onChange={(label) =>
+                        setFloorPlans((prev) =>
+                          prev.map((p, i) =>
+                            i === index
+                              ? { ...p, name: label, bhk_label: label }
+                              : p,
+                          ),
+                        )
+                      }
+                    />
                     {(
                       [
                         ["price_label", "Price (from overview)"],

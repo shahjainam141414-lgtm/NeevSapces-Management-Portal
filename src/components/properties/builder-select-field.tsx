@@ -14,14 +14,15 @@ import { Check, ChevronsUpDown, Plus, Search, X } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { BuilderFormDialog } from "@/components/customization/builder-form-dialog";
 import { createBuilder } from "@/lib/builders-api";
+import { joinBuilderNames } from "@/lib/properties";
 import type { Builder, BuilderStatus } from "@/lib/builders";
 import { cn } from "@/lib/utils";
 import { useNestedWheelScroll } from "@/hooks/useNestedWheelScroll";
 
 type BuilderSelectFieldProps = {
   builders: Builder[];
-  value: string;
-  onChange: (builderId: string, developerName: string) => void;
+  value: string[];
+  onChange: (builderIds: string[], developerName: string) => void;
   onBuildersChange: (builders: Builder[]) => void;
   label?: string;
   required?: boolean;
@@ -53,7 +54,7 @@ export function BuilderSelectField({
 }: BuilderSelectFieldProps) {
   const autoId = useId();
   const fieldId = id ?? autoId;
-  const triggerRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -66,15 +67,20 @@ export function BuilderSelectField({
 
   useEffect(() => setMounted(true), []);
 
+  const selectedSet = useMemo(() => new Set(value), [value]);
+
   const options = useMemo(() => {
     return [...builders]
-      .filter((b) => b.status === "active" || b.id === value)
+      .filter((b) => b.status === "active" || selectedSet.has(b.id))
       .sort((a, b) => a.name.localeCompare(b.name));
-  }, [builders, value]);
+  }, [builders, selectedSet]);
 
   const selected = useMemo(
-    () => options.find((b) => b.id === value) ?? null,
-    [options, value],
+    () =>
+      value
+        .map((id) => options.find((b) => b.id === id) ?? builders.find((b) => b.id === id))
+        .filter((b): b is Builder => Boolean(b)),
+    [value, options, builders],
   );
 
   const filtered = useMemo(() => {
@@ -82,6 +88,22 @@ export function BuilderSelectField({
     if (!q) return options;
     return options.filter((b) => b.name.toLowerCase().includes(q));
   }, [options, query]);
+
+  const emit = useCallback(
+    (ids: string[]) => {
+      const unique = [...new Set(ids)];
+      const names = unique
+        .map(
+          (id) =>
+            builders.find((b) => b.id === id)?.name ??
+            options.find((b) => b.id === id)?.name ??
+            "",
+        )
+        .filter(Boolean);
+      onChange(unique, joinBuilderNames(names));
+    },
+    [builders, onChange, options],
+  );
 
   const updatePosition = useCallback(() => {
     const trigger = triggerRef.current;
@@ -98,7 +120,7 @@ export function BuilderSelectField({
     setPos({
       top: openUp ? rect.top - gap : rect.bottom + gap,
       left: rect.left,
-      width: rect.width,
+      width: Math.max(rect.width, Math.min(rect.width, window.innerWidth - 24)),
       maxHeight: Math.max(180, Math.min(preferred, available)),
       openUp,
     });
@@ -107,7 +129,7 @@ export function BuilderSelectField({
   useLayoutEffect(() => {
     if (!open) return;
     updatePosition();
-  }, [open, updatePosition, filtered.length]);
+  }, [open, updatePosition, filtered.length, selected.length]);
 
   useEffect(() => {
     if (!open) return;
@@ -161,14 +183,16 @@ export function BuilderSelectField({
     setQuery("");
   };
 
-  const selectNone = () => {
-    onChange("", "");
-    closePanel();
+  const toggleBuilder = (builder: Builder) => {
+    if (selectedSet.has(builder.id)) {
+      emit(value.filter((id) => id !== builder.id));
+      return;
+    }
+    emit([...value, builder.id]);
   };
 
-  const selectBuilder = (builder: Builder) => {
-    onChange(builder.id, builder.name);
-    closePanel();
+  const removeBuilder = (builderId: string) => {
+    emit(value.filter((id) => id !== builderId));
   };
 
   const openAddBrand = () => {
@@ -190,10 +214,12 @@ export function BuilderSelectField({
       logo_url: data.logo_url,
       cloudinary_public_id: data.cloudinary_public_id,
     });
-    onBuildersChange(
-      [...builders, created].sort((a, b) => a.name.localeCompare(b.name)),
+    const nextBuilders = [...builders, created].sort((a, b) =>
+      a.name.localeCompare(b.name),
     );
-    onChange(created.id, created.name);
+    onBuildersChange(nextBuilders);
+    const ids = [...value, created.id];
+    onChange(ids, joinBuilderNames([...selected.map((b) => b.name), created.name]));
   };
 
   const panel =
@@ -202,6 +228,7 @@ export function BuilderSelectField({
           <div
             ref={panelRef}
             role="listbox"
+            aria-multiselectable="true"
             data-lenis-prevent
             className="fixed z-[200] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_20px_50px_rgba(16,25,46,0.18)]"
             style={{
@@ -209,7 +236,7 @@ export function BuilderSelectField({
               bottom: pos.openUp
                 ? window.innerHeight - pos.top
                 : undefined,
-              left: pos.left,
+              left: Math.min(pos.left, window.innerWidth - pos.width - 12),
               width: pos.width,
               maxHeight: pos.maxHeight,
             }}
@@ -245,43 +272,34 @@ export function BuilderSelectField({
                   WebkitOverflowScrolling: "touch",
                 }}
               >
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={!value}
-                  onClick={selectNone}
-                  className={cn(
-                    "flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-slate-600 transition hover:bg-[#16233f]/6 hover:text-[#16233f]",
-                    !value && "font-medium text-[#16233f]",
-                  )}
-                >
-                  <span className="grid h-4 w-4 place-items-center">
-                    {!value ? <Check className="h-4 w-4" /> : null}
-                  </span>
-                  None
-                </button>
-
                 {filtered.length === 0 ? (
                   <p className="px-3 py-8 text-center text-sm text-slate-500">
                     No builders match “{query.trim()}”
                   </p>
                 ) : (
                   filtered.map((builder) => {
-                    const active = builder.id === value;
+                    const active = selectedSet.has(builder.id);
                     return (
                       <button
                         key={builder.id}
                         type="button"
                         role="option"
                         aria-selected={active}
-                        onClick={() => selectBuilder(builder)}
+                        onClick={() => toggleBuilder(builder)}
                         className={cn(
                           "flex w-full cursor-pointer items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-slate-700 transition hover:bg-[#16233f]/6 hover:text-[#16233f]",
                           active && "font-medium text-[#16233f]",
                         )}
                       >
-                        <span className="grid h-4 w-4 place-items-center">
-                          {active ? <Check className="h-4 w-4" /> : null}
+                        <span
+                          className={cn(
+                            "grid h-4 w-4 shrink-0 place-items-center rounded border",
+                            active
+                              ? "border-[#16233f] bg-[#16233f] text-white"
+                              : "border-slate-300 bg-white",
+                          )}
+                        >
+                          {active ? <Check className="h-3 w-3" strokeWidth={3} /> : null}
                         </span>
                         <span className="min-w-0 flex-1 truncate">
                           {builder.name}
@@ -316,53 +334,59 @@ export function BuilderSelectField({
         {required ? <span className="text-red-500"> *</span> : null}
       </Label>
 
-      <div className="relative">
-        <button
-          ref={triggerRef}
-          id={fieldId}
-          type="button"
-          disabled={disabled}
-          aria-haspopup="listbox"
-          aria-expanded={open}
-          onClick={() => {
-            if (disabled) return;
-            setOpen((prev) => {
-              const next = !prev;
-              if (!next) setQuery("");
-              return next;
-            });
-          }}
+      <div
+        ref={triggerRef}
+        id={fieldId}
+        role="combobox"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-multiselectable="true"
+        tabIndex={disabled ? -1 : 0}
+        onClick={() => {
+          if (disabled) return;
+          setOpen(true);
+        }}
+        onKeyDown={(event) => {
+          if (disabled) return;
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            setOpen(true);
+          }
+        }}
+        className={cn(
+          "flex min-h-10 w-full cursor-pointer flex-wrap items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2 py-1.5 text-left text-sm text-slate-900 shadow-[0_1px_2px_rgba(16,25,46,0.03)] transition-all duration-200 hover:border-slate-300 focus:border-[#16233f]/40 focus:outline-none focus:ring-4 focus:ring-[#16233f]/10",
+          open && "border-[#16233f]/40 ring-4 ring-[#16233f]/10",
+          disabled && "cursor-not-allowed opacity-50",
+        )}
+      >
+        {selected.map((builder) => (
+          <span
+            key={builder.id}
+            className="inline-flex max-w-full items-center gap-1 rounded-full bg-[#16233f] py-0.5 pl-2.5 pr-1 text-[12px] font-medium text-white"
+          >
+            <span className="truncate">{builder.name}</span>
+            <button
+              type="button"
+              aria-label={`Remove ${builder.name}`}
+              onClick={(event) => {
+                event.stopPropagation();
+                removeBuilder(builder.id);
+              }}
+              className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-white/80 transition hover:bg-white/15 hover:text-white"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </span>
+        ))}
+        <span
           className={cn(
-            "flex h-10 w-full items-center justify-between rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-left text-sm text-slate-900 shadow-[0_1px_2px_rgba(16,25,46,0.03)] transition-all duration-200 hover:border-slate-300 focus:border-[#16233f]/40 focus:outline-none focus:ring-4 focus:ring-[#16233f]/10 disabled:cursor-not-allowed disabled:opacity-50",
-            open && "border-[#16233f]/40 ring-4 ring-[#16233f]/10",
+            "min-w-[8rem] flex-1 px-1.5 py-0.5",
+            selected.length ? "text-slate-400" : "text-slate-400",
           )}
         >
-          <span
-            className={cn(
-              "truncate",
-              selected ? "font-medium text-slate-900" : "text-slate-400",
-            )}
-          >
-            {selected ? selected.name : "Search or select builder"}
-          </span>
-          <span className="ml-2 flex shrink-0 items-center gap-1">
-            {selected ? (
-              <span
-                role="button"
-                tabIndex={-1}
-                aria-label="Clear builder"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onChange("", "");
-                }}
-                className="grid h-6 w-6 place-items-center rounded-md text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
-              >
-                <X className="h-3.5 w-3.5" />
-              </span>
-            ) : null}
-            <ChevronsUpDown className="h-4 w-4 text-slate-400" />
-          </span>
-        </button>
+          {selected.length ? "Add another…" : "Search or select builders"}
+        </span>
+        <ChevronsUpDown className="mr-1 h-4 w-4 shrink-0 text-slate-400" />
       </div>
 
       {hint ? <p className="text-xs text-slate-500">{hint}</p> : null}

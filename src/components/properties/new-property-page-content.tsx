@@ -33,7 +33,7 @@ export function NewPropertyPageContent() {
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [areaId, setAreaId] = useState("");
   const [propertyType, setPropertyType] = useState("");
-  const [builderId, setBuilderId] = useState("");
+  const [builderIds, setBuilderIds] = useState<string[]>([]);
   const [developerName, setDeveloperName] = useState("");
   const [title, setTitle] = useState("");
   const [locality, setLocality] = useState("");
@@ -98,7 +98,8 @@ export function NewPropertyPageContent() {
         locality: locality.trim() || selectedArea.name,
         city: city.trim() || "Gandhinagar",
         property_type_label: propertyType,
-        builder_id: builderId || null,
+        builder_id: builderIds[0] || null,
+        builder_ids: builderIds,
         developer_name: developerName.trim() || null,
         status: "active",
       });
@@ -252,14 +253,14 @@ export function NewPropertyPageContent() {
 
             <BuilderSelectField
               builders={builders}
-              value={builderId}
+              value={builderIds}
               onBuildersChange={setBuilders}
-              onChange={(id, name) => {
-                setBuilderId(id);
+              onChange={(ids, name) => {
+                setBuilderIds(ids);
                 setDeveloperName(name);
               }}
               disabled={loadingOptions}
-              hint="Optional. Pick an existing brand or add a new one."
+              hint="Optional. Pick one or more brands, or add a new one."
             />
 
             <div className="space-y-2">

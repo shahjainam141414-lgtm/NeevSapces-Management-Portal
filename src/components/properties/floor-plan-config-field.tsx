@@ -78,7 +78,7 @@ export function FloorPlanConfigField({ name, bhkLabel, onChange }: Props) {
           disabled={!kinds.includes("BHK")}
           onChange={(e) => {
             const nextCount = e.target.value.replace(/[^\d.]/g, "");
-            const nextKinds =
+            const nextKinds: PlanKind[] =
               nextCount && !kinds.includes("BHK") ? [...kinds, "BHK"] : kinds;
             emit(nextCount, nextKinds);
           }}

@@ -84,7 +84,7 @@ import {
 } from "@/lib/properties-api";
 import { notifyAdminListChanged } from "@/lib/admin-list-sync";
 import { RateCardsEditor } from "@/components/properties/rate-cards-editor";
-import { FloorPlanConfigField } from "@/components/properties/floor-plan-config-field";
+import { FloorPlanConfigField, parsePlanLabel } from "@/components/properties/floor-plan-config-field";
 import type { TextRow } from "@/components/properties/inline-text-rows";
 import { RichTextEditor } from "@/components/properties/rich-text-editor";
 import {
@@ -130,6 +130,8 @@ type EditableFloorPlan = {
   servant_room: string;
   carpet_area_sqft: string;
   carpet_area_sqyd: string;
+  carpet_terrace_sqft: string;
+  carpet_terrace_sqyd: string;
   area_sqft: string;
   area_sqyd: string;
   area_sqmt: string;
@@ -151,6 +153,10 @@ function planToEditable(p: PropertyFloorPlan): EditableFloorPlan {
       p.carpet_area_sqft != null ? String(p.carpet_area_sqft) : "",
     carpet_area_sqyd:
       p.carpet_area_sqyd != null ? String(p.carpet_area_sqyd) : "",
+    carpet_terrace_sqft:
+      p.carpet_terrace_sqft != null ? String(p.carpet_terrace_sqft) : "",
+    carpet_terrace_sqyd:
+      p.carpet_terrace_sqyd != null ? String(p.carpet_terrace_sqyd) : "",
     area_sqft: p.area_sqft != null ? String(p.area_sqft) : "",
     area_sqyd: p.area_sqyd != null ? String(p.area_sqyd) : "",
     area_sqmt: p.area_sqmt != null ? String(p.area_sqmt) : "",
@@ -170,6 +176,8 @@ function emptyPlan(): EditableFloorPlan {
     servant_room: "",
     carpet_area_sqft: "",
     carpet_area_sqyd: "",
+    carpet_terrace_sqft: "",
+    carpet_terrace_sqyd: "",
     area_sqft: "",
     area_sqyd: "",
     area_sqmt: "",
@@ -744,6 +752,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         const plan = floorPlans[i];
         if (!plan.name.trim() && !plan.bhk_label.trim()) continue;
         const label = plan.name.trim() || plan.bhk_label.trim();
+        const isPenthouse = parsePlanLabel(label).kinds.includes("Penthouse");
         const saved = await upsertFloorPlan({
           id: plan.id,
           property_id: propertyId,
@@ -755,6 +764,12 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           servant_room: toNum(plan.servant_room),
           carpet_area_sqft: toNum(plan.carpet_area_sqft),
           carpet_area_sqyd: toNum(plan.carpet_area_sqyd),
+          carpet_terrace_sqft: isPenthouse
+            ? toNum(plan.carpet_terrace_sqft)
+            : null,
+          carpet_terrace_sqyd: isPenthouse
+            ? toNum(plan.carpet_terrace_sqyd)
+            : null,
           area_sqft: toNum(plan.area_sqft),
           area_sqyd: toNum(plan.area_sqyd),
           area_sqmt: toNum(plan.area_sqmt),
@@ -1662,11 +1677,22 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                       bhkLabel={plan.bhk_label}
                       onChange={(label) =>
                         setFloorPlans((prev) =>
-                          prev.map((p, i) =>
-                            i === index
-                              ? { ...p, name: label, bhk_label: label }
-                              : p,
-                          ),
+                          prev.map((p, i) => {
+                            if (i !== index) return p;
+                            const keepTerrace =
+                              parsePlanLabel(label).kinds.includes("Penthouse");
+                            return {
+                              ...p,
+                              name: label,
+                              bhk_label: label,
+                              carpet_terrace_sqft: keepTerrace
+                                ? p.carpet_terrace_sqft
+                                : "",
+                              carpet_terrace_sqyd: keepTerrace
+                                ? p.carpet_terrace_sqyd
+                                : "",
+                            };
+                          }),
                         )
                       }
                     />
@@ -1810,6 +1836,75 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                         </div>
                       </div>
                     </div>
+
+                    {/* Carpet terrace — penthouse only */}
+                    {parsePlanLabel(plan.bhk_label || plan.name).kinds.includes(
+                      "Penthouse",
+                    ) ? (
+                      <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-4 sm:col-span-3">
+                        <div>
+                          <p className="text-sm font-semibold text-[#16233f]">
+                            Carpet Terrace
+                          </p>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-500">
+                            Private terrace carpet area for this penthouse.
+                            Shown on the website only when a value is set. Enter
+                            sq.ft or sq.yd — the other updates automatically (1
+                            sq.yd = 9 sq.ft).
+                          </p>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2">
+                          <div className="space-y-2">
+                            <Label>Carpet terrace (sq.ft)</Label>
+                            <Input
+                              inputMode="decimal"
+                              value={plan.carpet_terrace_sqft}
+                              onChange={(e) => {
+                                const converted = convertFromSqft(
+                                  e.target.value,
+                                );
+                                setFloorPlans((prev) =>
+                                  prev.map((p, i) =>
+                                    i === index
+                                      ? {
+                                          ...p,
+                                          carpet_terrace_sqft: converted.sqft,
+                                          carpet_terrace_sqyd: converted.sqyd,
+                                        }
+                                      : p,
+                                  ),
+                                );
+                              }}
+                              placeholder="e.g. 450"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Carpet terrace (sq.yd)</Label>
+                            <Input
+                              inputMode="decimal"
+                              value={plan.carpet_terrace_sqyd}
+                              onChange={(e) => {
+                                const converted = convertFromSqyd(
+                                  e.target.value,
+                                );
+                                setFloorPlans((prev) =>
+                                  prev.map((p, i) =>
+                                    i === index
+                                      ? {
+                                          ...p,
+                                          carpet_terrace_sqft: converted.sqft,
+                                          carpet_terrace_sqyd: converted.sqyd,
+                                        }
+                                      : p,
+                                  ),
+                                );
+                              }}
+                              placeholder="e.g. 50"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                     <div className="space-y-2 sm:col-span-3">
                       <Label>Floor plan image (optional)</Label>
                       <div className="max-w-xs">

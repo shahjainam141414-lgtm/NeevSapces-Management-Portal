@@ -35,7 +35,7 @@ function toFriendlyError(error: { message?: string; code?: string; hint?: string
       msg.toLowerCase().includes("does not exist"))
   ) {
     return new Error(
-      "Property schema outdated. Run supabase/migrations/015_property_rate_cards_and_spec_labels.sql, 028_property_hero_banners.sql, and 032_property_builder_ids.sql in the Supabase SQL Editor, then retry.",
+      "Property schema outdated. Run supabase/migrations/015_property_rate_cards_and_spec_labels.sql, 028_property_hero_banners.sql, 032_property_builder_ids.sql, and 033_floor_plan_carpet_terrace.sql in the Supabase SQL Editor, then retry.",
     );
   }
   if (
@@ -153,7 +153,7 @@ export async function getPropertyDetail(id: string): Promise<PropertyDetail> {
     supabase
       .from("property_floor_plans")
       .select(
-        "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, carpet_area_sqft, carpet_area_sqyd, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
+        "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, carpet_area_sqft, carpet_area_sqyd, carpet_terrace_sqft, carpet_terrace_sqyd, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
       )
       .eq("property_id", id)
       .order("sort_order", { ascending: true }),
@@ -389,6 +389,8 @@ export async function upsertFloorPlan(
     servant_room: input.servant_room,
     carpet_area_sqft: input.carpet_area_sqft,
     carpet_area_sqyd: input.carpet_area_sqyd,
+    carpet_terrace_sqft: input.carpet_terrace_sqft,
+    carpet_terrace_sqyd: input.carpet_terrace_sqyd,
     area_sqft: input.area_sqft,
     area_sqyd: input.area_sqyd,
     area_sqmt: input.area_sqmt,
@@ -404,7 +406,7 @@ export async function upsertFloorPlan(
       .update(payload)
       .eq("id", input.id)
       .select(
-        "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, carpet_area_sqft, carpet_area_sqyd, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
+        "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, carpet_area_sqft, carpet_area_sqyd, carpet_terrace_sqft, carpet_terrace_sqyd, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
       )
       .single();
     if (error) throw toFriendlyError(error);
@@ -423,7 +425,7 @@ export async function upsertFloorPlan(
     .from("property_floor_plans")
     .insert({ ...payload, sort_order: (maxRow?.sort_order ?? 0) + 1 })
     .select(
-      "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, carpet_area_sqft, carpet_area_sqyd, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
+      "id, property_id, name, bhk_label, rooms, balcony, bathroom, servant_room, carpet_area_sqft, carpet_area_sqyd, carpet_terrace_sqft, carpet_terrace_sqyd, area_sqft, area_sqyd, area_sqmt, price_label, image_url, cloudinary_public_id, sort_order",
     )
     .single();
 

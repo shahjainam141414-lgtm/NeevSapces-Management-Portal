@@ -33,6 +33,7 @@ const WIPE_ORDER = [
   "site_users",
   "digital_cards",
   "site_banners",
+  "site_details",
   "amenities",
   "builders",
   "static_options",
@@ -42,6 +43,7 @@ const WIPE_ORDER = [
 const PARENT_TABLES = [
   "static_options",
   "site_banners",
+  "site_details",
   "amenities",
   "builders",
   "admin_profiles",

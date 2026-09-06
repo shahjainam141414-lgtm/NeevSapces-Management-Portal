@@ -1,5 +1,14 @@
--- Run in NeevSpaces-Dev SQL Editor BEFORE copying production data.
--- Clears seed/empty rows so prod IDs can insert cleanly.
+-- ============================================================
+-- Clone NeevSpaces → NeevSpaces-Dev
+--
+-- Step 1: Run this WHOLE file in NeevSpaces-Dev SQL Editor
+--          (clears Dev so prod data can load cleanly)
+--
+-- Step 2: Neon → NeevSpaces → project menu → Export / dump
+--          then Import that dump into NeevSpaces-Dev
+--
+-- OR use the one-liner script: scripts/clone-db.ps1
+-- ============================================================
 
 truncate table
   public.property_faqs,
@@ -16,6 +25,7 @@ truncate table
   public.browse_unlocks,
   public.digital_cards,
   public.site_banners,
+  public.site_details,
   public.amenities,
   public.builders,
   public.static_options,

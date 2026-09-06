@@ -12,13 +12,7 @@ import { AlertBanner } from "@/components/ui/alert-banner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton";
 import { ScrollRegion } from "@/components/ui/scroll-region";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { EntityFormDialog } from "@/components/customization/entity-form-dialog";
 import type { EntityFormSubmitData } from "@/components/customization/entity-form-dialog";
 import {
@@ -92,6 +86,7 @@ export function CustomizationPageContent({
       status: data.status,
       image_url: data.image_url,
       cloudinary_public_id: data.cloudinary_public_id,
+      nearby_area_ids: enableImage ? data.nearby_area_ids : undefined,
     });
     setItems((prev) =>
       [...prev, created].sort((a, b) => a.name.localeCompare(b.name)),
@@ -109,6 +104,7 @@ export function CustomizationPageContent({
       image_url: data.image_url,
       cloudinary_public_id: data.cloudinary_public_id,
       clearImage: data.clearImage,
+      nearby_area_ids: enableImage ? data.nearby_area_ids : undefined,
     });
     const next: EntityItem = {
       ...current,
@@ -124,6 +120,11 @@ export function CustomizationPageContent({
         : (data.cloudinary_public_id ??
           updated.cloudinary_public_id ??
           current.cloudinary_public_id),
+      nearby_area_ids:
+        data.nearby_area_ids ??
+        updated.nearby_area_ids ??
+        current.nearby_area_ids ??
+        [],
     };
     setItems((prev) =>
       replaceById(prev, current.id, next).sort((a, b) =>
@@ -139,7 +140,16 @@ export function CustomizationPageContent({
     setDeleting(true);
     try {
       await deleteStaticOption(deleteItem.id);
-      setItems((prev) => prev.filter((i) => i.id !== deleteItem.id));
+      setItems((prev) =>
+        prev
+          .filter((i) => i.id !== deleteItem.id)
+          .map((i) => ({
+            ...i,
+            nearby_area_ids: (i.nearby_area_ids ?? []).filter(
+              (id) => id !== deleteItem.id,
+            ),
+          })),
+      );
       setDeleteItem(null);
       notifyAdminListChanged();
     } catch (err) {
@@ -354,6 +364,7 @@ export function CustomizationPageContent({
         entityLabel={entityLabel}
         mode="add"
         enableImage={enableImage}
+        areaOptions={enableImage ? items : []}
         onSubmit={handleAdd}
       />
 
@@ -366,38 +377,20 @@ export function CustomizationPageContent({
         mode="edit"
         initial={editItem}
         enableImage={enableImage}
+        areaOptions={enableImage ? items : []}
         onSubmit={handleEdit}
       />
 
-      <Dialog open={!!deleteItem} onOpenChange={() => setDeleteItem(null)}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete {entityLabel}</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{deleteItem?.name}&quot;?
-              This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-            <Button
-              variant="outline"
-              className="cursor-pointer"
-              onClick={() => setDeleteItem(null)}
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              className="cursor-pointer"
-              onClick={() => void handleDelete()}
-              loading={deleting}
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={!!deleteItem}
+        onOpenChange={(open) => {
+          if (!open) setDeleteItem(null);
+        }}
+        title={`Delete ${entityLabel}?`}
+        description={`Are you sure you want to delete “${deleteItem?.name ?? ""}”? This action cannot be undone.`}
+        loading={deleting}
+        onConfirm={() => void handleDelete()}
+      />
     </>
   );
 }

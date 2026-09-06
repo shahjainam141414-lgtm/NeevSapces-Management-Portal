@@ -1236,6 +1236,9 @@ alter table public.static_options
   add column if not exists image_url text,
   add column if not exists cloudinary_public_id text;
 
+-- 034_static_options_nearby_area_ids.sql
+alter table public.static_options
+  add column if not exists nearby_area_ids uuid[] not null default '{}';
 
 
 -- ------------------------------------------------------------
@@ -1935,5 +1938,20 @@ create table if not exists public.site_details (
 insert into public.site_details (id, phone_display, phone_tel, email, address)
 values (1, '+91 76002 71405', '+917600271405', 'info@neevspaces.com', 'Gujarat, India')
 on conflict (id) do nothing;
+
+-- ------------------------------------------------------------
+-- 035_area_featured_properties.sql
+-- ------------------------------------------------------------
+create table if not exists public.area_featured_properties (
+  id uuid primary key default gen_random_uuid(),
+  area_id uuid not null references public.static_options (id) on delete cascade,
+  property_id uuid not null references public.properties (id) on delete cascade,
+  sort_order integer not null default 0,
+  created_at timestamptz not null default now(),
+  constraint area_featured_properties_unique unique (area_id, property_id)
+);
+
+create index if not exists area_featured_properties_area_id_idx
+  on public.area_featured_properties (area_id);
 
 

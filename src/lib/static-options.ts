@@ -18,6 +18,7 @@ export type StaticOption = {
   status: OptionStatus;
   image_url?: string | null;
   cloudinary_public_id?: string | null;
+  nearby_area_ids?: string[] | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -29,6 +30,7 @@ export type EntityItem = {
   status: OptionStatus;
   image_url?: string | null;
   cloudinary_public_id?: string | null;
+  nearby_area_ids?: string[];
 };
 
 export function toEntityItem(row: StaticOption): EntityItem {
@@ -38,5 +40,8 @@ export function toEntityItem(row: StaticOption): EntityItem {
     status: row.status,
     image_url: row.image_url ?? null,
     cloudinary_public_id: row.cloudinary_public_id ?? null,
+    nearby_area_ids: Array.isArray(row.nearby_area_ids)
+      ? row.nearby_area_ids.filter(Boolean)
+      : [],
   };
 }

@@ -76,12 +76,12 @@ export async function listProperties(): Promise<Property[]> {
   return ((data ?? []) as Property[]).map(normalizeProperty);
 }
 
-/** Mark the given property IDs as featured (max 8); clear featured on all others. */
+/** Mark the given property IDs as featured; clear featured on all others. */
 export async function setFeaturedProperties(
   propertyIds: string[],
 ): Promise<void> {
   const supabase = createClient();
-  const unique = [...new Set(propertyIds)].slice(0, 8);
+  const unique = [...new Set(propertyIds)];
 
   const { error: clearError } = await supabase
     .from("properties")

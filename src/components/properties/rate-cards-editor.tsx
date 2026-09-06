@@ -26,6 +26,7 @@ import {
   sanitizeDecimalInput,
   type PriceUnit,
 } from "@/lib/pricing";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 
 type RateCardsEditorProps = {
   value: PropertyRateCard[];
@@ -64,6 +65,7 @@ export function RateCardsEditor({
   onRangeChange,
   lockRangeInitially = false,
 }: RateCardsEditorProps) {
+  const { requestDelete, dialog: confirmDeleteDialog } = useConfirmDelete();
   const [rangeManual, setRangeManual] = useState(lockRangeInitially);
   const [amountDrafts, setAmountDrafts] = useState<Record<string, string>>(
     () =>
@@ -224,7 +226,12 @@ export function RateCardsEditor({
                     size="icon"
                     className="size-7 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                     onClick={() =>
-                      onChange(value.filter((_, i) => i !== index))
+                      requestDelete({
+                        title: "Delete rate card?",
+                        description: `Remove “${card.title.trim() || `Card ${index + 1}`}”? This cannot be undone until you save.`,
+                        onConfirm: () =>
+                          onChange(value.filter((_, i) => i !== index)),
+                      })
                     }
                     aria-label="Remove rate card"
                   >
@@ -306,6 +313,7 @@ export function RateCardsEditor({
           ))}
         </div>
       )}
+      {confirmDeleteDialog}
     </div>
   );
 }

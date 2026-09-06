@@ -5,6 +5,7 @@ import { Bold, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 
 export type TextRow = { id: string; content: string };
 
@@ -28,6 +29,7 @@ export function InlineTextRows({
   allowBold = false,
 }: InlineTextRowsProps) {
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const { requestDelete, dialog: confirmDeleteDialog } = useConfirmDelete();
 
   const applyBold = (row: TextRow) => {
     const input = inputRefs.current[row.id];
@@ -134,7 +136,14 @@ export function InlineTextRows({
                 variant="ghost"
                 size="icon"
                 className="shrink-0 text-red-600 hover:bg-red-50"
-                onClick={() => onChange(value.filter((r) => r.id !== row.id))}
+                onClick={() =>
+                  requestDelete({
+                    title: "Delete row?",
+                    description: `Remove “${row.content.trim() || "this row"}”?`,
+                    onConfirm: () =>
+                      onChange(value.filter((r) => r.id !== row.id)),
+                  })
+                }
                 aria-label="Remove"
               >
                 <Trash2 className="size-4" />
@@ -143,6 +152,7 @@ export function InlineTextRows({
           ))}
         </ul>
       )}
+      {confirmDeleteDialog}
     </div>
   );
 }

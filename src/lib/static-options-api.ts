@@ -8,7 +8,7 @@ import {
 } from "@/lib/static-options";
 
 const OPTION_COLUMNS =
-  "id, type, value, status, image_url, cloudinary_public_id, created_at, updated_at";
+  "id, type, value, status, image_url, cloudinary_public_id, nearby_area_ids, created_at, updated_at";
 
 function toFriendlyError(error: {
   message?: string;
@@ -33,7 +33,18 @@ function toFriendlyError(error: {
       "Area image columns missing. Run supabase/migrations/016_static_options_image.sql in Supabase, then retry.",
     );
   }
+  if (msg.toLowerCase().includes("nearby_area_ids")) {
+    return new Error(
+      "Nearby areas column missing. Run supabase/migrations/034_static_options_nearby_area_ids.sql in Supabase, then retry.",
+    );
+  }
   return new Error(error.hint ? `${msg} (${error.hint})` : msg);
+}
+
+function cleanNearbyIds(ids: string[] | undefined, excludeId?: string) {
+  if (!ids?.length) return [];
+  const unique = [...new Set(ids.filter(Boolean))];
+  return excludeId ? unique.filter((id) => id !== excludeId) : unique;
 }
 
 export async function listStaticOptions(
@@ -56,6 +67,7 @@ export async function createStaticOption(input: {
   status: OptionStatus;
   image_url?: string | null;
   cloudinary_public_id?: string | null;
+  nearby_area_ids?: string[];
 }): Promise<EntityItem> {
   const supabase = createClient();
   const payload: Record<string, unknown> = {
@@ -66,6 +78,9 @@ export async function createStaticOption(input: {
   if (input.image_url !== undefined) payload.image_url = input.image_url;
   if (input.cloudinary_public_id !== undefined) {
     payload.cloudinary_public_id = input.cloudinary_public_id;
+  }
+  if (input.nearby_area_ids !== undefined) {
+    payload.nearby_area_ids = cleanNearbyIds(input.nearby_area_ids);
   }
 
   const { data, error } = await supabase
@@ -85,6 +100,7 @@ export async function updateStaticOption(input: {
   image_url?: string | null;
   cloudinary_public_id?: string | null;
   clearImage?: boolean;
+  nearby_area_ids?: string[];
 }): Promise<EntityItem> {
   const supabase = createClient();
   const payload: Record<string, unknown> = {
@@ -102,6 +118,10 @@ export async function updateStaticOption(input: {
     }
   }
 
+  if (input.nearby_area_ids !== undefined) {
+    payload.nearby_area_ids = cleanNearbyIds(input.nearby_area_ids, input.id);
+  }
+
   const { data, error } = await supabase
     .from("static_options")
     .update(payload)
@@ -115,6 +135,28 @@ export async function updateStaticOption(input: {
 
 export async function deleteStaticOption(id: string): Promise<void> {
   const supabase = createClient();
+
+  // Drop this area from other areas' nearby lists before deleting.
+  const { data: linked, error: linkedError } = await supabase
+    .from("static_options")
+    .select("id, nearby_area_ids")
+    .eq("type", "area")
+    .contains("nearby_area_ids", [id]);
+
+  if (linkedError) throw toFriendlyError(linkedError);
+
+  for (const row of linked ?? []) {
+    const next = cleanNearbyIds(
+      (row.nearby_area_ids as string[] | null) ?? [],
+      id,
+    ).filter((x) => x !== id);
+    const { error: updateError } = await supabase
+      .from("static_options")
+      .update({ nearby_area_ids: next })
+      .eq("id", row.id);
+    if (updateError) throw toFriendlyError(updateError);
+  }
+
   const { error } = await supabase
     .from("static_options")
     .delete()

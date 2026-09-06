@@ -26,8 +26,10 @@ import {
   ImageUploadField,
   ImagePreviewOverlay,
 } from "@/components/ui/image-upload-field";
+import { NearbyAreasField } from "@/components/customization/nearby-areas-field";
 import { useRemountKey } from "@/hooks/use-remount-key";
 import { uploadToCloudinary } from "@/lib/cloudinary";
+import { cn } from "@/lib/utils";
 import type { EntityItem, OptionStatus } from "@/lib/static-options";
 
 const formSchema = z.object({
@@ -43,6 +45,7 @@ export type EntityFormSubmitData = {
   image_url?: string | null;
   cloudinary_public_id?: string | null;
   clearImage?: boolean;
+  nearby_area_ids?: string[];
 };
 
 type EntityFormDialogProps = {
@@ -51,8 +54,10 @@ type EntityFormDialogProps = {
   entityLabel: string;
   mode: "add" | "edit";
   initial?: EntityItem | null;
-  /** When true, show a single image upload (used for Areas). */
+  /** When true, show image + nearby areas (Areas). */
   enableImage?: boolean;
+  /** All areas for nearby multi-select (Areas only). */
+  areaOptions?: EntityItem[];
   onSubmit: (data: EntityFormSubmitData) => Promise<void>;
 };
 
@@ -66,6 +71,7 @@ export function EntityFormDialog({
   mode,
   initial,
   enableImage = false,
+  areaOptions = [],
   onSubmit,
 }: EntityFormDialogProps) {
   const formKey = useRemountKey(open);
@@ -79,6 +85,7 @@ export function EntityFormDialog({
           mode={mode}
           initial={initial}
           enableImage={enableImage}
+          areaOptions={areaOptions}
           onOpenChange={onOpenChange}
           onSubmit={onSubmit}
         />
@@ -92,6 +99,7 @@ type EntityFormFieldsProps = {
   mode: "add" | "edit";
   initial?: EntityItem | null;
   enableImage: boolean;
+  areaOptions: EntityItem[];
   onOpenChange: (open: boolean) => void;
   onSubmit: EntityFormDialogProps["onSubmit"];
 };
@@ -101,6 +109,7 @@ function EntityFormFields({
   mode,
   initial,
   enableImage,
+  areaOptions,
   onOpenChange,
   onSubmit,
 }: EntityFormFieldsProps) {
@@ -111,6 +120,9 @@ function EntityFormFields({
   const [clearImage, setClearImage] = useState(false);
   const [fullPreview, setFullPreview] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [nearbyAreaIds, setNearbyAreaIds] = useState<string[]>(
+    () => initial?.nearby_area_ids ?? [],
+  );
 
   const {
     register,
@@ -182,6 +194,9 @@ function EntityFormFields({
               image_url,
               cloudinary_public_id,
               clearImage: clearImage && !file,
+              nearby_area_ids: nearbyAreaIds.filter(
+                (id) => id !== initial?.id,
+              ),
             }
           : {}),
       });
@@ -203,7 +218,13 @@ function EntityFormFields({
 
   return (
     <>
-      <DialogContent className="scrollbar-thin max-w-[calc(100vw-2rem)] gap-0 overflow-y-auto overscroll-contain p-0 sm:max-w-md [-webkit-overflow-scrolling:touch]" data-lenis-prevent>
+      <DialogContent
+        className={cn(
+          "scrollbar-thin max-w-[calc(100vw-2rem)] gap-0 overflow-y-auto overscroll-contain p-0 [-webkit-overflow-scrolling:touch]",
+          enableImage ? "sm:max-w-lg" : "sm:max-w-md",
+        )}
+        data-lenis-prevent
+      >
         <div className="border-b border-slate-100 bg-gradient-to-b from-slate-50 to-white px-5 py-5 sm:px-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold tracking-tight text-slate-900">
@@ -254,6 +275,16 @@ function EntityFormFields({
                 onPreview={() => shownImage && setFullPreview(true)}
               />
             </div>
+          ) : null}
+
+          {enableImage ? (
+            <NearbyAreasField
+              areas={areaOptions}
+              excludeId={initial?.id}
+              value={nearbyAreaIds}
+              onChange={setNearbyAreaIds}
+              disabled={saving}
+            />
           ) : null}
 
           <div className="space-y-2">

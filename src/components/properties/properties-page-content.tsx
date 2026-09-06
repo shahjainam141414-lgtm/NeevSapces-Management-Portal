@@ -20,13 +20,6 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ui/status-badge";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { deleteProperty, listProperties, updateProperty } from "@/lib/properties-api";
 import type { Property, PropertyStatus } from "@/lib/properties";
@@ -34,6 +27,7 @@ import {
   notifyAdminListChanged,
   useReloadWhenVisible,
 } from "@/lib/admin-list-sync";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 
 type StatusFilter = "all" | PropertyStatus;
 
@@ -45,8 +39,7 @@ export function PropertiesPageContent() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [deleteItem, setDeleteItem] = useState<Property | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { requestDelete, dialog: confirmDeleteDialog } = useConfirmDelete();
 
   const loadItems = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -100,21 +93,6 @@ export function PropertiesPageContent() {
     });
   }, [items, search, statusFilter]);
 
-  const handleDelete = async () => {
-    if (!deleteItem) return;
-    setDeleting(true);
-    try {
-      await deleteProperty(deleteItem.id);
-      setItems((prev) => prev.filter((p) => p.id !== deleteItem.id));
-      setDeleteItem(null);
-      notifyAdminListChanged();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Delete failed");
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   const handleSetStatus = async (item: Property, status: PropertyStatus) => {
     if (item.status === status) return;
     setError(null);
@@ -144,7 +122,22 @@ export function PropertiesPageContent() {
           ? () => void handleSetStatus(item, "inactive")
           : undefined
       }
-      onDelete={() => setDeleteItem(item)}
+      onDelete={() =>
+        requestDelete({
+          title: "Delete property?",
+          description: `This removes “${item.title}” and all floor plans, photos, FAQs, and linked amenities. This cannot be undone.`,
+          onConfirm: async () => {
+            try {
+              await deleteProperty(item.id);
+              setItems((prev) => prev.filter((p) => p.id !== item.id));
+              notifyAdminListChanged();
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Delete failed");
+              throw err;
+            }
+          },
+        })
+      }
     />
   );
 
@@ -348,32 +341,7 @@ export function PropertiesPageContent() {
         </div>
       </div>
 
-      <Dialog
-        open={Boolean(deleteItem)}
-        onOpenChange={(open) => !open && setDeleteItem(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete property?</DialogTitle>
-            <DialogDescription>
-              This removes &ldquo;{deleteItem?.title}&rdquo; and all floor plans,
-              photos, FAQs, and linked amenities. This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setDeleteItem(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              loading={deleting}
-              onClick={() => void handleDelete()}
-            >
-              Delete
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {confirmDeleteDialog}
     </>
   );
 }

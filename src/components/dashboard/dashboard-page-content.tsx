@@ -175,8 +175,6 @@ export function DashboardPageContent({ user }: Props) {
   );
 
   const lastTouched = recent[0] ?? null;
-  const featuredSlots = 8;
-  const featuredOpen = Math.max(0, featuredSlots - stats.featured);
 
   const focus = useMemo(() => {
     if (stats.drafts > 0) {
@@ -188,11 +186,11 @@ export function DashboardPageContent({ user }: Props) {
         cta: "Review drafts",
       };
     }
-    if (featuredOpen > 0) {
+    if (stats.featured === 0) {
       return {
         label: "Homepage",
-        value: `${featuredOpen} slot${featuredOpen === 1 ? "" : "s"} open`,
-        hint: `${stats.featured} of ${featuredSlots} featured picks filled`,
+        value: "No featured yet",
+        hint: "Pick listings for the homepage featured section",
         href: "/customization/featured",
         cta: "Curate featured",
       };
@@ -200,11 +198,11 @@ export function DashboardPageContent({ user }: Props) {
     return {
       label: "All clear",
       value: "Catalog is live",
-      hint: "No drafts waiting · homepage fully curated",
+      hint: `No drafts waiting · ${stats.featured} featured on homepage`,
       href: "/customization/properties/new",
       cta: "Add property",
     };
-  }, [stats.drafts, stats.featured, featuredOpen]);
+  }, [stats.drafts, stats.featured]);
 
   const firstName = (user?.name ?? "there").split(" ")[0];
   const greeting = greetingForHour(now.getHours());
@@ -341,7 +339,7 @@ export function DashboardPageContent({ user }: Props) {
                     {loading ? "Loading your next action…" : focus.hint}
                   </p>
                 </div>
-                {stats.drafts === 0 && featuredOpen === 0 && !loading ? (
+                {stats.drafts === 0 && stats.featured > 0 && !loading ? (
                   <CheckCircle2
                     className="mt-0.5 h-5 w-5 shrink-0 text-emerald-400/90"
                     strokeWidth={1.6}
@@ -548,7 +546,7 @@ export function DashboardPageContent({ user }: Props) {
               {
                 href: "/customization/featured",
                 label: "Curate featured",
-                hint: "Up to 8 homepage picks",
+                hint: "Homepage & by-area picks",
               },
               {
                 href: "/customization/main-banner",

@@ -16,13 +16,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton, TableSkeleton } from "@/components/ui/skeleton";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { ScrollRegion } from "@/components/ui/scroll-region";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { getInitials } from "@/lib/utils";
 import {
   deleteAdminUser,
@@ -389,33 +383,16 @@ export function UsersPageContent() {
         }}
       />
 
-      <Dialog open={!!deleteUser} onOpenChange={() => setDeleteUser(null)}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete User</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{deleteUser?.name}&quot;?
-              They will lose access immediately.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteUser(null)}
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              loading={deleting}
-              onClick={() => void handleDelete()}
-            >
-              Delete
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={!!deleteUser}
+        onOpenChange={(open) => {
+          if (!open) setDeleteUser(null);
+        }}
+        title="Delete user?"
+        description={`Are you sure you want to delete “${deleteUser?.name ?? ""}”? They will lose access immediately.`}
+        loading={deleting}
+        onConfirm={() => void handleDelete()}
+      />
     </>
   );
 }

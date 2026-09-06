@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 
 export type FaqRow = { id: string; question: string; answer: string };
 
@@ -17,6 +18,17 @@ type FaqAccordionEditorProps = {
 
 export function FaqAccordionEditor({ value, onChange }: FaqAccordionEditorProps) {
   const [openId, setOpenId] = useState<string | null>(value[0]?.id ?? null);
+  const { requestDelete, dialog: confirmDeleteDialog } = useConfirmDelete();
+
+  useEffect(() => {
+    if (!value.length) {
+      setOpenId(null);
+      return;
+    }
+    if (!value.some((row) => row.id === openId)) {
+      setOpenId(value[0]!.id);
+    }
+  }, [value, openId]);
 
   const addFaq = () => {
     const id = crypto.randomUUID();
@@ -62,7 +74,8 @@ export function FaqAccordionEditor({ value, onChange }: FaqAccordionEditorProps)
                   <button
                     type="button"
                     className="flex flex-1 items-center gap-2 px-3 py-3 text-left"
-                    onClick={() => setOpenId(open ? null : faq.id)}
+                    aria-expanded={open}
+                    onClick={() => setOpenId(faq.id)}
                   >
                     <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-[#16233f]/8 text-[11px] font-semibold text-[#16233f]">
                       {index + 1}
@@ -82,17 +95,29 @@ export function FaqAccordionEditor({ value, onChange }: FaqAccordionEditorProps)
                     variant="ghost"
                     size="icon"
                     className="mr-1 text-red-600 hover:bg-red-50"
-                    onClick={() => {
-                      onChange(value.filter((r) => r.id !== faq.id));
-                      if (openId === faq.id) setOpenId(null);
-                    }}
+                    onClick={() =>
+                      requestDelete({
+                        title: "Delete FAQ?",
+                        description: `Remove “${faq.question.trim() || "this FAQ"}”?`,
+                        onConfirm: () => {
+                          const next = value.filter((r) => r.id !== faq.id);
+                          onChange(next);
+                          setOpenId((current) => {
+                            if (current !== faq.id) return current;
+                            return (
+                              next[Math.min(index, next.length - 1)]?.id ?? null
+                            );
+                          });
+                        },
+                      })
+                    }
                     aria-label="Remove FAQ"
                   >
                     <Trash2 className="size-4" />
                   </Button>
                 </div>
 
-                {open && (
+                {open ? (
                   <div className="space-y-3 p-3 sm:p-4">
                     <div className="space-y-2">
                       <Label>Question</Label>
@@ -128,12 +153,13 @@ export function FaqAccordionEditor({ value, onChange }: FaqAccordionEditorProps)
                       />
                     </div>
                   </div>
-                )}
+                ) : null}
               </li>
             );
           })}
         </ul>
       )}
+      {confirmDeleteDialog}
     </div>
   );
 }

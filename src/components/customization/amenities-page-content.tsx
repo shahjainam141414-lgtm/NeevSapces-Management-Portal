@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { AmenityFormDialog } from "@/components/customization/amenity-form-dialog";
 import { AmenityIcon } from "@/components/customization/amenity-icon";
 import {
@@ -596,35 +597,16 @@ export function AmenitiesPageContent() {
         onSubmit={handleEdit}
       />
 
-      <Dialog open={!!deleteItem} onOpenChange={() => setDeleteItem(null)}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Amenity</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{deleteItem?.title}&quot;?
-              This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-            <Button
-              variant="outline"
-              className="cursor-pointer"
-              onClick={() => setDeleteItem(null)}
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              className="cursor-pointer"
-              onClick={() => void handleDelete()}
-              loading={deleting}
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ConfirmDeleteDialog
+        open={!!deleteItem}
+        onOpenChange={(open) => {
+          if (!open) setDeleteItem(null);
+        }}
+        title="Delete amenity?"
+        description={`Are you sure you want to delete “${deleteItem?.title ?? ""}”? This cannot be undone.`}
+        loading={deleting}
+        onConfirm={() => void handleDelete()}
+      />
 
       <Dialog
         open={confirmOpen}

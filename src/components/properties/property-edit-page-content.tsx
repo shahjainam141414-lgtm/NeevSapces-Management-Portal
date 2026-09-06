@@ -8,6 +8,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Check,
+  ChevronDown,
   Eye,
   FileText,
   ImagePlus,
@@ -96,6 +97,7 @@ import {
   type FaqRow,
 } from "@/components/properties/faq-accordion-editor";
 import { AmenityPicker } from "@/components/properties/amenity-picker";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 
 const ACCEPT_IMG = "image/jpeg,image/png,image/webp,image/jpg";
 
@@ -120,6 +122,7 @@ const cardMotion = (index: number) => ({
 });
 
 type EditableFloorPlan = {
+  clientKey: string;
   id?: string;
   rate_card_id?: string;
   name: string;
@@ -142,6 +145,7 @@ type EditableFloorPlan = {
 
 function planToEditable(p: PropertyFloorPlan): EditableFloorPlan {
   return {
+    clientKey: p.id,
     id: p.id,
     name: p.name,
     bhk_label: p.bhk_label ?? "",
@@ -168,6 +172,7 @@ function planToEditable(p: PropertyFloorPlan): EditableFloorPlan {
 
 function emptyPlan(): EditableFloorPlan {
   return {
+    clientKey: crypto.randomUUID(),
     name: "",
     bhk_label: "",
     rooms: "",
@@ -316,6 +321,8 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [faqRows, setFaqRows] = useState<FaqRow[]>([]);
   const [selectedAmenityIds, setSelectedAmenityIds] = useState<string[]>([]);
   const [floorPlans, setFloorPlans] = useState<EditableFloorPlan[]>([]);
+  const [openPlanKey, setOpenPlanKey] = useState<string | null>(null);
+  const { requestDelete, dialog: confirmDeleteDialog } = useConfirmDelete();
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingHeroBanner, setUploadingHeroBanner] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
@@ -327,6 +334,16 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const heroBannerInputRef = useRef<HTMLInputElement>(null);
   const brochureInputRef = useRef<HTMLInputElement>(null);
   const plansInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!floorPlans.length) {
+      setOpenPlanKey(null);
+      return;
+    }
+    if (!floorPlans.some((plan) => plan.clientKey === openPlanKey)) {
+      setOpenPlanKey(floorPlans[0]!.clientKey);
+    }
+  }, [floorPlans, openPlanKey]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -381,6 +398,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
             .map(planToEditable)
             .map((plan) => attachRateCard(plan, cards)),
         );
+        setOpenPlanKey(prop.floor_plans[0]?.id ?? null);
       }
       setAvailability(prop.availability ?? []);
       setPossessionBy(prop.possession_by ?? "");
@@ -453,6 +471,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
   const handleRateCardsChange = (cards: PropertyRateCard[]) => {
     setRateCards(cards);
+    let openedKey: string | null = null;
     setFloorPlans((current) => {
       const next = [...current];
 
@@ -469,13 +488,15 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         );
 
         if (matchIndex === -1) {
-          next.push({
+          const created = {
             ...emptyPlan(),
             rate_card_id: card.id,
             name: title,
             bhk_label: title,
             price_label: card.price,
-          });
+          };
+          next.push(created);
+          openedKey = created.clientKey;
           continue;
         }
 
@@ -494,6 +515,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
 
       return next;
     });
+    if (openedKey) setOpenPlanKey(openedKey);
   };
 
   const onAreaChange = (id: string) => {
@@ -601,6 +623,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         cloudinary_public_id: up.public_id,
       }));
       setFloorPlans((prev) => [...prev, ...newPlans]);
+      if (newPlans[0]) setOpenPlanKey(newPlans[0].clientKey);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Floor plan upload failed");
     } finally {
@@ -1158,10 +1181,18 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                           variant="outline"
                           size="sm"
                           className="text-red-600"
-                          onClick={() => {
-                            setCoverUrl(null);
-                            setCoverPublicId(null);
-                          }}
+                          onClick={() =>
+                            requestDelete({
+                              title: "Remove cover image?",
+                              description:
+                                "This clears the cover image. Save the property to persist the change.",
+                              confirmLabel: "Remove",
+                              onConfirm: () => {
+                                setCoverUrl(null);
+                                setCoverPublicId(null);
+                              },
+                            })
+                          }
                         >
                           <X className="h-3.5 w-3.5" />
                           Remove
@@ -1244,7 +1275,15 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                           variant="ghost"
                           size="icon"
                           className="text-red-600"
-                          onClick={() => setBrochureUrl("")}
+                          onClick={() =>
+                            requestDelete({
+                              title: "Remove brochure?",
+                              description:
+                                "This clears the brochure file. Save the property to persist the change.",
+                              confirmLabel: "Remove",
+                              onConfirm: () => setBrochureUrl(""),
+                            })
+                          }
                           aria-label="Remove brochure"
                         >
                           <Trash2 className="size-4" />
@@ -1334,10 +1373,18 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                           variant="outline"
                           size="sm"
                           className="text-red-600"
-                          onClick={() => {
-                            setHeroBannerUrl(null);
-                            setHeroBannerPublicId(null);
-                          }}
+                          onClick={() =>
+                            requestDelete({
+                              title: "Remove hero banner?",
+                              description:
+                                "This clears the hero banner image. Save the property to persist the change.",
+                              confirmLabel: "Remove",
+                              onConfirm: () => {
+                                setHeroBannerUrl(null);
+                                setHeroBannerPublicId(null);
+                              },
+                            })
+                          }
                         >
                           <X className="h-3.5 w-3.5" />
                           Remove
@@ -1632,7 +1679,11 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                 type="button"
                 variant="outline"
                 className="gap-1.5"
-                onClick={() => setFloorPlans((prev) => [...prev, emptyPlan()])}
+                onClick={() => {
+                  const plan = emptyPlan();
+                  setFloorPlans((prev) => [...prev, plan]);
+                  setOpenPlanKey(plan.clientKey);
+                }}
               >
                 <Plus className="size-4" />
                 Add floor plan
@@ -1652,25 +1703,70 @@ export function PropertyEditPageContent({ propertyId }: Props) {
               </Card>
             </motion.div>
           ) : (
-            floorPlans.map((plan, index) => (
-              <motion.div key={plan.id ?? `new-${index}`} {...cardMotion(index + 1)}>
-                <Card>
-                  <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                    <CardTitle className="text-base">
-                      Floor Plan {index + 1}
-                    </CardTitle>
+            floorPlans.map((plan, index) => {
+              const open = openPlanKey === plan.clientKey;
+              const title =
+                plan.name.trim() ||
+                plan.bhk_label.trim() ||
+                `Floor Plan ${index + 1}`;
+              return (
+              <motion.div key={plan.clientKey} {...cardMotion(index + 1)}>
+                <Card className="overflow-hidden">
+                  <div className="flex items-center gap-1 border-b border-slate-100 bg-[#eef1f6]/40">
+                    <button
+                      type="button"
+                      className="flex min-w-0 flex-1 items-center gap-2 px-4 py-3.5 text-left"
+                      aria-expanded={open}
+                      onClick={() => setOpenPlanKey(plan.clientKey)}
+                    >
+                      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[#16233f]/8 text-[11px] font-semibold text-[#16233f]">
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[#16233f]">
+                        {title}
+                      </span>
+                      {plan.price_label ? (
+                        <span className="hidden shrink-0 text-xs font-medium text-slate-500 sm:inline">
+                          {plan.price_label}
+                        </span>
+                      ) : null}
+                      <ChevronDown
+                        className={cn(
+                          "size-4 shrink-0 text-slate-400 transition-transform",
+                          open && "rotate-180",
+                        )}
+                      />
+                    </button>
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="text-red-600"
+                      className="mr-2 shrink-0 text-red-600 hover:bg-red-50"
+                      aria-label={`Delete ${title}`}
                       onClick={() =>
-                        setFloorPlans((prev) => prev.filter((_, i) => i !== index))
+                        requestDelete({
+                          title: "Delete floor plan?",
+                          description: `Remove “${title}” from this property? Unsaved changes for this plan will be lost.`,
+                          onConfirm: () => {
+                            setFloorPlans((prev) => {
+                              const next = prev.filter((_, i) => i !== index);
+                              setOpenPlanKey((current) => {
+                                if (current !== plan.clientKey) return current;
+                                return (
+                                  next[Math.min(index, next.length - 1)]
+                                    ?.clientKey ?? null
+                                );
+                              });
+                              return next;
+                            });
+                          },
+                        })
                       }
                     >
                       <Trash2 className="size-4" />
                     </Button>
-                  </CardHeader>
+                  </div>
+                  {open ? (
                   <CardContent className="grid gap-4 sm:grid-cols-3">
                     <FloorPlanConfigField
                       name={plan.name}
@@ -1918,17 +2014,25 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                           aspect="wide"
                           onPick={(file) => void handleFloorPlanUpload(index, file)}
                           onRemove={() => {
-                            setFloorPlans((prev) =>
-                              prev.map((p, i) =>
-                                i === index
-                                  ? {
-                                      ...p,
-                                      image_url: null,
-                                      cloudinary_public_id: null,
-                                    }
-                                  : p,
-                              ),
-                            );
+                            requestDelete({
+                              title: "Remove floor plan image?",
+                              description:
+                                "This clears the image from this floor plan. Save the property to persist the change.",
+                              confirmLabel: "Remove",
+                              onConfirm: () => {
+                                setFloorPlans((prev) =>
+                                  prev.map((p, i) =>
+                                    i === index
+                                      ? {
+                                          ...p,
+                                          image_url: null,
+                                          cloudinary_public_id: null,
+                                        }
+                                      : p,
+                                  ),
+                                );
+                              },
+                            });
                           }}
                           onPreview={
                             plan.image_url
@@ -1939,9 +2043,11 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                       </div>
                     </div>
                   </CardContent>
+                  ) : null}
                 </Card>
               </motion.div>
-            ))
+              );
+            })
           )}
         </TabsContent>
 
@@ -2006,20 +2112,26 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                           <button
                             type="button"
                             className="rounded-full bg-white/90 p-1.5 text-red-600 shadow transition-colors hover:bg-white"
-                            onClick={() => {
-                              void deletePropertyMedia(m.id).then(() => {
-                                setDetail((prev) =>
-                                  prev
-                                    ? {
-                                        ...prev,
-                                        media: prev.media.filter(
-                                          (x) => x.id !== m.id,
-                                        ),
-                                      }
-                                    : prev,
-                                );
-                              });
-                            }}
+                            onClick={() =>
+                              requestDelete({
+                                title: "Delete gallery photo?",
+                                description:
+                                  "This removes the photo from this property immediately.",
+                                onConfirm: async () => {
+                                  await deletePropertyMedia(m.id);
+                                  setDetail((prev) =>
+                                    prev
+                                      ? {
+                                          ...prev,
+                                          media: prev.media.filter(
+                                            (x) => x.id !== m.id,
+                                          ),
+                                        }
+                                      : prev,
+                                  );
+                                },
+                              })
+                            }
                             aria-label="Remove image"
                           >
                             <X className="size-3.5" />
@@ -2172,6 +2284,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
           onClose={() => setPreviewImage(null)}
         />
       )}
+      {confirmDeleteDialog}
     </div>
   );
 }

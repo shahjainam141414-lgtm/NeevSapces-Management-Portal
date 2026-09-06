@@ -11,13 +11,6 @@ import { ActionsDropdown } from "@/components/ui/actions-dropdown";
 import { AlertBanner } from "@/components/ui/alert-banner";
 import { EmptyState } from "@/components/ui/empty-state";
 import { CardGridSkeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { BuilderFormDialog } from "@/components/customization/builder-form-dialog";
 import { BuilderLogo } from "@/components/customization/builder-logo";
 import {
@@ -31,6 +24,7 @@ import {
   notifyAdminListChanged,
   replaceById,
 } from "@/lib/admin-list-sync";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 
 export function BuildersPageContent() {
   const [items, setItems] = useState<Builder[]>([]);
@@ -39,8 +33,7 @@ export function BuildersPageContent() {
   const [search, setSearch] = useState("");
   const [addOpen, setAddOpen] = useState(false);
   const [editItem, setEditItem] = useState<Builder | null>(null);
-  const [deleteItem, setDeleteItem] = useState<Builder | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const { requestDelete, dialog: confirmDeleteDialog } = useConfirmDelete();
   const editItemRef = useRef(editItem);
   editItemRef.current = editItem;
 
@@ -131,21 +124,6 @@ export function BuildersPageContent() {
     notifyAdminListChanged();
   };
 
-  const handleDelete = async () => {
-    if (!deleteItem) return;
-    setDeleting(true);
-    try {
-      await deleteBuilder(deleteItem.id);
-      setItems((prev) => prev.filter((i) => i.id !== deleteItem.id));
-      setDeleteItem(null);
-      notifyAdminListChanged();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete.");
-    } finally {
-      setDeleting(false);
-    }
-  };
-
   const handleSetStatus = async (item: Builder, status: BuilderStatus) => {
     if (item.status === status) return;
     setError(null);
@@ -181,7 +159,24 @@ export function BuildersPageContent() {
           ? () => void handleSetStatus(item, "inactive")
           : undefined
       }
-      onDelete={() => setDeleteItem(item)}
+      onDelete={() =>
+        requestDelete({
+          title: "Delete builder?",
+          description: `Are you sure you want to delete “${item.name}”? This cannot be undone.`,
+          onConfirm: async () => {
+            try {
+              await deleteBuilder(item.id);
+              setItems((prev) => prev.filter((i) => i.id !== item.id));
+              notifyAdminListChanged();
+            } catch (err) {
+              setError(
+                err instanceof Error ? err.message : "Failed to delete.",
+              );
+              throw err;
+            }
+          },
+        })
+      }
     />
   );
 
@@ -299,35 +294,7 @@ export function BuildersPageContent() {
         onSubmit={handleEdit}
       />
 
-      <Dialog open={!!deleteItem} onOpenChange={() => setDeleteItem(null)}>
-        <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Builder</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete &quot;{deleteItem?.name}&quot;?
-              This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
-            <Button
-              variant="outline"
-              className="cursor-pointer"
-              onClick={() => setDeleteItem(null)}
-              disabled={deleting}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              className="cursor-pointer"
-              onClick={() => void handleDelete()}
-              loading={deleting}
-            >
-              {deleting ? "Deleting..." : "Delete"}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      {confirmDeleteDialog}
     </>
   );
 }

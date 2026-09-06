@@ -4,6 +4,7 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 
 export type LabelValueRow = { id: string; label: string; value: string };
 
@@ -26,6 +27,7 @@ export function LabelValueRows({
   labelPlaceholder = "Label",
   valuePlaceholder = "Value",
 }: LabelValueRowsProps) {
+  const { requestDelete, dialog: confirmDeleteDialog } = useConfirmDelete();
   const addRow = () =>
     onChange([...value, { id: crypto.randomUUID(), label: "", value: "" }]);
   return (
@@ -113,7 +115,14 @@ export function LabelValueRows({
                 variant="ghost"
                 size="icon"
                 className="justify-self-end text-red-600 hover:bg-red-50 sm:justify-self-center"
-                onClick={() => onChange(value.filter((r) => r.id !== row.id))}
+                onClick={() =>
+                  requestDelete({
+                    title: "Delete specification?",
+                    description: `Remove “${row.label.trim() || row.value.trim() || "this row"}”?`,
+                    onConfirm: () =>
+                      onChange(value.filter((r) => r.id !== row.id)),
+                  })
+                }
                 aria-label="Remove"
               >
                 <Trash2 className="size-4" />
@@ -122,6 +131,7 @@ export function LabelValueRows({
           ))}
         </ul>
       )}
+      {confirmDeleteDialog}
     </div>
   );
 }

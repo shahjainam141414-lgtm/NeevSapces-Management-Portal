@@ -37,6 +37,7 @@ export const customizationTabs = [
   { id: "amenities", label: "Amenities", href: "/customization/amenities" },
   { id: "property-types", label: "Property Types", href: "/customization/property-types" },
   { id: "featured", label: "Featured Properties", href: "/customization/featured" },
+  { id: "testimonials", label: "Testimonials", href: "/customization/testimonials" },
 ] as const;
 
 export type UserRole = "Super Admin" | "Manager";

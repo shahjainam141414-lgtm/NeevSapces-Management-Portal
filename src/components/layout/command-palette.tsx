@@ -11,6 +11,7 @@ import {
   Plus,
   Settings,
   SlidersHorizontal,
+  Quote,
   Sparkles,
   Users,
 } from "lucide-react";
@@ -24,6 +25,7 @@ const ACTIONS = [
       { label: "Properties", href: "/customization/properties", icon: Building2 },
       { label: "Areas", href: "/customization/areas", icon: MapPin },
       { label: "Builders", href: "/customization/builders", icon: Sparkles },
+      { label: "Testimonials", href: "/customization/testimonials", icon: Quote },
       {
         label: "Customization",
         href: "/customization/areas",

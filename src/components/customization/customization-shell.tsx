@@ -20,7 +20,7 @@ export function CustomizationShell({ children }: { children: React.ReactNode }) 
       >
         <PageHeader
           title="Customization"
-          description="Areas, properties, banners, builders, amenities, and more"
+          description="Areas, properties, banners, builders, amenities, testimonials, and more"
         />
       </motion.div>
 

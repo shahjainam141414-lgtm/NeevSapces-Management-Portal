@@ -43,6 +43,8 @@ import {
   replaceById,
 } from "@/lib/admin-list-sync";
 import { cn } from "@/lib/utils";
+import { usePagedList } from "@/hooks/use-paged-list";
+import { AdminPagination } from "@/components/ui/admin-pagination";
 
 type SelectMode = "set" | "unset" | null;
 
@@ -103,6 +105,9 @@ export function AmenitiesPageContent() {
     }
     return [];
   }, [filtered, selectMode]);
+
+  const visibleItems = selectMode ? selectableFiltered : filtered;
+  const pager = usePagedList(visibleItems, `${search}:${selectMode ?? "browse"}`);
 
   const selectedCount = selectedIds.size;
   const allSelectableSelected =
@@ -447,9 +452,9 @@ export function AmenitiesPageContent() {
           )}
         </CardHeader>
 
-        <CardContent className="p-3 sm:p-5">
+        <CardContent className="p-0">
           {error && (
-            <AlertBanner variant="warning" className="mb-4">
+            <AlertBanner variant="warning" className="mx-3 mt-3 mb-0 sm:mx-5 sm:mt-5">
               {error}
               <button
                 type="button"
@@ -462,8 +467,11 @@ export function AmenitiesPageContent() {
           )}
 
           {loading ? (
-            <CardGridSkeleton items={12} />
+            <div className="p-3 sm:p-5">
+              <CardGridSkeleton items={12} />
+            </div>
           ) : filtered.length === 0 ? (
+            <div className="p-3 sm:p-5">
             <EmptyState
               icon={Inbox}
               title="No amenities yet"
@@ -475,7 +483,9 @@ export function AmenitiesPageContent() {
                 </Button>
               }
             />
+            </div>
           ) : selectMode && selectableFiltered.length === 0 ? (
+            <div className="p-3 sm:p-5">
             <EmptyState
               title={
                 selectMode === "set"
@@ -498,9 +508,11 @@ export function AmenitiesPageContent() {
                 </Button>
               }
             />
+            </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-              {(selectMode ? selectableFiltered : filtered).map(
+            <>
+            <div className="grid grid-cols-2 gap-2.5 p-3 sm:grid-cols-3 sm:gap-3 sm:p-5 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+              {pager.pageItems.map(
                 (item, index) => {
                   const selected = selectedIds.has(item.id);
 
@@ -576,6 +588,15 @@ export function AmenitiesPageContent() {
                 },
               )}
             </div>
+            <AdminPagination
+              page={pager.page}
+              totalPages={pager.totalPages}
+              from={pager.from}
+              to={pager.to}
+              total={pager.total}
+              onPageChange={pager.setPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>

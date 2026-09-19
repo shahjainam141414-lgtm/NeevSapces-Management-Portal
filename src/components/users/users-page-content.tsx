@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Search, Users as UsersIcon } from "lucide-react";
 import { UserFormDialog } from "@/components/users/user-form-dialog";
 import { DigitalCardFormDialog } from "@/components/users/digital-card-form-dialog";
@@ -26,6 +26,8 @@ import { getCurrentAdminProfile } from "@/app/actions/auth";
 import type { AdminProfile } from "@/lib/admin-profiles";
 import type { UserRole } from "@/lib/nav-config";
 import { canDeleteUser, canEditUser, isUserRole } from "@/lib/roles";
+import { usePagedList } from "@/hooks/use-paged-list";
+import { AdminPagination } from "@/components/ui/admin-pagination";
 
 export function UsersPageContent() {
   const [users, setUsers] = useState<AdminProfile[]>([]);
@@ -64,20 +66,23 @@ export function UsersPageContent() {
   const actorRole: UserRole =
     currentUser && isUserRole(currentUser.role) ? currentUser.role : "Manager";
 
-  const filteredUsers = users.filter((user) => {
+  const filteredUsers = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return true;
-    const name = (user.name ?? "").toLowerCase();
-    const email = (user.email ?? "").toLowerCase();
-    const phone = (user.phone ?? "").toLowerCase();
-    const role = (user.role ?? "").toLowerCase();
-    return (
-      name.includes(q) ||
-      email.includes(q) ||
-      phone.includes(q) ||
-      role.includes(q)
-    );
-  });
+    if (!q) return users;
+    return users.filter((user) => {
+      const name = (user.name ?? "").toLowerCase();
+      const email = (user.email ?? "").toLowerCase();
+      const phone = (user.phone ?? "").toLowerCase();
+      const role = (user.role ?? "").toLowerCase();
+      return (
+        name.includes(q) ||
+        email.includes(q) ||
+        phone.includes(q) ||
+        role.includes(q)
+      );
+    });
+  }, [users, search]);
+  const pager = usePagedList(filteredUsers, search);
 
   const handleDelete = async () => {
     if (!deleteUser) return;
@@ -198,7 +203,7 @@ export function UsersPageContent() {
             ) : (
               <>
                 <div className="space-y-2.5 p-3 md:hidden">
-                  {filteredUsers.map((user) => {
+                  {pager.pageItems.map((user) => {
                     const isSelf = currentUser?.id === user.id;
                     return (
                       <div
@@ -281,7 +286,7 @@ export function UsersPageContent() {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredUsers.map((user) => {
+                      {pager.pageItems.map((user) => {
                         const isSelf = currentUser?.id === user.id;
                         return (
                           <tr
@@ -342,6 +347,14 @@ export function UsersPageContent() {
                     </tbody>
                   </table>
                 </ScrollRegion>
+                <AdminPagination
+                  page={pager.page}
+                  totalPages={pager.totalPages}
+                  from={pager.from}
+                  to={pager.to}
+                  total={pager.total}
+                  onPageChange={pager.setPage}
+                />
               </>
             )}
           </CardContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { Inbox, ImageIcon, Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,8 @@ import {
   notifyAdminListChanged,
   replaceById,
 } from "@/lib/admin-list-sync";
+import { usePagedList } from "@/hooks/use-paged-list";
+import { AdminPagination } from "@/components/ui/admin-pagination";
 
 type CustomizationPageContentProps = {
   title: string;
@@ -75,9 +77,14 @@ export function CustomizationPageContent({
     void loadItems();
   }, [loadItems]);
 
-  const filtered = items.filter((item) =>
-    item.name.toLowerCase().includes(search.toLowerCase()),
+  const filtered = useMemo(
+    () =>
+      items.filter((item) =>
+        item.name.toLowerCase().includes(search.toLowerCase()),
+      ),
+    [items, search],
   );
+  const pager = usePagedList(filtered, search);
 
   const handleAdd = async (data: EntityFormSubmitData) => {
     const created = await createStaticOption({
@@ -269,7 +276,7 @@ export function CustomizationPageContent({
                 onAdd={() => setAddOpen(true)}
               />
             ) : (
-              filtered.map((item, index) => (
+              pager.pageItems.map((item, index) => (
                 <motion.div
                   key={item.id}
                   initial={{ opacity: 0, y: 6 }}
@@ -324,7 +331,7 @@ export function CustomizationPageContent({
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((item, index) => (
+                  pager.pageItems.map((item, index) => (
                     <motion.tr
                       key={item.id}
                       initial={{ opacity: 0 }}
@@ -355,6 +362,14 @@ export function CustomizationPageContent({
               </tbody>
             </table>
           </ScrollRegion>
+          <AdminPagination
+            page={pager.page}
+            totalPages={pager.totalPages}
+            from={pager.from}
+            to={pager.to}
+            total={pager.total}
+            onPageChange={pager.setPage}
+          />
         </CardContent>
       </Card>
 

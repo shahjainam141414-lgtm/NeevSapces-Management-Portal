@@ -19,9 +19,9 @@ import {
   listProperties,
   setHeroBannerProperties,
 } from "@/lib/properties-api";
+import { usePagedList } from "@/hooks/use-paged-list";
+import { AdminPagination } from "@/components/ui/admin-pagination";
 import type { Property } from "@/lib/properties";
-
-const PAGE_SIZE = 10;
 
 export function MainBannerPageContent() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -30,7 +30,6 @@ export function MainBannerPageContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -46,7 +45,6 @@ export function MainBannerPageContent() {
         .map((p) => p.id);
       setSelectedIds(selected);
       setInitialIds(selected);
-      setPage(1);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load properties",
@@ -73,16 +71,7 @@ export function MainBannerPageContent() {
     );
   }, [properties, search]);
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const pageItems = filtered.slice(
-    (safePage - 1) * PAGE_SIZE,
-    safePage * PAGE_SIZE,
-  );
-
-  useEffect(() => {
-    setPage(1);
-  }, [search]);
+  const pager = usePagedList(filtered, search);
 
   const dirty =
     selectedIds.length !== initialIds.length ||
@@ -224,7 +213,7 @@ export function MainBannerPageContent() {
             </div>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {pageItems.map((property, index) => {
+              {pager.pageItems.map((property, index) => {
                 const checked = selectedIds.includes(property.id);
                 const bannerSrc =
                   property.hero_banner_url || property.cover_image_url;
@@ -311,38 +300,14 @@ export function MainBannerPageContent() {
           )}
         </CardContent>
 
-        {!loading && filtered.length > 0 ? (
-          <div className="flex flex-col gap-3 border-t border-slate-100 px-3 py-3 min-[380px]:flex-row min-[380px]:items-center min-[380px]:justify-between min-[380px]:px-5">
-            <p className="text-xs text-slate-500">
-              Showing {(safePage - 1) * PAGE_SIZE + 1}–
-              {Math.min(safePage * PAGE_SIZE, filtered.length)} of{" "}
-              {filtered.length}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={safePage <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <span className="min-w-[4.5rem] text-center text-xs font-medium text-slate-600">
-                {safePage} / {totalPages}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={safePage >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        ) : null}
+        <AdminPagination
+          page={pager.page}
+          totalPages={pager.totalPages}
+          from={pager.from}
+          to={pager.to}
+          total={pager.total}
+          onPageChange={pager.setPage}
+        />
       </Card>
 
       <div className="sticky bottom-3 z-10 flex justify-stretch sm:bottom-4 sm:justify-end">

@@ -25,6 +25,8 @@ import {
   replaceById,
 } from "@/lib/admin-list-sync";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
+import { usePagedList } from "@/hooks/use-paged-list";
+import { AdminPagination } from "@/components/ui/admin-pagination";
 
 export function BuildersPageContent() {
   const [items, setItems] = useState<Builder[]>([]);
@@ -66,6 +68,8 @@ export function BuildersPageContent() {
       .filter((item) => !q || item.name.toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [items, search]);
+
+  const pager = usePagedList(filtered, search);
 
   const handleAdd = async (data: {
     name: string;
@@ -212,9 +216,9 @@ export function BuildersPageContent() {
           </div>
         </CardHeader>
 
-        <CardContent className="p-3 sm:p-5">
+        <CardContent className="p-0">
           {error && (
-            <AlertBanner variant="warning" className="mb-4">
+            <AlertBanner variant="warning" className="mx-3 mt-3 mb-0 sm:mx-5 sm:mt-5">
               {error}
               <button
                 type="button"
@@ -227,8 +231,11 @@ export function BuildersPageContent() {
           )}
 
           {loading ? (
-            <CardGridSkeleton items={10} />
+            <div className="p-3 sm:p-5">
+              <CardGridSkeleton items={10} />
+            </div>
           ) : filtered.length === 0 ? (
+            <div className="p-3 sm:p-5">
             <EmptyState
               icon={Inbox}
               title="No builders found"
@@ -240,9 +247,11 @@ export function BuildersPageContent() {
                 </Button>
               }
             />
+            </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-              {filtered.map((item, index) => (
+            <>
+            <div className="grid grid-cols-2 gap-3 p-3 sm:grid-cols-3 sm:p-5 md:grid-cols-4 lg:grid-cols-5">
+              {pager.pageItems.map((item, index) => (
                 <motion.article
                   key={item.id}
                   initial={{ opacity: 0, y: 8 }}
@@ -273,6 +282,15 @@ export function BuildersPageContent() {
                 </motion.article>
               ))}
             </div>
+            <AdminPagination
+              page={pager.page}
+              totalPages={pager.totalPages}
+              from={pager.from}
+              to={pager.to}
+              total={pager.total}
+              onPageChange={pager.setPage}
+            />
+            </>
           )}
         </CardContent>
       </Card>

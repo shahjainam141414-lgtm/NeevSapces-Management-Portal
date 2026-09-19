@@ -16,6 +16,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { listProperties, setFeaturedProperties } from "@/lib/properties-api";
 import type { Property } from "@/lib/properties";
+import { usePagedList } from "@/hooks/use-paged-list";
+import { AdminPagination } from "@/components/ui/admin-pagination";
 
 export function FeaturedHomepagePanel() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -190,9 +192,15 @@ export function PropertyPickList({
   onToggle: (id: string) => void;
   badgeWhenFeatured?: boolean;
 }) {
+  const pager = usePagedList(
+    properties,
+    `${properties.length}:${properties[0]?.id ?? ""}:${properties[properties.length - 1]?.id ?? ""}`,
+  );
+
   return (
+    <>
     <ul className="divide-y divide-slate-100">
-      {properties.map((property, index) => {
+      {pager.pageItems.map((property, index) => {
         const checked = selectedIds.includes(property.id);
 
         return (
@@ -275,5 +283,14 @@ export function PropertyPickList({
         );
       })}
     </ul>
+    <AdminPagination
+      page={pager.page}
+      totalPages={pager.totalPages}
+      from={pager.from}
+      to={pager.to}
+      total={pager.total}
+      onPageChange={pager.setPage}
+    />
+    </>
   );
 }

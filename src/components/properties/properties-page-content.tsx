@@ -28,6 +28,8 @@ import {
   useReloadWhenVisible,
 } from "@/lib/admin-list-sync";
 import { useConfirmDelete } from "@/hooks/use-confirm-delete";
+import { usePagedList } from "@/hooks/use-paged-list";
+import { AdminPagination } from "@/components/ui/admin-pagination";
 
 type StatusFilter = "all" | PropertyStatus;
 
@@ -92,6 +94,8 @@ export function PropertiesPageContent() {
       );
     });
   }, [items, search, statusFilter]);
+
+  const pager = usePagedList(filtered, `${search}:${statusFilter}`);
 
   const handleSetStatus = async (item: Property, status: PropertyStatus) => {
     if (item.status === status) return;
@@ -249,8 +253,9 @@ export function PropertiesPageContent() {
               />
             </div>
           ) : (
+            <>
             <div className="grid gap-3 p-3 sm:grid-cols-2 sm:gap-4 sm:p-5 lg:grid-cols-3">
-              {filtered.map((item, index) => (
+              {pager.pageItems.map((item, index) => (
                 <motion.article
                   key={item.id}
                   initial={{ opacity: 0, y: 12 }}
@@ -337,6 +342,15 @@ export function PropertiesPageContent() {
                 </motion.article>
               ))}
             </div>
+            <AdminPagination
+              page={pager.page}
+              totalPages={pager.totalPages}
+              from={pager.from}
+              to={pager.to}
+              total={pager.total}
+              onPageChange={pager.setPage}
+            />
+            </>
           )}
         </div>
       </div>

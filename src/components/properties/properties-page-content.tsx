@@ -31,7 +31,7 @@ import { useConfirmDelete } from "@/hooks/use-confirm-delete";
 import { usePagedList } from "@/hooks/use-paged-list";
 import { AdminPagination } from "@/components/ui/admin-pagination";
 
-type StatusFilter = "all" | PropertyStatus;
+type StatusFilter = "all" | PropertyStatus | "old";
 
 export function PropertiesPageContent() {
   const router = useRouter();
@@ -78,13 +78,18 @@ export function PropertiesPageContent() {
       draft: items.filter((p) => p.status === "draft").length,
       inactive: items.filter((p) => p.status === "inactive").length,
       featured: items.filter((p) => p.is_featured).length,
+      old: items.filter((p) => p.is_old).length,
     };
   }, [items]);
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase().trim();
     return items.filter((item) => {
-      if (statusFilter !== "all" && item.status !== statusFilter) return false;
+      if (statusFilter === "old") {
+        if (!item.is_old) return false;
+      } else if (statusFilter !== "all" && item.status !== statusFilter) {
+        return false;
+      }
       if (!q) return true;
       return (
         item.title.toLowerCase().includes(q) ||
@@ -150,6 +155,7 @@ export function PropertiesPageContent() {
     { id: "active", label: "Active", count: counts.active },
     { id: "draft", label: "Draft", count: counts.draft },
     { id: "inactive", label: "Inactive", count: counts.inactive },
+    { id: "old", label: "Old", count: counts.old },
   ];
 
   return (

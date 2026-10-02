@@ -35,7 +35,7 @@ function toFriendlyError(error: { message?: string; code?: string; hint?: string
       msg.toLowerCase().includes("does not exist"))
   ) {
     return new Error(
-      "Property schema outdated. Run supabase/migrations/015_property_rate_cards_and_spec_labels.sql, 028_property_hero_banners.sql, 032_property_builder_ids.sql, and 033_floor_plan_carpet_terrace.sql in the Supabase SQL Editor, then retry.",
+      "Property schema outdated. Run supabase/migrations/015_property_rate_cards_and_spec_labels.sql, 028_property_hero_banners.sql, 032_property_builder_ids.sql, 033_floor_plan_carpet_terrace.sql, and 038_property_is_old.sql in the Supabase SQL Editor, then retry.",
     );
   }
   if (
@@ -61,6 +61,7 @@ function normalizeProperty(row: Property): Property {
     rate_cards: normalizeRateCards(row.rate_cards),
     is_featured: Boolean(row.is_featured),
     is_hero_banner: Boolean(row.is_hero_banner),
+    is_old: Boolean(row.is_old),
   };
 }
 

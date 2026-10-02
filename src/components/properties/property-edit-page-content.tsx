@@ -272,6 +272,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
   const [slug, setSlug] = useState("");
   const [status, setStatus] = useState<PropertyStatus>("draft");
   const [isFeatured, setIsFeatured] = useState(false);
+  const [isOld, setIsOld] = useState(false);
   const [listingBadge, setListingBadge] = useState("For Sale");
   const [areaId, setAreaId] = useState("");
   const [areaName, setAreaName] = useState("");
@@ -374,6 +375,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
       setSlug(prop.slug);
       setStatus(prop.status);
       setIsFeatured(prop.is_featured);
+      setIsOld(Boolean(prop.is_old));
       setListingBadge(prop.listing_badge || "For Sale");
       setAreaId(prop.area_id ?? "");
       setAreaName(prop.area_name ?? "");
@@ -703,6 +705,7 @@ export function PropertyEditPageContent({ propertyId }: Props) {
         slug: nextSlug,
         status,
         is_featured: isFeatured,
+        is_old: isOld,
         listing_badge: listingBadge.trim() || "For Sale",
         area_id: areaId || null,
         area_name: areaName || null,
@@ -1099,15 +1102,45 @@ export function PropertyEditPageContent({ propertyId }: Props) {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center gap-2.5 sm:col-span-2">
-                  <Checkbox
-                    id="featured"
-                    checked={isFeatured}
-                    onChange={(e) => setIsFeatured(e.target.checked)}
-                  />
-                  <Label htmlFor="featured" className="cursor-pointer font-normal">
-                    Featured listing
-                  </Label>
+                <div className="grid grid-cols-2 gap-2.5 sm:col-span-2 sm:gap-3">
+                  <label
+                    htmlFor="featured"
+                    className={cn(
+                      "flex min-h-[3.5rem] cursor-pointer items-center gap-3 rounded-xl border-2 px-3 py-3 transition sm:min-h-16 sm:gap-3.5 sm:px-4",
+                      isFeatured
+                        ? "border-[#16233f] bg-[#eef1f6] shadow-[0_8px_22px_rgba(22,35,63,0.1)]"
+                        : "border-slate-200 bg-white hover:border-[#16233f]/35",
+                    )}
+                  >
+                    <Checkbox
+                      id="featured"
+                      size="lg"
+                      checked={isFeatured}
+                      onChange={(e) => setIsFeatured(e.target.checked)}
+                    />
+                    <span className="text-[11px] font-semibold uppercase leading-tight tracking-[0.12em] text-[#16233f] sm:text-xs">
+                      Featured listing
+                    </span>
+                  </label>
+                  <label
+                    htmlFor="old-property"
+                    className={cn(
+                      "flex min-h-[3.5rem] cursor-pointer items-center gap-3 rounded-xl border-2 px-3 py-3 transition sm:min-h-16 sm:gap-3.5 sm:px-4",
+                      isOld
+                        ? "border-[#16233f] bg-[#eef1f6] shadow-[0_8px_22px_rgba(22,35,63,0.1)]"
+                        : "border-slate-200 bg-white hover:border-[#16233f]/35",
+                    )}
+                  >
+                    <Checkbox
+                      id="old-property"
+                      size="lg"
+                      checked={isOld}
+                      onChange={(e) => setIsOld(e.target.checked)}
+                    />
+                    <span className="text-[11px] font-semibold uppercase leading-tight tracking-[0.12em] text-[#16233f] sm:text-xs">
+                      Old property
+                    </span>
+                  </label>
                 </div>
               </CardContent>
             </Card>

@@ -117,7 +117,7 @@ export function FeaturedHomepagePanel() {
               Homepage featured
             </CardTitle>
             <p className="mt-1 text-xs text-slate-500">
-              {selectedIds.length} selected
+              {selectedIds.length} selected · these are the homepage banner
               {dirty ? " · unsaved changes" : ""}
             </p>
           </div>
@@ -192,8 +192,23 @@ export function PropertyPickList({
   onToggle: (id: string) => void;
   badgeWhenFeatured?: boolean;
 }) {
+  const ordered = useMemo(() => {
+    if (selectedIds.length === 0) return properties;
+    const rank = new Map(selectedIds.map((id, index) => [id, index]));
+    const selected: Property[] = [];
+    const rest: Property[] = [];
+    for (const property of properties) {
+      if (rank.has(property.id)) selected.push(property);
+      else rest.push(property);
+    }
+    selected.sort(
+      (a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0),
+    );
+    return [...selected, ...rest];
+  }, [properties, selectedIds]);
+
   const pager = usePagedList(
-    properties,
+    ordered,
     `${properties.length}:${properties[0]?.id ?? ""}:${properties[properties.length - 1]?.id ?? ""}`,
   );
 

@@ -71,7 +71,22 @@ export function MainBannerPageContent() {
     );
   }, [properties, search]);
 
-  const pager = usePagedList(filtered, search);
+  const ordered = useMemo(() => {
+    if (selectedIds.length === 0) return filtered;
+    const rank = new Map(selectedIds.map((id, index) => [id, index]));
+    const selected: Property[] = [];
+    const rest: Property[] = [];
+    for (const property of filtered) {
+      if (rank.has(property.id)) selected.push(property);
+      else rest.push(property);
+    }
+    selected.sort(
+      (a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0),
+    );
+    return [...selected, ...rest];
+  }, [filtered, selectedIds]);
+
+  const pager = usePagedList(ordered, search);
 
   const dirty =
     selectedIds.length !== initialIds.length ||
@@ -126,7 +141,7 @@ export function MainBannerPageContent() {
       <PageHeader
         eyebrow="Homepage"
         title="Main Banner"
-        description="Choose which property banners appear in the homepage hero. Multiple banners rotate every 5 seconds."
+        description="The live homepage hero uses Featured Properties, not this list. Mark a property featured to show it as a banner."
         actions={
           <Button
             className="w-full gap-2 min-[380px]:w-auto"
